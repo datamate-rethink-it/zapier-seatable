@@ -1,0 +1,10 @@
+# markdown explicit line-break style
+#   $ git config --global filter.space-removal-at-eol.clean 'sed -e "s/ \+$//"'
+*.md filter=space-removal-at-eol
+
+
+# trivialize read-me changes
+README.md merge=union
+
+# eol is lf (precision across git versions)
+* text eol=lf
