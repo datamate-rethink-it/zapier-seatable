@@ -5,6 +5,8 @@ const zapier = require('zapier-platform-core')
 const App = require('../../index')
 const appTester = zapier.createAppTester(App)
 
+const ctx = require('../../ctx')
+
 describe('Trigger - row_create', () => {
   zapier.tools.env.inject()
   const bundle = {
@@ -15,6 +17,7 @@ describe('Trigger - row_create', () => {
     inputData: {
       table_name: 'table:0000',
       table_view: 'table:0000:view:sx3j',
+      [ctx.FEATURE_NO_AUTH_ASSET_LINKS]: true,
     },
   }
 
@@ -24,6 +27,14 @@ describe('Trigger - row_create', () => {
     results[0].should.eqls({key: 'row_id', label: 'Original ID'})
     results[1].should.eqls({key: 'row_mtime', label: 'Last Modified'})
     results[2].should.eqls({key: 'column:0000', label: 'Name'})
+    results[10].should.eqls({
+      'key': 'column:wNWg-(no-auth-dl)',
+      'label': 'Picture (Download w/o Authorization)',
+    })
+    results[11].should.eqls({
+      'key': 'column:6Ev4-(no-auth-dl)',
+      'label': 'File (Download w/o Authorization)',
+    })
   })
 
   it('triggers.row_create should support links in dynamic output fields', async () => {
@@ -61,7 +72,7 @@ describe('Trigger - row_create', () => {
     }
     const results = await appTester(App.triggers.row_create.operation.perform, bundle)
     results.should.be.an.Array()
-    results.length.should.be.equal(2) // breaks when test link table data is changed
+    results.length.should.be.equal(2)
     const record = results[1] // first row (last array entry as reverse) contains non-empty children
     record.should.have.property('column:99m0')
     const children = record['column:99m0']
@@ -71,4 +82,19 @@ describe('Trigger - row_create', () => {
     child.should.be.an.Object()
   })
 
+  it('triggers.row_create should acquire image links', async () => {
+    bundle.inputData = {
+      table_name: 'table:0000',
+      table_view: 'table:0000:view:sx3j',
+      [ctx.FEATURE_NO_AUTH_ASSET_LINKS]: true,
+    }
+    const results = await appTester(App.triggers.row_create.operation.perform, bundle)
+    results.should.be.an.Array()
+    results.length.should.be.equal(4)
+    results[0].should.have.properties('column:wNWg-(no-auth-dl)', 'column:6Ev4-(no-auth-dl)')
+    results[0]['column:wNWg-(no-auth-dl)'][0].should.be.a.String()
+    results[0]['column:6Ev4-(no-auth-dl)'][0].url.should.be.a.String()
+    results[0]['column:wNWg-(no-auth-dl)'][0].should.endWith('/example-email-marketing.jpg')
+    results[0]['column:6Ev4-(no-auth-dl)'][0].url.should.endWith('/magazine2.jpg')
+  })
 })

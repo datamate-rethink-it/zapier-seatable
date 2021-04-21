@@ -28,6 +28,7 @@ const perform = async (z, bundle) => {
 
   rows = _.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o))
 
+  rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows)
   rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows)
 
   return rows
@@ -89,11 +90,12 @@ const searchValue = async (z, bundle) => {
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
 
-  return _.concat(
-      {key: 'row_id', label: 'ID'},
-      {key: 'row_mtime', label: 'Last Modified'},
-      _.map(tableMetadata.columns, ctx.mapColumnOutputField(bundle)),
-  )
+  return [
+    {key: 'row_id', label: 'ID'},
+    {key: 'row_mtime', label: 'Last Modified'},
+    ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
+    ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
+  ]
 }
 
 module.exports = {
@@ -118,6 +120,7 @@ module.exports = {
       },
       searchColumn,
       searchValue,
+      ctx.fileNoAuthLinksField,
     ],
     sample: {
       row_id: 'S34-T4b13yuRKHvQa0L_kyNQC',

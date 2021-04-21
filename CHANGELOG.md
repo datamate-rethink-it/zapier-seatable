@@ -1,5 +1,12 @@
 # Change-Log
 
+## [2.1.0] - 2021-04-22
+
+### Added
+
+* `FEATURE_NO_AUTH_ASSET_LINKS` Option to add additional fields with asset-URLs (file and image columns) that are
+  temporary for a couple of hours and do not require authentication.
+
 ## [2.0.0] - 2021-01-28
 
 ### New Actions

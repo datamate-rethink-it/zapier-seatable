@@ -137,6 +137,7 @@ const struct = {
       'last-modifier': 'Last Modifier',
       mtime: 'Last modified time',
     },
+    assets: ['file', 'image'],
     filter: {
       // columns types that can not be filtered:
       not: ['file', 'long-text', 'image', 'url'],
@@ -181,6 +182,114 @@ async function appAccessToken(z, bundle) {
  */
 const acquireDtableAppAccess = (z, bundle) => {
   return isEmpty(bundle.dtable) ? appAccessToken(z, bundle) : Promise.resolve(bundle.dtable)
+}
+
+const FEATURE_NO_AUTH_ASSET_LINKS = 'feature_non_authorized_asset_downloads'
+/**
+ * @param {Array<DTableColumn|DTableColumnTLink>} columns
+ */
+const fileColumns = (columns) => columns.filter((s) => struct.columns.assets.indexOf(s.type) + 1)
+const noAuthColumnKey = (key) => `column:${key}-(no-auth-dl)`
+const noAuthColumnLabel = (name) => `${name} (Download w/o Authorization)`
+const noAuthFilePathFromUrl = (buffer) => {
+  // 'https://cloud.seatable.io/workspace/4881/asset/98d18404-03fc-4f4a-9d6d-6527441aea25/files/2021-04/magazine2.jpg'
+  const probe = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(buffer)
+  return probe && probe[1]
+}
+
+const fileNoAuthLinksField = {
+  key: FEATURE_NO_AUTH_ASSET_LINKS,
+  required: false,
+  default: 'False',
+  type: 'boolean',
+  label: 'Provide access to images and files',
+  helpText: 'By default (**False**) SeaTable provides links to files and images that require authentication. Choose **True** if you want to use your files and pictures in your Zapier Action, this adds additional fields with links that temporarily allow unauthorized downloads for a couple of hours.',
+  altersDynamicFields: false,
+}
+
+/**
+ * @yield {*<{label: string, key: string}>}
+ */
+const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
+  if (!bundle.inputData[FEATURE_NO_AUTH_ASSET_LINKS]) {
+    return
+  }
+
+  for (const col of fileColumns(columns)) {
+    yield {key: noAuthColumnKey(col.key), label: noAuthColumnLabel(col.name)}
+  }
+}
+
+/**
+ * add non-authorized asset links into the result
+ *
+ * images and files, original data type (string or object) is kept, ads a new, suffixed entry.
+ *
+ * @param z
+ * @param bundle
+ * @param {Array<DTableColumn|DTableColumnTLink>} columns
+ * @param {Array<{object}>} rows
+ */
+const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
+  if (!bundle.inputData[FEATURE_NO_AUTH_ASSET_LINKS]) {
+    return rows
+  }
+
+  const dtableCtx = bundle.dtable
+  const fileUrlStats = {urls: [], errors: []}
+  const fileUrl = async (buffer) => {
+    fileUrlStats.urls.push(buffer)
+    const urlPath = noAuthFilePathFromUrl(buffer)
+    if (!urlPath) {
+      throw new z.errors.Error(`Failed to extract path from url: "${buffer}"`)
+    }
+    /** @type {ZapierZRequestResponse} */
+    let response
+    let exception
+    const url = `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`
+    try {
+      response = await z.request({
+        url,
+        headers: {Authorization: `Token ${dtableCtx.access_token}`},
+        skipThrowForStatus: true,
+      })
+    } catch (e) {
+      exception = e
+    }
+    if (!_.isObject(response && response.data)) {
+      fileUrlStats.errors.push([buffer, urlPath, url, response, exception && exception.message])
+      return null
+    }
+    return response.data.download_link || null
+  }
+  z.console.time('acquireFileNoAuthLinks')
+  rows = await Promise.all(rows.map(async (row) => {
+    for (const column of fileColumns(columns)) {
+      const field = `column:${column.key}`
+      const noAuthField = noAuthColumnKey(column.key)
+      let values = row && row[field]
+      if (!values) continue
+      if (!Array.isArray(values)) continue
+      if (!values.length) continue
+      row[noAuthField] = await Promise.all(values.map(async (value) => {
+        if (typeof value === 'object' && value !== null && value.type === 'file' && value.url) {
+          const copy = {...value}
+          copy.url = await fileUrl(value.url)
+          return copy
+        } else if (typeof value === 'string' && value) {
+          return await fileUrl(value)
+        }
+        return value
+      }))
+    }
+    return row
+  }))
+  z.console.timeEnd('acquireFileNoAuthLinks')
+  z.console.log(`acquireFileNoAuthLinks: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`)
+  if (fileUrlStats.errors.length > 0) {
+    z.console.log('acquireFileNoAuthLinks: error(s); fileUrlStats.errors:', fileUrlStats.errors)
+  }
+  return rows
 }
 
 /**
@@ -582,33 +691,33 @@ const columnLinkTableMetadata = (col, bundle) => {
 }
 
 /**
- * functor for a map function on a column output field
+ * standard output fields based on the bundled table meta-data
  *
- * supports column.type link
+ * (since 2.0.0) all of the rows columns with the resolution of linked rows columns (supports column.type link)
  *
- * @param  bundle
- * @return {function(DTableColumn|DTableColumnTLink): ({label: string, key: string})}
+ * @param {Array<DTableColumn|DTableColumnTLink>} columns (e.g. tableMetadata.columns)
+ * @param bundle
+ * @return {{label: string, key: string}[]}
  */
-const mapColumnOutputField = (bundle) => {
-  return (col) => {
+const outputFieldsRows = function* (columns, bundle) {
+  for (const col of columns) {
     const f = {key: `column:${col.key}`, label: col.name}
 
     // link field handling
     const linkTableMetadata = columnLinkTableMetadata(col, bundle)
-    if (undefined === linkTableMetadata) {
-      return f
+    if (undefined !== linkTableMetadata) {
+      const children = [{key: `${f.key}[]row_id`, label: `${col.name}: ID`}, {
+        key: `${f.key}[]row_mtime`,
+        label: `${col.name}: Last Modified`,
+      }]
+      for (const c of linkTableMetadata.columns) {
+        if (c.type === 'link') continue
+        children.push({key: `${f.key}[]column:${c.key}`, label: `${col.name}: ${c.name}`})
+      }
+      f.children = children
     }
-    const children = [{key: `${f.key}[]row_id`, label: `${col.name}: ID`}, {
-      key: `${f.key}[]row_mtime`,
-      label: `${col.name}: Last Modified`,
-    }]
-    for (const c of linkTableMetadata.columns) {
-      if (c.type === 'link') continue
-      children.push({key: `${f.key}[]column:${c.key}`, label: `${col.name}: ${c.name}`})
-    }
-    f.children = children
 
-    return f
+    yield f
   }
 }
 
@@ -688,7 +797,6 @@ module.exports = {
   acquireTableMetadata,
   filter,
   mapColumnKeys,
-  mapColumnOutputField,
   mapCreateRowKeys,
   requestParamsSid,
   requestParamsBundle,
@@ -696,4 +804,11 @@ module.exports = {
   struct,
   tableFields,
   tableView,
+  // standard
+  outputFieldsRows,
+  // noAuthLinks
+  FEATURE_NO_AUTH_ASSET_LINKS,
+  acquireFileNoAuthLinks,
+  outputFieldsFileNoAuthLinks,
+  fileNoAuthLinksField,
 }
