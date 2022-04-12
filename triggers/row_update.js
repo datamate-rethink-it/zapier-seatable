@@ -23,6 +23,12 @@ const perform = async (z, bundle) => {
   let rows = response.data.rows
   rows = _.orderBy(rows, ['_mtime'], ['desc'])
 
+  const meta = bundle.meta
+
+  if (meta && meta.isLoadingSample) {
+    rows.splice(meta.limit || 3)
+  }
+
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
 
   rows = _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (o) => {

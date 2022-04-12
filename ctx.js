@@ -139,7 +139,7 @@ const struct = {
     },
     assets: ['file', 'image'],
     filter: {
-      // columns types that can not be filtered:
+      // column types that can not be filtered:
       not: ['file', 'long-text', 'image', 'url'],
     },
     zapier: {
@@ -182,6 +182,12 @@ async function appAccessToken(z, bundle) {
  */
 const acquireDtableAppAccess = (z, bundle) => {
   return isEmpty(bundle.dtable) ? appAccessToken(z, bundle) : Promise.resolve(bundle.dtable)
+}
+
+const featureLinkColumnsData = {
+  enabled: true, // whether data of linked columns are fetched (2.1.0: true)
+  childLimit: 1, // number of children (linked rows) per source row.column that are resolved (2.1.0: 1)
+  resolveLimit: 10, // number of total resolves that are done
 }
 
 const FEATURE_NO_AUTH_ASSET_LINKS = 'feature_non_authorized_asset_downloads'
@@ -305,6 +311,13 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
 const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
   const dtableCtx = bundle.dtable
 
+  z.console.time('acquireLinkColumnsData')
+  z.console.log('number of rows: ', rows.length)
+
+  const linkMap = new Map();
+  const mapMap = m => a => m.get(a) || m.set(a, new Map()).get(a);
+  const linkCache = mapMap(linkMap);
+
   for (let i = 0, l = rows.length; i < l; i++) {
     const row = rows[i]
     // handle each link field (if any)
@@ -317,10 +330,17 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
       if (!Array.isArray(childIds)) {
         continue
       }
-      childIds.length = Math.min(1, childIds.length) // only the first linked row
+      childIds.length = Math.min(featureLinkColumnsData.childLimit, childIds.length)
 
       const children = []
       for (const childId of childIds) {
+        let linkTableCache = linkCache(linkTableMetadata._id);
+        let probe = linkTableCache.get(childId);
+        if (probe) {
+          children.push(probe)
+          continue;
+        }
+
         /** @type {ZapierZRequestResponse} */
         const response = await z.request({
           url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${childId}/`,
@@ -331,6 +351,8 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
           throw new z.errors.Error(`Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`)
         }
         const childRow = mapColumnKeys(_.filter(linkTableMetadata.columns, (c) => c.type !== 'link'), response.data)
+        z.console.log(`resolved linked row table:${linkTableMetadata._id}:row:${childId}`)
+        linkTableCache.set(childId, childRow);
         children.push(childRow)
       }
 
@@ -341,6 +363,8 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
       }
     }
   }
+
+  z.console.timeEnd('acquireLinkColumnsData')
 
   return rows
 }

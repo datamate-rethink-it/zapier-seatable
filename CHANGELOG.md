@@ -1,5 +1,18 @@
 # Change-Log
 
+## [2.1.1] - 2021-04-12
+
+### Fixed
+
+* Fix [Zapier Issue-1]: Prevent timeouts when setting up a Zap by reducing the number of rows to fetch to three (reduces the number of linked rows and subsequent HTTP API requests).
+* Fix [Zapier Issue-1] (2): Prevent timeouts when fetching rows by reducing the number of rows to not fetch a linked row more than once.
+
+[Zapier Issue-1]: https://developer.zapier.com/app/111331/issues/1
+
+### Internal
+
+* Upgrade to Zapier Core 12.0.2
+
 ## [2.1.0] - 2021-04-22
 
 ### Added
