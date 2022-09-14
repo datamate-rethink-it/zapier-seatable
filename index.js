@@ -1,36 +1,55 @@
-const authentication = require('./authentication')
+const _CONST = require('./src/const')
+const {ResponseThrottleInfo} = require('./src/lib')
+
+const authentication = require('./src/authentication')
 /* Trigger */
-const getRowCreate = require('./triggers/row_create')
-const getRowUpdate = require('./triggers/row_update')
-const getRowOfATable = require('./triggers/get_row_of_a_table')
-const getTablesOfABase = require('./triggers/get_tables_of_a_base')
-const getViewsOfATableOfAView = require('./triggers/get_views_of_a_table_of_a_base')
+const getRowCreate = require('./src/triggers/row_create')
+const getRowUpdate = require('./src/triggers/row_update')
+const getRowOfATable = require('./src/triggers/get_row_of_a_table')
+const getTablesOfABase = require('./src/triggers/get_tables_of_a_base')
+const getViewsOfATableOfAView = require('./src/triggers/get_views_of_a_table_of_a_base')
 /* Create */
-const createRow = require('./creates/row')
-const createRowUpdate = require('./creates/row_update')
+const createRow = require('./src/creates/row')
+const createRowUpdate = require('./src/creates/row_update')
 /* Search */
-const findRow = require('./searches/row')
-const getRowIdOfATable = require('./searches/get_row_id_of_a_table')
+const findRow = require('./src/searches/row')
+const getRowIdOfATable = require('./src/searches/get_row_id_of_a_table')
+
+const featureHttpAlwaysLogging = {
+  key: _CONST.FEATURE_HTTP_MIDDLEWARE_ALWAYS_LOG_THROTTLING,
+  enabled: false,
+}
 
 /* HTTP Middleware */
 const handleHTTPError = (response, z) => {
-  if (response.status >= 400) {
-    if (response.status === 401) {
-      throw new z.errors.RefreshAuthError()
-    }
-    if (response.status === 403) {
-      throw new Error(
-          '403 Forbidden: This Zap is not allowed to write data to' +
-          ' SeaTable.' +
-          ' Most of the time this happens if you use an API-Token with' +
-          ' read-only permission.',
-      )
-    }
-    throw new Error(`Unexpected status code ${response.status}`)
+  if (response.request && response.request.skipHandleHTTPError) {
+    return response
   }
-  return response
+  if (featureHttpAlwaysLogging.enabled && response.status !== 429) {
+    z && z.console.log(`handleHTTPError(${response.request.method} ${response.request.url} ${response.status} [${new ResponseThrottleInfo(response)}])`)
+  }
+
+  if (response.status < 400) {
+    return response
+  }
+  if (response.status === 401) {
+    throw new z.errors.RefreshAuthError()
+  }
+  if (response.status === 403) {
+    throw new Error(_CONST.STRINGS['http.error.status403'])
+  }
+  if (response.status === 429) {
+    /* @link https://zapier.github.io/zapier-platform/#handling-throttled-requests */
+    const retryAfter = response.getHeader('retry-after') || 67
+    z.console.log(`handleHTTPError(${new ResponseThrottleInfo(response)}) (status=${response.status} retryAfter=${retryAfter})`)
+    throw new z.errors.ThrottledError(_CONST.STRINGS['http.error.status429'], retryAfter)
+  }
+  throw new Error(`Unexpected status code ${response.status}`)
 }
 const handleUndefinedJson = (response) => {
+  if (response.request && response.request.skipHandleUndefinedJson) {
+    return response
+  }
   let accept = undefined
   try {
     accept = response.request.headers.Accept

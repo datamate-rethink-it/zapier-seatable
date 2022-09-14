@@ -1,5 +1,6 @@
 const ctx = require('../ctx')
 const _ = require('lodash')
+const {ResponseThrottleInfo} = require('../lib')
 
 /**
  * perform
@@ -11,7 +12,11 @@ const _ = require('lodash')
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
+
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle)
+
+  const logTag = `[${bundle.__zTS}] triggers.row_create`;
+  z.console.time(logTag);
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -21,10 +26,15 @@ const perform = async (z, bundle) => {
   })
 
   let rows = response.data.rows
-  rows.reverse()
 
   const meta = bundle.meta
 
+  z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`)
+  if (0 === rows.length) {
+    return rows;
+  }
+
+  rows.reverse()
   if (meta && meta.isLoadingSample) {
     rows.splice(meta.limit || 3)
   }

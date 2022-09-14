@@ -5,11 +5,20 @@
  * Copyright 2021 SeaTable GmbH, Mainz
  */
 
+const _CONST = require('./const')
+
 const _ = require('lodash')
+const {ResponseThrottleInfo} = require('./lib')
 
 /* SeaTable Rest API Schema
  *
  * The schema is kept complete to usage only, no full API schema
+ */
+
+/**
+ * @typedef {object} ServerInfo
+ * @property {string} version
+ * @property {string} edition
  */
 
 /**
@@ -151,10 +160,66 @@ const struct = {
   },
 }
 
+function zapInit(z, bundle)
+{
+  if (isEmpty(bundle.__zTS)) {
+    const val = (new Date()).valueOf() % 1000000
+    bundle.__zTS = ''.concat(val).padStart(6, ' ')
+    bundle.__zLogTag = `[${bundle.__zTS}] zap`
+    z.console.time(bundle.__zLogTag)
+  }
+
+  return bundle.__zTS
+}
+
+/**
+ * @returns {Promise<{}>}
+ */
+async function serverInfo(z, bundle) {
+  let response
+
+  zapInit(z, bundle)
+
+  /** @type {ZapierZRequestResponse} */
+  response = await z.request({
+    url: `${bundle.authData.server}/server-info/`,
+    skipHandleHTTPError: true,
+    skipHandleUndefinedJson: true,
+  })
+
+  const serverInfo = {}
+  const properties = response.data && Object.keys(response.data) || []
+  properties.forEach(function (property) {
+    const value = response.data[property]
+    if (typeof value === 'string')
+      serverInfo[property] = value
+  })
+  if (!~properties.indexOf('version') || !~properties.indexOf('edition')) {
+    throw new Error(_CONST.STRINGS['seatable.error.no-server-info'](bundle.authData.server))
+  }
+
+  return bundle.serverInfo = serverInfo
+}
+
+/**
+ * bind serverInfo in bundle
+ *
+ * point of first contact with the remote system
+ *
+ * @param z
+ * @param bundle
+ * @return {Promise<DTable>}
+ */
+const acquireServerInfo = (z, bundle) => {
+  return isEmpty(bundle.serverInfo) ? serverInfo(z, bundle) : Promise.resolve(bundle.serverInfo)
+}
+
 /**
  * @returns {Promise<DTable>}
  */
 async function appAccessToken(z, bundle) {
+  await acquireServerInfo(z, bundle)
+
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
         url: `${bundle.authData.server}/api/v2.1/dtable/app-access-token/`,
@@ -162,11 +227,17 @@ async function appAccessToken(z, bundle) {
       },
   )
 
-  bundle.dtable = {}
+  const dtable = {}
+  const properties = response.data && Object.keys(response.data) || []
+  for (let property of properties)
+      dtable[property] = response.data[property]
 
-  for (let property in response.data)
-    if (response.data.hasOwnProperty(property))
-      bundle.dtable[property] = response.data[property]
+  const serverInfo = bundle.serverInfo
+  z.console.timeLog(bundle.__zLogTag, `app(${dtable.workspace_id}/${dtable.dtable_uuid}) ${serverInfo.version} ${serverInfo.edition} (${bundle.authData.server})`)
+  if (!~properties.indexOf('dtable_uuid') || !~properties.indexOf('access_token')) {
+    throw new Error(_CONST.STRINGS['seatable.error.app-access-token'](bundle.authData.server))
+  }
+  bundle.dtable = dtable
 
   return bundle.dtable
 }
@@ -190,7 +261,6 @@ const featureLinkColumnsData = {
   resolveLimit: 10, // number of total resolves that are done
 }
 
-const FEATURE_NO_AUTH_ASSET_LINKS = 'feature_non_authorized_asset_downloads'
 /**
  * @param {Array<DTableColumn|DTableColumnTLink>} columns
  */
@@ -204,7 +274,7 @@ const noAuthFilePathFromUrl = (buffer) => {
 }
 
 const fileNoAuthLinksField = {
-  key: FEATURE_NO_AUTH_ASSET_LINKS,
+  key: _CONST.FEATURE_NO_AUTH_ASSET_LINKS,
   required: false,
   default: 'False',
   type: 'boolean',
@@ -217,7 +287,7 @@ const fileNoAuthLinksField = {
  * @yield {*<{label: string, key: string}>}
  */
 const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
-  if (!bundle.inputData[FEATURE_NO_AUTH_ASSET_LINKS]) {
+  if (!bundle.inputData[_CONST.FEATURE_NO_AUTH_ASSET_LINKS]) {
     return
   }
 
@@ -237,9 +307,12 @@ const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
  * @param {Array<{object}>} rows
  */
 const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
-  if (!bundle.inputData[FEATURE_NO_AUTH_ASSET_LINKS]) {
+  if (!bundle.inputData[_CONST.FEATURE_NO_AUTH_ASSET_LINKS]) {
     return rows
   }
+
+  const logTag = `[${bundle.__zTS}] acquireFileNoAuthLinks`
+  z.console.time(logTag)
 
   const dtableCtx = bundle.dtable
   const fileUrlStats = {urls: [], errors: []}
@@ -263,12 +336,14 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
       exception = e
     }
     if (!_.isObject(response && response.data)) {
+      if (_.isObject(exception) && exception.name === 'ThrottledError') {
+        throw exception
+      }
       fileUrlStats.errors.push([buffer, urlPath, url, response, exception && exception.message])
       return null
     }
     return response.data.download_link || null
   }
-  z.console.time('acquireFileNoAuthLinks')
   rows = await Promise.all(rows.map(async (row) => {
     for (const column of fileColumns(columns)) {
       const field = `column:${column.key}`
@@ -277,6 +352,12 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
       if (!values) continue
       if (!Array.isArray(values)) continue
       if (!values.length) continue
+      if (fileUrlStats.errors.length > 0) {
+        // skip further urls on error
+        z.console.timeLog(logTag, `skipping on previous error`)
+        row[noAuthField] = null
+        continue
+      }
       row[noAuthField] = await Promise.all(values.map(async (value) => {
         if (typeof value === 'object' && value !== null && value.type === 'file' && value.url) {
           const copy = {...value}
@@ -290,10 +371,9 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
     }
     return row
   }))
-  z.console.timeEnd('acquireFileNoAuthLinks')
-  z.console.log(`acquireFileNoAuthLinks: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`)
+  z.console.timeLog(logTag, `urls: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`)
   if (fileUrlStats.errors.length > 0) {
-    z.console.log('acquireFileNoAuthLinks: error(s); fileUrlStats.errors:', fileUrlStats.errors)
+    z.console.timeLog(logTag,'errors:', fileUrlStats.errors)
   }
   return rows
 }
@@ -311,8 +391,14 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
 const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
   const dtableCtx = bundle.dtable
 
-  z.console.time('acquireLinkColumnsData')
-  z.console.log('number of rows: ', rows.length)
+  if (0 === rows.length) {
+    return rows
+  }
+
+  const logTag = `[${bundle.__zTS}] acquireLinkColumnsData`
+  z.console.time(logTag)
+
+  let totalRequestCount = 0;
 
   const linkMap = new Map();
   const mapMap = m => a => m.get(a) || m.set(a, new Map()).get(a);
@@ -341,6 +427,7 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
           continue;
         }
 
+        totalRequestCount++
         /** @type {ZapierZRequestResponse} */
         const response = await z.request({
           url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${childId}/`,
@@ -351,7 +438,7 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
           throw new z.errors.Error(`Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`)
         }
         const childRow = mapColumnKeys(_.filter(linkTableMetadata.columns, (c) => c.type !== 'link'), response.data)
-        z.console.log(`resolved linked row table:${linkTableMetadata._id}:row:${childId}`)
+        z.console.timeLog(logTag, `child row(${new ResponseThrottleInfo(response)}): ${linkTableMetadata._id}:row:${childId} (request=${totalRequestCount})`)
         linkTableCache.set(childId, childRow);
         children.push(childRow)
       }
@@ -364,7 +451,7 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
     }
   }
 
-  z.console.timeEnd('acquireLinkColumnsData')
+  totalRequestCount && z.console.timeLog(logTag, `requests=${totalRequestCount} rows=${rows.length}`)
 
   return rows
 }
@@ -428,7 +515,7 @@ const acquireTableMetadata = async (z, bundle) => {
   }
   const tableMetadata = tableFromMetadata(metadata, bundle.inputData.table_name)
   if (!tableMetadata) {
-    z.console.log('internal: acquireTableMetadata: missing table metadata columns on input-data:', bundle.inputData)
+    z.console.log(`[${bundle.__zTS}] internal: acquireTableMetadata: missing table metadata columns on input-data:`, bundle.inputData)
   }
   return tableMetadata
 }
@@ -473,11 +560,11 @@ const filter = async (z, bundle, context) => {
   const sid = sidParse(bundle.inputData.search_column)
   const col = _.find(tableMetadata.columns, ['key', sid.column])
   if (undefined === col) {
-    z.console.log(`filter[${context}]: search column not found:`, bundle.inputData.search_column, sid, tableMetadata.columns)
+    z.console.log(`[${bundle.__zTS}] filter[${context}]: search column not found:`, bundle.inputData.search_column, sid, tableMetadata.columns)
     return f
   }
   if (struct.columns.filter.not.includes(col.type)) {
-    z.console.log(`filter[${context}]: known unsupported column type (user will see an error with clear description):`, col.type)
+    z.console.log(`[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`, col.type)
     throw new z.errors.Error(`Search in ${struct.columns.types[col.type] || `[${col.type}]`} field named "${col.name}" is not supported, please choose a different column.`)
   }
   f.column_name = col.name
@@ -505,7 +592,7 @@ const filter = async (z, bundle, context) => {
       f.filter_term = [f.filter_term]
       break
     default:
-      z.console.log(`filter[${context}]: unknown column type (fall-through):`, col.type)
+      z.console.log(`[${bundle.__zTS}] filter[${context}]: unknown column type (fall-through):`, col.type)
   }
   return f
 }
@@ -554,9 +641,9 @@ const isEmpty = (v) => {
  *
  * parse only right now, encoding is simple string building. format definition is here.
  *
- * table:{id}     the format is not very well defined, we can see 4 characters of a-z, A-Z and 0-9.
+ * table:{id}     the format is not very well-defined, we can see 4 characters of a-z, A-Z and 0-9.
  *                -> request of specification from Seatable, talked with MW, no feedback yet
- * column:{key}   the format is not very well defined, similar to table:{id} we can see 4 characters
+ * column:{key}   the format is not very well-defined, similar to table:{id} we can see 4 characters
  *                of a-z, A-Z and 0-9.
  * table:{id}:view:{id}
  *                the view is in context of a table as per base, views and tables can have the same
@@ -717,7 +804,7 @@ const columnLinkTableMetadata = (col, bundle) => {
 /**
  * standard output fields based on the bundled table meta-data
  *
- * (since 2.0.0) all of the rows columns with the resolution of linked rows columns (supports column.type link)
+ * (since 2.0.0) all the rows columns with the resolution of linked rows columns (supports column.type link)
  *
  * @param {Array<DTableColumn|DTableColumnTLink>} columns (e.g. tableMetadata.columns)
  * @param bundle
@@ -812,6 +899,7 @@ const tableFields = async (z, bundle) => {
 }
 
 module.exports = {
+  acquireServerInfo,
   /**
    * @returns {Promise<DTable>}
    */
@@ -831,8 +919,10 @@ module.exports = {
   // standard
   outputFieldsRows,
   // noAuthLinks
-  FEATURE_NO_AUTH_ASSET_LINKS,
+  FEATURE_NO_AUTH_ASSET_LINKS: _CONST.FEATURE_NO_AUTH_ASSET_LINKS,
   acquireFileNoAuthLinks,
   outputFieldsFileNoAuthLinks,
   fileNoAuthLinksField,
+  // mtimeFilter
+  FEATURE_MTIME_FILTER: _CONST.FEATURE_MTIME_FILTER,
 }

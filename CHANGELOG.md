@@ -1,5 +1,25 @@
 # Change-Log
 
+## [2.1.3] - 2021-09-14
+
+### Changed
+
+* Add `serverInfo` object to bundle.
+* Add HTTP 429 status `ThrottledError()` handling.
+* Improved 403 `Error()` message.
+* Improved logging in `ctx.acquireLinkColumnsData()`
+* Add feature to limit time in `row_update` trigger for debugging and testing.
+* Handle 429 responses in `ctx.acquireFileNoAuthLinks()`.
+
+### Internal
+
+* Have `format`-`STRINGS` closure in `src/const` module.
+* Add `handleUndefinedJson` middleware flag `skipHandleUndefinedJson` (optional, boolean) to short-circuit global handling.
+* Have `STRINGS` in `src/const` module.
+* Group code in `src`.
+* Add `handleHTTPError` middleware flag `skipHandleHTTPError` (optional, boolean) to short-circuit global handling.
+* Upgrade to Zapier Core 12.0.3
+
 ## [2.1.1] - 2021-04-12
 
 ### Fixed

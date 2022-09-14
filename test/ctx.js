@@ -1,6 +1,6 @@
 require('should')
 
-const ctx = require('../ctx')
+const ctx = require('../src/ctx')
 const _ = require('lodash')
 
 describe('Ctx - sidParse', () => {

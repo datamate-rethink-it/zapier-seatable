@@ -5,7 +5,7 @@ const zapier = require('zapier-platform-core')
 const App = require('../../index')
 const appTester = zapier.createAppTester(App)
 
-const ctx = require('../../ctx')
+const ctx = require('../../src/ctx')
 
 describe('Trigger - row_create', () => {
   zapier.tools.env.inject()
@@ -56,6 +56,8 @@ describe('Trigger - row_create', () => {
 
   it('triggers.row_create should get an array', async () => {
     // test against dtable server
+    delete bundle.serverInfo
+    delete bundle.__zTS
     delete bundle.dtable
     const results = await appTester(App.triggers.row_create.operation.perform, bundle)
     results.should.be.an.Array()

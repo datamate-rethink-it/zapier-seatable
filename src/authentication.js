@@ -15,7 +15,7 @@ module.exports = {
       label: 'Server',
       type: 'string',
       default: 'https://cloud.seatable.io',
-      helpText: 'The public SAAS Server is [https://cloud.seatable.io](https://cloud.seatable.io). Only If use your own on-premise SeaTable you have to add something else.',
+      helpText: 'The public SAAS Server is [https://cloud.seatable.io](https://cloud.seatable.io). Only if you use your own on-premise SeaTable you have to add something else.',
     },
     {
       computed: false,

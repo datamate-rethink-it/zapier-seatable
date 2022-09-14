@@ -6,6 +6,8 @@ const zapier = require('zapier-platform-core')
 const App = require('../../index')
 const appTester = zapier.createAppTester(App)
 
+const _CONST = require('../../src/const')
+
 describe('Update row', () => {
   zapier.tools.env.inject()
   const bundle = {
@@ -28,12 +30,29 @@ describe('Update row', () => {
   })
 
   it('should run triggers.row_update', async () => {
+
+    bundle._testFeature || (bundle._testFeature = []);
+    bundle._testFeature[_CONST.FEATURE_MTIME_FILTER] = {captureRowsBeforeFilter: true}
+
     const results = await appTester(App.triggers.row_update.operation.perform, bundle)
+    const resultsUnfiltered = bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].capturedRows || null;
+
+    if (!_CONST.FEATURE[_CONST.FEATURE_MTIME_FILTER].enabled) {
+      should.exist(results)
+      should.not.exist(resultsUnfiltered)
+      // skip further assertions if feature is not enabled.
+      return;
+    }
+
+    should.exist(resultsUnfiltered)
+    resultsUnfiltered.should.be.Array()
+
+    resultsUnfiltered.length.should.be.above(1)
+    resultsUnfiltered[0].should.be.Object()
+    resultsUnfiltered[0].should.have.properties('column:0000', 'row_id', 'row_mtime', 'id')
+    resultsUnfiltered[0].id.should.eqls(`${resultsUnfiltered[0].row_id}-${resultsUnfiltered[0].row_mtime}`)
+
     should.exist(results)
     results.should.be.Array()
-    results.length.should.be.above(1)
-    results[0].should.be.Object()
-    results[0].should.have.properties('column:0000', 'row_id', 'row_mtime', 'id')
-    results[0].id.should.eqls(`${results[0].row_id}-${results[0].row_mtime}`)
   })
 })
