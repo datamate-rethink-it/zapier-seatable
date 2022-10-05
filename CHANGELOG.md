@@ -1,5 +1,21 @@
 # Change-Log
 
+## [2.1.5] - 2022-10-05
+
+### Added
+
+* DEV-2: Authentication against Invalid DTable gives 404
+
+### Changed
+
+* Handle 403 and 404 responses of `ctx.acquireDtableAppAccess()` in `afterResponse`.
+
+### Internal
+
+* Improve tests.
+* Improve HTTP Status Code logging.
+* Make as build manager.
+
 ## [2.1.3] - 2021-09-14
 
 ### Changed

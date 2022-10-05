@@ -32,6 +32,10 @@ function format(strings, ...keys) {
 const STRINGS = {
   'seatable.error.app-access-token':
     format`Failed to get app-access on SeaTable server at "${0}".`,
+  'seatable.error.base-forbidden':
+    `Your API Key is invalid. Please reconnect your account.`,
+  'seatable.error.base-deleted':
+    format`SeaTable base has been deleted: ${0}.\nIf deletion was unindented, restore the base from trash.\nIf the base has moved, provide an API-Token of the new base by reconnecting the Zap.`,
   'seatable.error.no-server-info':
     format`Failed to connect to SeaTable server at "${0}".`,
   'http.error.status403':

@@ -6,4 +6,4 @@
 node_modules/
 
 # Build folder
-/build/
+/build/*

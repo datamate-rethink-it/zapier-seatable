@@ -21,12 +21,69 @@ const featureHttpAlwaysLogging = {
 }
 
 /* HTTP Middleware */
+const handleBundleRequest = (request, z, bundle) => {
+  if (bundle.__zTS) {
+    request.__zTS = bundle.__zTS
+  }
+  return request;
+};
+
+/**
+ * handleForbiddenBaseAccess
+ *
+ * 403 /api/v2.1/dtable/app-access-token/
+ *
+ * @param response
+ * @param z
+ * @returns {{endPointPath}|*}
+ */
+const handleForbiddenBaseAccess = (response, z) => {
+  if (
+    response?.status !== 403
+    || !response?.request?.endPointPath
+    || response.request.endPointPath !== `/api/v2.1/dtable/app-access-token/`
+  ) {
+    return response
+  }
+
+  z.console.log(`handleForbiddenBaseAccess(${response.request.method} ${response.request.url} ${response.status})`)
+  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-forbidden']);
+}
+
+/**
+ * handleDeletedBaseAccess
+ *
+ * 404 /api/v2.1/dtable/app-access-token/
+ *  `-{"error_msg": "dtable _(deleted_12345) Deleted Table not found."}
+ *
+ * @param response
+ * @param z
+ * @returns {{error_msg}|{endPointPath}|*}
+ */
+const handleDeletedBaseAccess = (response, z) => {
+  const re = /^dtable _\(deleted_(\d+)\) (.*) not found\.$/;
+  let reRes
+  if (
+    response?.status !== 404
+    || !response?.request?.endPointPath
+    || response.request.endPointPath !== `/api/v2.1/dtable/app-access-token/`
+    || !response?.data?.error_msg
+    || typeof response.data.error_msg !== `string`
+    || !(reRes = response.data.error_msg.match(re))
+  ) {
+    return response
+  }
+
+  z.console.log(`handleDeletedBaseAccess(${response.request.method} ${response.request.url} ${response.status})`)
+  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-deleted'](JSON.stringify(reRes[2])));
+}
+
 const handleHTTPError = (response, z) => {
   if (response.request && response.request.skipHandleHTTPError) {
     return response
   }
   if (featureHttpAlwaysLogging.enabled && response.status !== 429) {
-    z && z.console.log(`handleHTTPError(${response.request.method} ${response.request.url} ${response.status} [${new ResponseThrottleInfo(response)}])`)
+    z && z.console.log(`[${response.request?.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}])`)
   }
 
   if (response.status < 400) {
@@ -41,7 +98,7 @@ const handleHTTPError = (response, z) => {
   if (response.status === 429) {
     /* @link https://zapier.github.io/zapier-platform/#handling-throttled-requests */
     const retryAfter = response.getHeader('retry-after') || 67
-    z.console.log(`handleHTTPError(${new ResponseThrottleInfo(response)}) (status=${response.status} retryAfter=${retryAfter})`)
+    z.console.log(`[${response.request.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}]) (retryAfter=${retryAfter})`)
     throw new z.errors.ThrottledError(_CONST.STRINGS['http.error.status429'], retryAfter)
   }
   throw new Error(`Unexpected status code ${response.status}`)
@@ -73,7 +130,8 @@ module.exports = {
     method: 'GET',
     headers: {Accept: 'application/json'},
   },
-  afterResponse: [handleHTTPError, handleUndefinedJson],
+  beforeRequest: [handleBundleRequest],
+  afterResponse: [handleForbiddenBaseAccess, handleDeletedBaseAccess, handleHTTPError, handleUndefinedJson],
   triggers: {
     [getRowCreate.key]: getRowCreate,
     [getRowUpdate.key]: getRowUpdate,

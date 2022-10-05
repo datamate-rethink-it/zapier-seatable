@@ -9,8 +9,10 @@ const _CONST = require('../src/const')
 
 describe('App - index', () => {
 
+  const handleHTTPError = App.afterResponse[2]
+  handleHTTPError.name.should.eql(`handleHTTPError`, `handleHTTPError function name check as index may move`);
+
   it('handleHTTPError 403', async () => {
-    const handleHTTPError = App.afterResponse[0]
     try {
       await appTester(handleHTTPError({status: 403}, undefined))
     } catch (e) {
@@ -22,11 +24,10 @@ describe('App - index', () => {
     }
   })
 
-  it('handleHTTPError 429 to throw an error with message "ThrottledError is not a constructor"', async () => {
-    const handleHTTPError = App.afterResponse[0]
-    const result = await appTester(async (z, bundle) => {
+  it('handleHTTPError 429 to throw ThrottledError error', async () => {
+    await appTester(async (z, bundle) => {
       try {
-        await handleHTTPError({status: 429, getHeader: (a) => a === 'retry-after' ? 42 : null}, z)
+        await handleHTTPError({status: 429, request: {}, getHeader: (a) => a === 'retry-after' ? 42 : null}, z)
       } catch (e) {
         e.should.be.Object()
         e.should.be.instanceOf(z.errors.ThrottledError)

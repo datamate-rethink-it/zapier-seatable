@@ -224,6 +224,7 @@ async function appAccessToken(z, bundle) {
   const response = await z.request({
         url: `${bundle.authData.server}/api/v2.1/dtable/app-access-token/`,
         headers: {Authorization: `Token ${bundle.authData.api_token}`},
+        endPointPath: `/api/v2.1/dtable/app-access-token/`,
       },
   )
 
