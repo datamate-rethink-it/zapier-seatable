@@ -1,11 +1,17 @@
+const connectionLabel = (z, bundle) => {
+
+  // remove https:// in front (but keep the non-secure to show)
+  const address = bundle.authData.server.replace(/^https:\/\//, '')
+  const {serverInfo, dtable} = bundle.inputData
+  const editionAbbreviated = serverInfo.edition.replace('enterprise edition', 'EE')
+
+  return `${address} (${serverInfo.version} ${editionAbbreviated}) ${dtable?.dtable_name} (${dtable?.app_name})`;
+};
+
 module.exports = {
   type: 'custom',
   test: {
-    url: '{{bundle.authData.server}}/api/v2.1/dtable/app-access-token/',
-    headers: {
-      Authorization: 'Token {{bundle.authData.api_token}}',
-    },
-    removeMissingValuesFrom: {},
+    require: 'src/authenticationFunctionRequire.js',
   },
   fields: [
     {
@@ -26,6 +32,6 @@ module.exports = {
       helpText: 'Create an [API-Token](https://seatable.io/docs/handbuch/become-a-pro/api-tokens/?lang=auto) for one of your bases inside SeaTable.',
     },
   ],
-  connectionLabel: '({{bundle.authData.server}})',
+  connectionLabel,
   customConfig: {},
 }

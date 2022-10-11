@@ -1,5 +1,22 @@
 # Change-Log
 
+## [2.1.7] - 2022-10-11
+
+### Added
+
+* Zapier's authentication test HTTP request is now aware of the endpoint
+  path using the 403 and 404 responses of 2.1.5 / DEV-2.
+
+### Changed
+
+* Improve connection label.
+
+### Internal
+
+* `authentication.test` is now a `/FunctionRequireSchema`
+* Upgrade to Zapier Core 12.1.0
+* Fix locked-out build.
+
 ## [2.1.5] - 2022-10-05
 
 ### Added

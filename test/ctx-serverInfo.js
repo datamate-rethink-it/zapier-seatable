@@ -29,8 +29,12 @@ describe('serverInfo', () => {
       const result = await ctx.acquireServerInfo(z, bundle)
       result.should.be.Object()
       result.should.have.properties('version', 'edition')
-      result.version.should.eql('3.1.13')
-      result.edition.should.eql('enterprise edition')
+      const knownVersions = [
+        '3.1.13',
+        '3.2.5',
+      ]
+      knownVersions.indexOf(result.version).should.greaterThan(-1, `${result.version} (known are: ${knownVersions}; this test fails when the server version changes on cloud.seatable.io, extend known versions then.)`);
+      result.edition.should.eql('enterprise edition', 'cloud.seatable.io runs enterprise edition')
     }, bundle)
   })
 

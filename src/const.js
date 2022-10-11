@@ -37,7 +37,7 @@ const STRINGS = {
   'seatable.error.base-deleted':
     format`SeaTable base has been deleted: ${0}.\nIf deletion was unindented, restore the base from trash.\nIf the base has moved, provide an API-Token of the new base by reconnecting the Zap.`,
   'seatable.error.no-server-info':
-    format`Failed to connect to SeaTable server at "${0}".`,
+    format`Failed to connect to SeaTable server at "${0}". Please check the server address.`,
   'http.error.status403':
     '403 Forbidden: This Zap is not allowed to talk to SeaTable.' +
     ' Most of the time this happens if you use an API-Token with' +

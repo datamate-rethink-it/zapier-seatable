@@ -5,13 +5,13 @@ all: test build publish
 
 include .config/zapier/zapier.mk
 
+## publish :  continuous deployment (cd) goal
 .PHONY: publish
 publish: test build
 	$(zapier) upload
 
 .PHONY: test
-test: $(zapier-files)
-	$(zapier) test
+test: test/.increment
 
 .PHONY: clean
 clean:

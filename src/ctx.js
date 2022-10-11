@@ -185,9 +185,12 @@ async function serverInfo(z, bundle) {
     url: `${bundle.authData.server}/server-info/`,
     skipHandleHTTPError: true,
     skipHandleUndefinedJson: true,
+    skipThrowForStatus: true,
   })
 
-  const serverInfo = {}
+  const serverInfo = {
+    server: `${bundle.authData.server}`,
+  }
   const properties = response.data && Object.keys(response.data) || []
   properties.forEach(function (property) {
     const value = response.data[property]
