@@ -1,5 +1,11 @@
 # Change-Log
 
+## [unreleased]
+
+### Added
+
+* New File Trigger
+
 ## [2.1.14] - unreleased
 
 ### Fixed
