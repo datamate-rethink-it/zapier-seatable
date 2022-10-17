@@ -3,6 +3,7 @@ const {ResponseThrottleInfo} = require('./src/lib');
 
 const authentication = require('./src/authentication');
 /* Trigger */
+const fileCreate = require('./src/triggers/file_create');
 const rowCreate = require('./src/triggers/row_create');
 const rowUpdate = require('./src/triggers/row_update');
 const getRowOfATable = require('./src/triggers/get_row_of_a_table');
@@ -130,6 +131,8 @@ const handleUndefinedJson = (response) => {
 module.exports = {
   version: require('./package.json').version,
   platformVersion: require('zapier-platform-core').version,
+  hydrators: require('./src/hydrators'),
+
   authentication,
   requestTemplate: {
     method: 'GET',
@@ -143,6 +146,7 @@ module.exports = {
     [getViewsOfATableOfAView.key]: getViewsOfATableOfAView,
     [rowCreate.key]: rowCreate,
     [rowUpdate.key]: rowUpdate,
+    [fileCreate.key]: fileCreate,
   },
   creates: {
     [createRow.key]: createRow,
