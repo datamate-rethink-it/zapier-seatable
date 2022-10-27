@@ -37,8 +37,8 @@ const perform = async (z, bundle) => {
 const searchColumn = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
   const choices = _.merge(..._.map(_.filter(tableMetadata.columns, (o) => {
-    return !ctx.struct.columns.filter.not.includes(o.type)
-        && !ctx.struct.columns.zapier.hide_search.includes(o.type)
+    return !ctx.struct.columns.filter.not.includes(o.type) &&
+        !ctx.struct.columns.zapier.hide_search.includes(o.type)
   }), (o) => {
     return {[`column:${o.key}`]: o.name}
   }))
@@ -123,8 +123,8 @@ module.exports = {
       ctx.fileNoAuthLinksField,
     ],
     sample: {
-      row_id: 'S34-T4b13yuRKHvQa0L_kyNQC',
-      row_mtime: '2021-12-02T01:23:45.678+00:00',
+      'row_id': 'S34-T4b13yuRKHvQa0L_kyNQC',
+      'row_mtime': '2021-12-02T01:23:45.678+00:00',
       'column:0000': 'Contents of the first field; a text-field',
     },
     outputFields: [outputFields],

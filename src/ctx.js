@@ -23,6 +23,7 @@ const {ResponseThrottleInfo} = require('./lib')
 
 /**
  * @typedef {object} DTable
+ * @property {string} server_address {server_address} on access, non-standard
  * @property {string} app_name
  * @property {string} access_token
  * @property {string} dtable_uuid
@@ -124,27 +125,27 @@ const {ResponseThrottleInfo} = require('./lib')
 const struct = {
   columns: {
     types: {
-      text: 'Text',
-      number: 'Number',
-      checkbox: 'Checkbox',
-      date: 'Date',
+      'text': 'Text',
+      'number': 'Number',
+      'checkbox': 'Checkbox',
+      'date': 'Date',
       'single-select': 'Single Select',
       'long-text': 'Long Text',
-      image: 'Image',
-      file: 'File',
+      'image': 'Image',
+      'file': 'File',
       'multiple-select': 'Multiple Select',
-      collaborator: 'Collaborator',
-      url: 'URL',
-      email: 'Email',
-      duration: 'Duration',
-      geolocation: 'Geolocation',
-      formula: 'Formula',
-      link: 'Link other records',
+      'collaborator': 'Collaborator',
+      'url': 'URL',
+      'email': 'Email',
+      'duration': 'Duration',
+      'geolocation': 'Geolocation',
+      'formula': 'Formula',
+      'link': 'Link other records',
       'auto-number': 'Auto number',
-      creator: 'Creator',
-      ctime: 'Created time',
+      'creator': 'Creator',
+      'ctime': 'Created time',
       'last-modifier': 'Last Modifier',
-      mtime: 'Last modified time',
+      'mtime': 'Last modified time',
     },
     assets: ['file', 'image'],
     filter: {
@@ -160,8 +161,10 @@ const struct = {
   },
 }
 
-function zapInit(z, bundle)
-{
+function zapInit(z, bundle) {
+
+  bundle.authData.server = bundle.authData.server.replace(/\/+$/, '')
+
   if (isEmpty(bundle.__zTS)) {
     const val = (new Date()).valueOf() % 1000000
     bundle.__zTS = ''.concat(val).padStart(6, ' ')
@@ -173,7 +176,7 @@ function zapInit(z, bundle)
 }
 
 /**
- * @returns {Promise<{}>}
+ * @return {Promise<{}>}
  */
 async function serverInfo(z, bundle) {
   let response
@@ -192,10 +195,11 @@ async function serverInfo(z, bundle) {
     server: `${bundle.authData.server}`,
   }
   const properties = response.data && Object.keys(response.data) || []
-  properties.forEach(function (property) {
+  properties.forEach(function(property) {
     const value = response.data[property]
-    if (typeof value === 'string')
+    if (typeof value === 'string') {
       serverInfo[property] = value
+    }
   })
   if (!~properties.indexOf('version') || !~properties.indexOf('edition')) {
     throw new Error(_CONST.STRINGS['seatable.error.no-server-info'](bundle.authData.server))
@@ -218,24 +222,24 @@ const acquireServerInfo = (z, bundle) => {
 }
 
 /**
- * @returns {Promise<DTable>}
+ * @return {Promise<DTable>}
  */
 async function appAccessToken(z, bundle) {
   await acquireServerInfo(z, bundle)
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
-        url: `${bundle.authData.server}/api/v2.1/dtable/app-access-token/`,
-        headers: {Authorization: `Token ${bundle.authData.api_token}`},
-        endPointPath: `/api/v2.1/dtable/app-access-token/`,
-      },
+    url: `${bundle.authData.server}/api/v2.1/dtable/app-access-token/`,
+    headers: {Authorization: `Token ${bundle.authData.api_token}`},
+    endPointPath: `/api/v2.1/dtable/app-access-token/`,
+  },
   )
 
-  const dtable = {}
+  const dtable = {server_address: bundle.authData.server}
   const properties = response.data && Object.keys(response.data) || []
-  for (let property of properties)
-      dtable[property] = response.data[property]
-
+  for (const property of properties) {
+    dtable[property] = response.data[property]
+  }
   const serverInfo = bundle.serverInfo
   z.console.timeLog(bundle.__zLogTag, `app(${dtable.workspace_id}/${dtable.dtable_uuid}) ${serverInfo.version} ${serverInfo.edition} (${bundle.authData.server})`)
   if (!~properties.indexOf('dtable_uuid') || !~properties.indexOf('access_token')) {
@@ -352,7 +356,7 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
     for (const column of fileColumns(columns)) {
       const field = `column:${column.key}`
       const noAuthField = noAuthColumnKey(column.key)
-      let values = row && row[field]
+      const values = row && row[field]
       if (!values) continue
       if (!Array.isArray(values)) continue
       if (!values.length) continue
@@ -377,7 +381,7 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
   }))
   z.console.timeLog(logTag, `urls: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`)
   if (fileUrlStats.errors.length > 0) {
-    z.console.timeLog(logTag,'errors:', fileUrlStats.errors)
+    z.console.timeLog(logTag, 'errors:', fileUrlStats.errors)
   }
   return rows
 }
@@ -402,11 +406,11 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
   const logTag = `[${bundle.__zTS}] acquireLinkColumnsData`
   z.console.time(logTag)
 
-  let totalRequestCount = 0;
+  let totalRequestCount = 0
 
-  const linkMap = new Map();
-  const mapMap = m => a => m.get(a) || m.set(a, new Map()).get(a);
-  const linkCache = mapMap(linkMap);
+  const linkMap = new Map()
+  const mapMap = (m) => (a) => m.get(a) || m.set(a, new Map()).get(a)
+  const linkCache = mapMap(linkMap)
 
   for (let i = 0, l = rows.length; i < l; i++) {
     const row = rows[i]
@@ -424,11 +428,11 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
 
       const children = []
       for (const childId of childIds) {
-        let linkTableCache = linkCache(linkTableMetadata._id);
-        let probe = linkTableCache.get(childId);
+        const linkTableCache = linkCache(linkTableMetadata._id)
+        const probe = linkTableCache.get(childId)
         if (probe) {
           children.push(probe)
-          continue;
+          continue
         }
 
         totalRequestCount++
@@ -443,7 +447,7 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
         }
         const childRow = mapColumnKeys(_.filter(linkTableMetadata.columns, (c) => c.type !== 'link'), response.data)
         z.console.timeLog(logTag, `child row(${new ResponseThrottleInfo(response)}): ${linkTableMetadata._id}:row:${childId} (request=${totalRequestCount})`)
-        linkTableCache.set(childId, childRow);
+        linkTableCache.set(childId, childRow)
         children.push(childRow)
       }
 
@@ -468,7 +472,7 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
  *
  * @param z
  * @param bundle
- * @returns {Promise<DTableMetadataTables>}
+ * @return {Promise<DTableMetadataTables>}
  */
 const acquireMetadata = async (z, bundle) => {
   /** @type {DTableEx} */
@@ -481,7 +485,7 @@ const acquireMetadata = async (z, bundle) => {
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/metadata/`,
     headers: {
-      Authorization: `Token ${dtableCtx.access_token}`,
+      'Authorization': `Token ${dtableCtx.access_token}`,
       'X-TABLE': bundle.inputData.table_name,
     },
   })
@@ -505,7 +509,7 @@ const acquireMetadata = async (z, bundle) => {
  *
  * @param z
  * @param bundle
- * @returns {Promise<DTableTable>}
+ * @return {Promise<DTableTable>}
  */
 const acquireTableMetadata = async (z, bundle) => {
   const metadata = await acquireMetadata(z, bundle)
@@ -573,30 +577,30 @@ const filter = async (z, bundle, context) => {
   }
   f.column_name = col.name
   switch (col.type) {
-    case 'text':
-    case 'formula':
-      break
-    case 'number':
-      f.filter_predicate = 'equal'
-      break
-    case 'auto-number':
-    case 'checkbox':
-    case 'single-select':
-    case 'date':
-    case 'ctime':
-    case 'mtime':
-      f.filter_predicate = 'is'
-      break
-    case 'multi-select':
-      f.filter_predicate = 'has_any_of'
-      f.filter_term = [f.filter_term]
-      break
-    case 'creator':
-    case 'last-modifier':
-      f.filter_term = [f.filter_term]
-      break
-    default:
-      z.console.log(`[${bundle.__zTS}] filter[${context}]: unknown column type (fall-through):`, col.type)
+  case 'text':
+  case 'formula':
+    break
+  case 'number':
+    f.filter_predicate = 'equal'
+    break
+  case 'auto-number':
+  case 'checkbox':
+  case 'single-select':
+  case 'date':
+  case 'ctime':
+  case 'mtime':
+    f.filter_predicate = 'is'
+    break
+  case 'multi-select':
+    f.filter_predicate = 'has_any_of'
+    f.filter_term = [f.filter_term]
+    break
+  case 'creator':
+  case 'last-modifier':
+    f.filter_term = [f.filter_term]
+    break
+  default:
+    z.console.log(`[${bundle.__zTS}] filter[${context}]: unknown column type (fall-through):`, col.type)
   }
   return f
 }
@@ -634,7 +638,7 @@ const isEmpty = (v) => {
   }
 
   // noinspection LoopStatementThatDoesntLoopJS
-  for (let i in v) {
+  for (const i in v) {
     return false
   }
   return true
@@ -676,7 +680,11 @@ const isEmpty = (v) => {
 const sidParse = (sid) => {
   let result = false
   if ((typeof sid === 'string' || sid instanceof String)) {
-    result = sid.match(/^(table:(?<table>[a-zA-Z0-9_-]{4,})(:view:(?<view>[a-zA-Z0-9_-]{4,})|:row:(?<row>[a-zA-Z0-9_-]{4,}))?|column:(?<column>[a-zA-Z0-9_-]{4,}))$/)
+    result = sid.match(
+      new RegExp(
+        '^(table:(?<table>[a-zA-Z0-9_-]{4,})(:view:(?<view>[a-zA-Z0-9_-]{4,})|:row:(?<row>[a-zA-Z0-9_-]{4,}))?|column:(?<column>[a-zA-Z0-9_-]{4,}))$',
+      ),
+    )
   } else {
     return {}
   }
@@ -724,8 +732,9 @@ function requestParamsBundle(bundle) {
  * @return {{table_id?: {string}, view_id?: {string}}}
  */
 function requestParamsSid(sid) {
-  const r = {}, s = sidParse(sid);
-  ['table', 'view'].forEach(x => (s[x] && (r[`${x}_id`] = s[x])))
+  const r = {}
+  const s = sidParse(sid);
+  ['table', 'view'].forEach((x) => (s[x] && (r[`${x}_id`] = s[x])))
   return r
 }
 
@@ -766,7 +775,7 @@ const mapColumnKeys = (columns, row) => {
  * @param  {DTableRow} row
  */
 const mapCreateRowKeys = (row) => {
-  let r = {}
+  const r = {}
 
   for (const k in row) {
     if (!Object.prototype.hasOwnProperty.call(row, k)) {
@@ -793,15 +802,15 @@ const mapCreateRowKeys = (row) => {
  * @return {DTableTable}?
  */
 const columnLinkTableMetadata = (col, bundle) => {
-  if (col.type !== 'link'
-      || undefined === col.data
-      || undefined === col.data.table_id
-      || undefined === col.data.other_table_id) {
+  if (col.type !== 'link' ||
+      undefined === col.data ||
+      undefined === col.data.table_id ||
+      undefined === col.data.other_table_id) {
     return undefined
   }
-  const linkTableId = bundle_table_meta(bundle)._id === col.data.other_table_id
-      ? col.data.table_id
-      : col.data.other_table_id
+  const linkTableId = bundle_table_meta(bundle)._id === col.data.other_table_id ?
+    col.data.table_id :
+    col.data.other_table_id
   return _.find(bundle.dtable.metadata.tables, ['_id', linkTableId])
 }
 
@@ -845,9 +854,9 @@ const outputFieldsRows = function* (columns, bundle) {
  */
 const tableView = async (z, bundle) => {
   const viewIsInvalid = (
-      bundle.inputData.table_name
-      && bundle.inputData.table_view
-      && !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`)
+    bundle.inputData.table_name &&
+      bundle.inputData.table_view &&
+      !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`)
   )
 
   // base configuration

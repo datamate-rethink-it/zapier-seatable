@@ -4,7 +4,6 @@ const ctx = require('../src/ctx')
 const _ = require('lodash')
 
 describe('Ctx - sidParse', () => {
-
   it('should not parse as before but throw', async () => {
     try {
       ctx.sidParse('Table1')

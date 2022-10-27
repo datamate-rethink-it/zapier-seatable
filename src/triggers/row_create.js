@@ -12,11 +12,10 @@ const {ResponseThrottleInfo} = require('../lib')
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
-
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle)
 
-  const logTag = `[${bundle.__zTS}] triggers.row_create`;
-  z.console.time(logTag);
+  const logTag = `[${bundle.__zTS}] triggers.row_create`
+  z.console.time(logTag)
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -31,7 +30,7 @@ const perform = async (z, bundle) => {
 
   z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`)
   if (0 === rows.length) {
-    return rows;
+    return rows
   }
 
   rows.reverse()
@@ -75,9 +74,9 @@ module.exports = {
     perform,
     inputFields: [ctx.tableFields, ctx.fileNoAuthLinksField],
     sample: {
-      id: 'N33qMZ-JQTuUlx_DiF__lQ',
-      row_id: 'N33qMZ-JQTuUlx_DiF__lQ',
-      row_mtime: '2021-12-02T01:23:45.678+00:00',
+      'id': 'N33qMZ-JQTuUlx_DiF__lQ',
+      'row_id': 'N33qMZ-JQTuUlx_DiF__lQ',
+      'row_mtime': '2021-12-02T01:23:45.678+00:00',
       'column:0000': 'Contents of the first field; a text-field',
     },
     outputFields: [outputFields],

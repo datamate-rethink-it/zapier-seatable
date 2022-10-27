@@ -14,11 +14,10 @@ const _ = require('lodash')
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
-
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle)
 
-  const logTag = `[${bundle.__zTS}] triggers.row_update`;
-  z.console.time(logTag);
+  const logTag = `[${bundle.__zTS}] triggers.row_update`
+  z.console.time(logTag)
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -33,7 +32,7 @@ const perform = async (z, bundle) => {
 
   z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`)
   if (0 === rows.length) {
-    return rows;
+    return rows
   }
 
   rows = _.orderBy(rows, ['_mtime'], ['desc'])
@@ -48,23 +47,23 @@ const perform = async (z, bundle) => {
     return o
   })
 
-  const unfilteredLength = rows.length;
+  const unfilteredLength = rows.length
 
-  const featureMTime = _CONST.FEATURE[_CONST.FEATURE_MTIME_FILTER] || undefined;
+  const featureMTime = _CONST.FEATURE[_CONST.FEATURE_MTIME_FILTER] || undefined
   if (featureMTime && featureMTime.enabled) {
     if (bundle._testFeature && bundle._testFeature[_CONST.FEATURE_MTIME_FILTER]) {
       if (bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].captureRowsBeforeFilter) {
-        bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].capturedRows = rows;
+        bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].capturedRows = rows
       } else {
-        bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].capturedRows = null;
+        bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].capturedRows = null
       }
     }
     const mTimeFilterMinutes = featureMTime.minutes
-    const MILLISECONDS_PER_MINUTE = 60000;
-    const floorEpochMilliseconds = (new Date).valueOf() - (mTimeFilterMinutes * MILLISECONDS_PER_MINUTE);
+    const MILLISECONDS_PER_MINUTE = 60000
+    const floorEpochMilliseconds = (new Date).valueOf() - (mTimeFilterMinutes * MILLISECONDS_PER_MINUTE)
 
     rows = _.filter(rows, (o) => {
-      return Date.parse(o.row_mtime) >= floorEpochMilliseconds;
+      return Date.parse(o.row_mtime) >= floorEpochMilliseconds
     })
     z.console.timeLog(logTag, `filtered rows length: ${rows.length} (offset=${unfilteredLength - rows.length} minutes=${mTimeFilterMinutes})`)
   }
@@ -99,9 +98,9 @@ module.exports = {
     perform,
     inputFields: [ctx.tableFields, ctx.fileNoAuthLinksField],
     sample: {
-      id: 'N33qMZ-JQTuUlx_DiF__lQ-2021-12-02T01:23:45.678+00:00',
-      row_id: 'N33qMZ-JQTuUlx_DiF__lQ',
-      row_mtime: '2021-12-02T01:23:45.678+00:00',
+      'id': 'N33qMZ-JQTuUlx_DiF__lQ-2021-12-02T01:23:45.678+00:00',
+      'row_id': 'N33qMZ-JQTuUlx_DiF__lQ',
+      'row_mtime': '2021-12-02T01:23:45.678+00:00',
       'column:0000': 'Contents of the first field; a text-field',
     },
     outputFields: [outputFields],

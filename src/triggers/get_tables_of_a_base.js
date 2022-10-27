@@ -8,7 +8,7 @@ const _ = require('lodash')
  *
  * @param z
  * @param bundle
- * @returns {Promise<{json: {id: string, Name: string}}[]>}
+ * @return {Promise<{json: {id: string, Name: string}}[]>}
  */
 const perform = async (z, bundle) => {
   const metadata = await ctx.acquireMetadata(z, bundle)

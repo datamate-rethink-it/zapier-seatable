@@ -38,30 +38,30 @@ const inputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
 
   return _.map(
-      _.filter(tableMetadata.columns, (o) => {
-        return !ctx.struct.columns.zapier.hide_write.includes(o.type)
-      }), (o) => {
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `${ctx.struct.columns.types[o.type] || `[${o.type}]`} field, optional.`,
-        }
-      })
+    _.filter(tableMetadata.columns, (o) => {
+      return !ctx.struct.columns.zapier.hide_write.includes(o.type)
+    }), (o) => {
+      return {
+        key: `column:${o.key}`,
+        label: o.name,
+        type: o.type,
+        required: false,
+        help_text: `${ctx.struct.columns.types[o.type] || `[${o.type}]`} field, optional.`,
+      }
+    })
 }
 
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
 
   return _.concat(
-      {key: 'row_id', label: 'ID'},
-      _.map(tableMetadata.columns, (o) => ({key: `column:${o.key}`, label: o.name})),
+    {key: 'row_id', label: 'ID'},
+    _.map(tableMetadata.columns, (o) => ({key: `column:${o.key}`, label: o.name})),
   )
 }
 
 // noinspection SpellCheckingInspection
-const sample = {'column:0000': 'I am new Row2445', row_id: 'AdTy5Y8-TW6MVHPXTyOeTw'}
+const sample = {'column:0000': 'I am new Row2445', 'row_id': 'AdTy5Y8-TW6MVHPXTyOeTw'}
 
 module.exports = {
   key: 'row',

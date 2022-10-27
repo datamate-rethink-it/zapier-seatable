@@ -30,18 +30,17 @@ describe('Update row', () => {
   })
 
   it('should run triggers.row_update', async () => {
-
-    bundle._testFeature || (bundle._testFeature = []);
+    bundle._testFeature || (bundle._testFeature = [])
     bundle._testFeature[_CONST.FEATURE_MTIME_FILTER] = {captureRowsBeforeFilter: true}
 
     const results = await appTester(App.triggers.row_update.operation.perform, bundle)
-    const resultsUnfiltered = bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].capturedRows || null;
+    const resultsUnfiltered = bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].capturedRows || null
 
     if (!_CONST.FEATURE[_CONST.FEATURE_MTIME_FILTER].enabled) {
       should.exist(results)
       should.not.exist(resultsUnfiltered)
       // skip further assertions if feature is not enabled.
-      return;
+      return
     }
 
     should.exist(resultsUnfiltered)

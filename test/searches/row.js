@@ -30,17 +30,21 @@ describe('Search row', () => {
   })
 
   it('should not search unsupported column type', async () => {
-    let b = bundle
+    const b = bundle
     b.inputData.table_name = 'table:P8z8'
     b.inputData.search_column = 'column:5fV6'
     try {
       await appTester(App.searches.row.operation.perform, b)
     } catch (e) {
       e.should.be.Object()
-      e.should.isPrototypeOf('AppError')
+      e.should.isPrototypeOf(
+        'AppError',
+      )
       e.message.should.be.String()
-      let json = JSON.parse(e.message)
-      json.message.should.match(/^Search in Long Text field named "LongTextColumn" is not supported, please choose a different column\.$/)
+      const json = JSON.parse(e.message)
+      json.message.should.match(
+        /^Search in Long Text field named "LongTextColumn" is not supported, please choose a different column\.$/,
+      )
     }
   })
 

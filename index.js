@@ -3,8 +3,8 @@ const {ResponseThrottleInfo} = require('./src/lib')
 
 const authentication = require('./src/authentication')
 /* Trigger */
-const getRowCreate = require('./src/triggers/row_create')
-const getRowUpdate = require('./src/triggers/row_update')
+const rowCreate = require('./src/triggers/row_create')
+const rowUpdate = require('./src/triggers/row_update')
 const getRowOfATable = require('./src/triggers/get_row_of_a_table')
 const getTablesOfABase = require('./src/triggers/get_tables_of_a_base')
 const getViewsOfATableOfAView = require('./src/triggers/get_views_of_a_table_of_a_base')
@@ -25,8 +25,8 @@ const handleBundleRequest = (request, z, bundle) => {
   if (bundle.__zTS) {
     request.__zTS = bundle.__zTS
   }
-  return request;
-};
+  return request
+}
 
 /**
  * handleForbiddenBaseAccess
@@ -35,19 +35,19 @@ const handleBundleRequest = (request, z, bundle) => {
  *
  * @param response
  * @param z
- * @returns {{endPointPath}|*}
+ * @return {{endPointPath}|*}
  */
 const handleForbiddenBaseAccess = (response, z) => {
   if (
-    response?.status !== 403
-    || !response?.request?.endPointPath
-    || response.request.endPointPath !== `/api/v2.1/dtable/app-access-token/`
+    response?.status !== 403 ||
+    !response?.request?.endPointPath ||
+    response.request.endPointPath !== `/api/v2.1/dtable/app-access-token/`
   ) {
     return response
   }
 
   z.console.log(`handleForbiddenBaseAccess(${response.request.method} ${response.request.url} ${response.status})`)
-  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-forbidden']);
+  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-forbidden'])
 }
 
 /**
@@ -58,24 +58,24 @@ const handleForbiddenBaseAccess = (response, z) => {
  *
  * @param response
  * @param z
- * @returns {{error_msg}|{endPointPath}|*}
+ * @return {{error_msg}|{endPointPath}|*}
  */
 const handleDeletedBaseAccess = (response, z) => {
-  const re = /^dtable _\(deleted_(\d+)\) (.*) not found\.$/;
+  const re = /^dtable _\(deleted_(\d+)\) (.*) not found\.$/
   let reRes
   if (
-    response?.status !== 404
-    || !response?.request?.endPointPath
-    || response.request.endPointPath !== `/api/v2.1/dtable/app-access-token/`
-    || !response?.data?.error_msg
-    || typeof response.data.error_msg !== `string`
-    || !(reRes = response.data.error_msg.match(re))
+    response?.status !== 404 ||
+    !response?.request?.endPointPath ||
+    response.request.endPointPath !== `/api/v2.1/dtable/app-access-token/` ||
+    !response?.data?.error_msg ||
+    typeof response.data.error_msg !== `string` ||
+    !(reRes = response.data.error_msg.match(re))
   ) {
     return response
   }
 
   z.console.log(`handleDeletedBaseAccess(${response.request.method} ${response.request.url} ${response.status})`)
-  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-deleted'](JSON.stringify(reRes[2])));
+  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-deleted'](JSON.stringify(reRes[2])))
 }
 
 const handleHTTPError = (response, z) => {
@@ -113,9 +113,9 @@ const handleUndefinedJson = (response) => {
   } catch {
   }
   if (
-      'string' === typeof accept
-      && accept.match(/^($|\s*application\/json\s*($|;))/is)
-      && 'undefined' === typeof response.data
+    'string' === typeof accept &&
+      accept.match(/^($|\s*application\/json\s*($|;))/is) &&
+      'undefined' === typeof response.data
   ) {
     throw new Error(`Zapier core has left JSON undefined in its response object for a request with Accept: ${accept}`)
   }
@@ -133,11 +133,11 @@ module.exports = {
   beforeRequest: [handleBundleRequest],
   afterResponse: [handleForbiddenBaseAccess, handleDeletedBaseAccess, handleHTTPError, handleUndefinedJson],
   triggers: {
-    [getRowCreate.key]: getRowCreate,
-    [getRowUpdate.key]: getRowUpdate,
     [getRowOfATable.key]: getRowOfATable,
     [getTablesOfABase.key]: getTablesOfABase,
     [getViewsOfATableOfAView.key]: getViewsOfATableOfAView,
+    [rowCreate.key]: rowCreate,
+    [rowUpdate.key]: rowUpdate,
   },
   creates: {
     [createRow.key]: createRow,

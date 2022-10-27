@@ -9,7 +9,6 @@ const _CONST = require('../src/const')
 const ctx = require('../src/ctx')
 
 describe('serverInfo', () => {
-
   zapier.tools.env.inject()
   const bundle = {
     authData: {
@@ -33,7 +32,7 @@ describe('serverInfo', () => {
         '3.1.13',
         '3.2.5',
       ]
-      knownVersions.indexOf(result.version).should.greaterThan(-1, `${result.version} (known are: ${knownVersions}; this test fails when the server version changes on cloud.seatable.io, extend known versions then.)`);
+      knownVersions.indexOf(result.version).should.greaterThan(-1, `${result.version} (known are: ${knownVersions}; this test fails when the server version changes on cloud.seatable.io, extend known versions then.)`)
       result.edition.should.eql('enterprise edition', 'cloud.seatable.io runs enterprise edition')
     }, bundle)
   })
@@ -42,7 +41,7 @@ describe('serverInfo', () => {
     bundle.serverInfo = undefined
     bundle.authData.server = 'https://seatable.io/?'
     const result = await appTester(async (z, bundle) => {
-      let result;
+      let result
       try {
         result = await ctx.acquireServerInfo(z, bundle)
       } catch (e) {
@@ -53,5 +52,4 @@ describe('serverInfo', () => {
       result.message.should.match(_CONST.STRINGS['seatable.error.no-server-info'](bundle.authData.server))
     }, bundle)
   })
-
 })

@@ -14,9 +14,9 @@ describe('Create row', () => {
       api_token: process.env.API_TOKEN,
     },
     inputData: {
-      table_name: 'table:0000',
+      'table_name': 'table:0000',
       'column:0000': 'Herr Rossi',
-      Name: 'Herr Rossi und Gaston', // must be ignored, pre 1.0.3, now column:0000 key is preferred to read from input-data if exists
+      'Name': 'Herr Rossi und Gaston', // must be ignored, pre 1.0.3, now column:0000 key is preferred to read from input-data if exists
     },
   }
 

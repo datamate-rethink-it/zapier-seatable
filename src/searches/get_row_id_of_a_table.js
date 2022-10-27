@@ -31,11 +31,11 @@ const perform = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
 
   rows = _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (r) => {
-        return {
-          id: `table:${tableMetadata._id}:row:${r.row_id}`,
-          name: r['column:0000'], // known: r['column:0000'] can be "undefined"
-        }
-      },
+    return {
+      id: `table:${tableMetadata._id}:row:${r.row_id}`,
+      name: r['column:0000'], // known: r['column:0000'] can be "undefined"
+    }
+  },
   )
 
   return rows
@@ -68,7 +68,7 @@ module.exports = {
         helpText: 'The unique default column value to search for.',
       },
     ],
-    sample: {id: 'table:0000:row:xYz...', 'name': 'Name1'},
+    sample: {'id': 'table:0000:row:xYz...', 'name': 'Name1'},
     outputFields: [{key: 'id'}, {key: 'name'}],
   },
 }

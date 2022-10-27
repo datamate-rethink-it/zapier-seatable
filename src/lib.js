@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
 const tryStringToPositiveInteger = (v) => {
   if (typeof v !== 'string' && !Number.isInteger(v)) {
-    return null;
+    return null
   }
-  let int = parseInt(v, 10)
+  const int = parseInt(v, 10)
   if (isNaN(int) || !Number.isInteger(int)) {
     return null
   }
@@ -14,8 +14,7 @@ const tryStringToPositiveInteger = (v) => {
   return int
 }
 
-function ResponseThrottleInfo(response)
-{
+function ResponseThrottleInfo(response) {
   this.status = response.status
 
   response.getHeader || (response.getHeader = () => null)
@@ -27,17 +26,17 @@ function ResponseThrottleInfo(response)
   this.hasRateLimit = null !== this.remaining && null !== this.limit && null !== this.reset
   this.hasRetryAfter = null !== this.retryAfter
 
-  this.fmtRateLimit = function () {
+  this.fmtRateLimit = function() {
     const resetDate = (new Date(this.reset * 1000)).toISOString().split('.')[0]+'Z'
     return `${this.remaining}/${this.limit} @${this.reset}/${resetDate}`
   }
-  this.fmtRetry = function () {
+  this.fmtRetry = function() {
     const retryTimestamp = Math.floor(Date.now() / 1000) + this.retryAfter
     const retryDate = (new Date(Date.now() + this.retryAfter * 1000)).toISOString().split('.')[0]+'Z'
     return `${this.retryAfter} @${retryTimestamp}/${retryDate}`
   }
 
-  this.toString = function () {
+  this.toString = function() {
     if (this.hasRateLimit) {
       let buffer = ''
       if (this.hasRetryAfter) {
@@ -52,5 +51,5 @@ function ResponseThrottleInfo(response)
 }
 
 module.exports = {
-  ResponseThrottleInfo
+  ResponseThrottleInfo,
 }

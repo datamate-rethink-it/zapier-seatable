@@ -8,7 +8,7 @@ const _ = require('lodash')
  *
  * @param z
  * @param bundle
- * @returns {Promise<{json: {id: string, Name: string}}[]>}
+ * @return {Promise<{json: {id: string, Name: string}}[]>}
  */
 const perform = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle)
@@ -18,14 +18,14 @@ const perform = async (z, bundle) => {
     headers: {Authorization: `Token ${dtableCtx.access_token}`},
     params: ctx.requestParamsBundle(bundle),
   })
-  let rows = response.data.rows
+  const rows = response.data.rows
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
   return _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (r) => {
-        return {
-          id: `table:${tableMetadata._id}:row:${r.row_id}`,
-          name: r['column:0000'], // r['column:0000'] can be "undefined", perhaps filter first
-        }
-      },
+    return {
+      id: `table:${tableMetadata._id}:row:${r.row_id}`,
+      name: r['column:0000'], // r['column:0000'] can be "undefined", perhaps filter first
+    }
+  },
   )
 }
 

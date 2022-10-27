@@ -1,3 +1,6 @@
+# cache files/trees
+*.cache*
+
 # environment variables file
 /.env*
 !/.env*.dist
@@ -7,3 +10,6 @@ node_modules/
 
 # Build folder
 /build/*
+
+# increments
+*.increment*

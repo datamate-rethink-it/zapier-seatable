@@ -1,5 +1,20 @@
 # Change-Log
 
+## [2.1.8] - 2022-10-27
+
+### Fixed
+
+* Authenticating a Server Address with the common trailing slash
+  mandated by the Uniform Resource Locator (URL) specification does not
+  crumble the Zap for no obvious reason any longer (Thanks Georg).
+
+### Internal
+
+* Add `server_address` to the bundled `dtable`.
+* Correct index names.
+* Add stress and load test-suite for the SeaTable REST API.
+* Leaning a first coding standard baseline towards a-z.
+
 ## [2.1.7] - 2022-10-11
 
 ### Added

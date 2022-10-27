@@ -8,9 +8,8 @@ const appTester = zapier.createAppTester(App)
 const _CONST = require('../src/const')
 
 describe('App - index', () => {
-
   const handleHTTPError = App.afterResponse[2]
-  handleHTTPError.name.should.eql(`handleHTTPError`, `handleHTTPError function name check as index may move`);
+  handleHTTPError.name.should.eql(`handleHTTPError`, `handleHTTPError function name check as index may move`)
 
   it('handleHTTPError 403', async () => {
     try {
@@ -42,5 +41,4 @@ describe('App - index', () => {
       }
     })
   })
-
 })

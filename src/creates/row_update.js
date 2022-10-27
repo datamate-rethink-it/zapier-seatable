@@ -16,9 +16,9 @@ const _ = require('lodash')
  */
 const getBundledViewColumns = (columns, bundle) => {
   const viewIsInvalid = (
-      bundle.inputData.table_name
-      && bundle.inputData.table_view
-      && !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`)
+    bundle.inputData.table_name &&
+      bundle.inputData.table_view &&
+      !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`)
   )
   const tid = ctx.sidParse(bundle.inputData.table_name).table
   /** @type DTableTable */
@@ -32,7 +32,7 @@ const getBundledViewColumns = (columns, bundle) => {
   if (undefined === view || undefined === view.hidden_columns || !_.isArray(view.hidden_columns)) {
     return columns
   }
-  return _.filter(columns, col => !view.hidden_columns.includes(col.key))
+  return _.filter(columns, (col) => !view.hidden_columns.includes(col.key))
 }
 
 /**

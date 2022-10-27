@@ -1,10 +1,10 @@
 {
   "name": "sea-table",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "description": "SeaTable is a web based table-database hybrid. SeaTable is a flexible tool for your team, complete overview and better collaboration. SeaTable is the building block for your ideas.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --recursive -t 10000"
+    "test": "mocha --recursive --exclude 'test/antar/*' -t 10000"
   },
   "engines": {
     "node": ">=v12",
