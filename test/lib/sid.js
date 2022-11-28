@@ -3,7 +3,6 @@ const should = require('should');
 const {sidParse, SidObj} = require('../../src/lib/sid');
 
 describe('Lib sidParse / SidObj', () => {
-
   for (const [sid, expected, description] of [
     ['table:0000', {table: '0000'}, 'v1: table only'],
     ['table:0000:view:0000', {table: '0000', view: '0000'}, 'v1: table view'],
