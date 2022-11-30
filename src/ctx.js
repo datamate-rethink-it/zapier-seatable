@@ -8,7 +8,8 @@
 const _CONST = require('./const');
 
 const _ = require('lodash');
-const {ResponseThrottleInfo, sidParse} = require('./lib');
+const {ResponseThrottleInfo} = require('./lib');
+const {sidParse} = require('./lib/sid');
 
 
 /**
