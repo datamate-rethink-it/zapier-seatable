@@ -1,6 +1,6 @@
 # Change-Log
 
-## [2.1.9] - 2022-12-07
+## [2.1.10] - 2022-12-07
 
 ### Fixed
 
@@ -11,6 +11,8 @@
 
 * Upgrade to Zapier Core 12.2.0
 * Fix Node and Npm versions in package.json.
+
+## [2.1.9] - 2022-12-07 (yanked)
 
 ## [2.1.8] - 2022-10-27
 
