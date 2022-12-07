@@ -1,32 +1,32 @@
-const _CONST = require('./src/const')
-const {ResponseThrottleInfo} = require('./src/lib')
+const _CONST = require('./src/const');
+const {ResponseThrottleInfo} = require('./src/lib');
 
-const authentication = require('./src/authentication')
+const authentication = require('./src/authentication');
 /* Trigger */
-const rowCreate = require('./src/triggers/row_create')
-const rowUpdate = require('./src/triggers/row_update')
-const getRowOfATable = require('./src/triggers/get_row_of_a_table')
-const getTablesOfABase = require('./src/triggers/get_tables_of_a_base')
-const getViewsOfATableOfAView = require('./src/triggers/get_views_of_a_table_of_a_base')
+const rowCreate = require('./src/triggers/row_create');
+const rowUpdate = require('./src/triggers/row_update');
+const getRowOfATable = require('./src/triggers/get_row_of_a_table');
+const getTablesOfABase = require('./src/triggers/get_tables_of_a_base');
+const getViewsOfATableOfAView = require('./src/triggers/get_views_of_a_table_of_a_base');
 /* Create */
-const createRow = require('./src/creates/row')
-const createRowUpdate = require('./src/creates/row_update')
+const createRow = require('./src/creates/row');
+const createRowUpdate = require('./src/creates/row_update');
 /* Search */
-const findRow = require('./src/searches/row')
-const getRowIdOfATable = require('./src/searches/get_row_id_of_a_table')
+const findRow = require('./src/searches/row');
+const getRowIdOfATable = require('./src/searches/get_row_id_of_a_table');
 
 const featureHttpAlwaysLogging = {
   key: _CONST.FEATURE_HTTP_MIDDLEWARE_ALWAYS_LOG_THROTTLING,
   enabled: false,
-}
+};
 
 /* HTTP Middleware */
 const handleBundleRequest = (request, z, bundle) => {
   if (bundle.__zTS) {
-    request.__zTS = bundle.__zTS
+    request.__zTS = bundle.__zTS;
   }
-  return request
-}
+  return request;
+};
 
 /**
  * handleForbiddenBaseAccess
@@ -43,12 +43,12 @@ const handleForbiddenBaseAccess = (response, z) => {
     !response?.request?.endPointPath ||
     response.request.endPointPath !== `/api/v2.1/dtable/app-access-token/`
   ) {
-    return response
+    return response;
   }
 
-  z.console.log(`handleForbiddenBaseAccess(${response.request.method} ${response.request.url} ${response.status})`)
-  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-forbidden'])
-}
+  z.console.log(`handleForbiddenBaseAccess(${response.request.method} ${response.request.url} ${response.status})`);
+  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-forbidden']);
+};
 
 /**
  * handleDeletedBaseAccess
@@ -61,8 +61,8 @@ const handleForbiddenBaseAccess = (response, z) => {
  * @return {{error_msg}|{endPointPath}|*}
  */
 const handleDeletedBaseAccess = (response, z) => {
-  const re = /^dtable _\(deleted_(\d+)\) (.*) not found\.$/
-  let reRes
+  const re = /^dtable _\(deleted_(\d+)\) (.*) not found\.$/;
+  let reRes;
   if (
     response?.status !== 404 ||
     !response?.request?.endPointPath ||
@@ -71,45 +71,45 @@ const handleDeletedBaseAccess = (response, z) => {
     typeof response.data.error_msg !== `string` ||
     !(reRes = response.data.error_msg.match(re))
   ) {
-    return response
+    return response;
   }
 
-  z.console.log(`handleDeletedBaseAccess(${response.request.method} ${response.request.url} ${response.status})`)
-  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-deleted'](JSON.stringify(reRes[2])))
-}
+  z.console.log(`handleDeletedBaseAccess(${response.request.method} ${response.request.url} ${response.status})`);
+  throw new z.errors.ExpiredAuthError(_CONST.STRINGS['seatable.error.base-deleted'](JSON.stringify(reRes[2])));
+};
 
 const handleHTTPError = (response, z) => {
   if (response.request && response.request.skipHandleHTTPError) {
-    return response
+    return response;
   }
   if (featureHttpAlwaysLogging.enabled && response.status !== 429) {
-    z && z.console.log(`[${response.request?.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}])`)
+    z && z.console.log(`[${response.request?.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}])`);
   }
 
   if (response.status < 400) {
-    return response
+    return response;
   }
   if (response.status === 401) {
-    throw new z.errors.RefreshAuthError()
+    throw new z.errors.RefreshAuthError();
   }
   if (response.status === 403) {
-    throw new Error(_CONST.STRINGS['http.error.status403'])
+    throw new Error(_CONST.STRINGS['http.error.status403']);
   }
   if (response.status === 429) {
     /* @link https://zapier.github.io/zapier-platform/#handling-throttled-requests */
-    const retryAfter = response.getHeader('retry-after') || 67
-    z.console.log(`[${response.request.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}]) (retryAfter=${retryAfter})`)
-    throw new z.errors.ThrottledError(_CONST.STRINGS['http.error.status429'], retryAfter)
+    const retryAfter = response.getHeader('retry-after') || 67;
+    z.console.log(`[${response.request.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}]) (retryAfter=${retryAfter})`);
+    throw new z.errors.ThrottledError(_CONST.STRINGS['http.error.status429'], retryAfter);
   }
-  throw new Error(`Unexpected status code ${response.status}`)
-}
+  throw new Error(`Unexpected status code ${response.status}`);
+};
 const handleUndefinedJson = (response) => {
   if (response.request && response.request.skipHandleUndefinedJson) {
-    return response
+    return response;
   }
-  let accept = undefined
+  let accept = undefined;
   try {
-    accept = response.request.headers.Accept
+    accept = response.request.headers.Accept;
   } catch {
   }
   if (
@@ -117,10 +117,10 @@ const handleUndefinedJson = (response) => {
       accept.match(/^($|\s*application\/json\s*($|;))/is) &&
       'undefined' === typeof response.data
   ) {
-    throw new Error(`Zapier core has left JSON undefined in its response object for a request with Accept: ${accept}`)
+    throw new Error(`Zapier core has left JSON undefined in its response object for a request with Accept: ${accept}`);
   }
-  return response
-}
+  return response;
+};
 
 module.exports = {
   version: require('./package.json').version,
@@ -158,4 +158,4 @@ module.exports = {
       create: createRow.key,
     },
   },
-}
+};

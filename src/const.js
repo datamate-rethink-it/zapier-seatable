@@ -5,9 +5,9 @@
  * Copyright 2022 SeaTable GmbH, Mainz
  */
 
-const FEATURE_MTIME_FILTER = 'feature_row_modification_time_limiter'
-const FEATURE_NO_AUTH_ASSET_LINKS = 'feature_non_authorized_asset_downloads'
-const FEATURE_HTTP_MIDDLEWARE_ALWAYS_LOG_THROTTLING = 'feature_http_middleware_always_log_throttling'
+const FEATURE_MTIME_FILTER = 'feature_row_modification_time_limiter';
+const FEATURE_NO_AUTH_ASSET_LINKS = 'feature_non_authorized_asset_downloads';
+const FEATURE_HTTP_MIDDLEWARE_ALWAYS_LOG_THROTTLING = 'feature_http_middleware_always_log_throttling';
 
 const FEATURE = {
   [FEATURE_MTIME_FILTER]: {
@@ -15,18 +15,18 @@ const FEATURE = {
     enabled: false,
     minutes: 216,
   },
-}
+};
 
 function format(strings, ...keys) {
   return (...values) => {
-    const dict = values[values.length - 1] || {}
-    const result = [strings[0]]
+    const dict = values[values.length - 1] || {};
+    const result = [strings[0]];
     keys.forEach((key, i) => {
-      const value = Number.isInteger(key) ? values[key] : dict[key]
-      result.push(value, strings[i + 1])
-    })
-    return result.join('')
-  }
+      const value = Number.isInteger(key) ? values[key] : dict[key];
+      result.push(value, strings[i + 1]);
+    });
+    return result.join('');
+  };
 }
 
 const STRINGS = {
@@ -45,7 +45,7 @@ const STRINGS = {
   'http.error.status429':
     '429 Too Many Requests: This Zap is running into SeaTable API' +
     ' request limits.',
-}
+};
 
 module.exports = {
   FEATURE,
@@ -53,4 +53,4 @@ module.exports = {
   FEATURE_MTIME_FILTER,
   FEATURE_NO_AUTH_ASSET_LINKS,
   STRINGS,
-}
+};

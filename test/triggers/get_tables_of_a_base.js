@@ -1,12 +1,12 @@
-require('should')
+require('should');
 
-const zapier = require('zapier-platform-core')
+const zapier = require('zapier-platform-core');
 
-const App = require('../../index')
-const appTester = zapier.createAppTester(App)
+const App = require('../../index');
+const appTester = zapier.createAppTester(App);
 
 describe('Trigger - get_tables_of_a_base', () => {
-  zapier.tools.env.inject()
+  zapier.tools.env.inject();
 
   it('should get an array', async () => {
     const bundle = {
@@ -15,12 +15,12 @@ describe('Trigger - get_tables_of_a_base', () => {
         api_token: process.env.API_TOKEN,
       },
       inputData: {},
-    }
+    };
 
     const results = await appTester(
-      App.triggers['get_tables_of_a_base'].operation.perform,
-      bundle,
-    )
-    results.should.be.an.Array()
-  })
-})
+        App.triggers['get_tables_of_a_base'].operation.perform,
+        bundle,
+    );
+    results.should.be.an.Array();
+  });
+});

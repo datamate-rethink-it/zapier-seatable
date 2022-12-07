@@ -1,5 +1,5 @@
-const ctx = require('../ctx')
-const _ = require('lodash')
+const ctx = require('../ctx');
+const _ = require('lodash');
 
 /**
  * perform
@@ -11,23 +11,23 @@ const _ = require('lodash')
  * @return {Promise<{json: {id: string, Name: string}}[]>}
  */
 const perform = async (z, bundle) => {
-  const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle)
+  const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/`,
     headers: {Authorization: `Token ${dtableCtx.access_token}`},
     params: ctx.requestParamsBundle(bundle),
-  })
-  const rows = response.data.rows
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  });
+  const rows = response.data.rows;
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   return _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (r) => {
     return {
       id: `table:${tableMetadata._id}:row:${r.row_id}`,
       name: r['column:0000'], // r['column:0000'] can be "undefined", perhaps filter first
-    }
+    };
   },
-  )
-}
+  );
+};
 
 module.exports = {
   key: 'get_row_of_a_table',
@@ -43,4 +43,4 @@ module.exports = {
     sample: {id: 'table:0000:row:xYz...', name: 'Name1'},
     outputFields: [{key: 'id'}, {key: 'name'}],
   },
-}
+};

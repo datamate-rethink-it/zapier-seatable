@@ -1,5 +1,5 @@
-const ctx = require('../ctx')
-const _ = require('lodash')
+const ctx = require('../ctx');
+const _ = require('lodash');
 
 /**
  * perform
@@ -11,9 +11,9 @@ const _ = require('lodash')
  * @return {Promise<{id: {string}, name: {string}}[]>}
  */
 const perform = async (z, bundle) => {
-  const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle)
+  const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
 
-  bundle.inputData.search_column = 'column:0000'
+  bundle.inputData.search_column = 'column:0000';
   // + bundle.inputData.search_value
   // + bundle.inputData.table_name
 
@@ -24,22 +24,22 @@ const perform = async (z, bundle) => {
     params: ctx.requestParamsSid(bundle.inputData.table_name),
     allowGetBody: true,
     body: {'filters': [await ctx.filter(z, bundle, 'internal')]},
-  })
+  });
 
-  let rows = response.data.rows
+  let rows = response.data.rows;
 
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   rows = _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (r) => {
     return {
       id: `table:${tableMetadata._id}:row:${r.row_id}`,
       name: r['column:0000'], // known: r['column:0000'] can be "undefined"
-    }
+    };
   },
-  )
+  );
 
-  return rows
-}
+  return rows;
+};
 
 module.exports = {
   key: 'get_row_id_of_a_table',
@@ -71,4 +71,4 @@ module.exports = {
     sample: {'id': 'table:0000:row:xYz...', 'name': 'Name1'},
     outputFields: [{key: 'id'}, {key: 'name'}],
   },
-}
+};

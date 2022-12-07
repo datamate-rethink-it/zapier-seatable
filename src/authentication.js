@@ -1,11 +1,11 @@
 const connectionLabel = (z, bundle) => {
   // remove https:// in front (but keep the non-secure to show)
-  const address = bundle.authData.server.replace(/^https:\/\//, '').replace(/\/+$/, '')
-  const {serverInfo, dtable} = bundle.inputData
-  const editionAbbreviated = serverInfo.edition.replace('enterprise edition', 'EE')
+  const address = bundle.authData.server.replace(/^https:\/\//, '').replace(/\/+$/, '');
+  const {serverInfo, dtable} = bundle.inputData;
+  const editionAbbreviated = serverInfo.edition.replace('enterprise edition', 'EE');
 
-  return `${address} (${serverInfo.version} ${editionAbbreviated}) ${dtable?.dtable_name} (${dtable?.app_name})`
-}
+  return `${address} (${serverInfo.version} ${editionAbbreviated}) ${dtable?.dtable_name} (${dtable?.app_name})`;
+};
 
 module.exports = {
   type: 'custom',
@@ -33,4 +33,4 @@ module.exports = {
   ],
   connectionLabel,
   customConfig: {},
-}
+};

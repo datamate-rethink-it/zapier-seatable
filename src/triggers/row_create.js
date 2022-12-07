@@ -1,6 +1,6 @@
-const ctx = require('../ctx')
-const _ = require('lodash')
-const {ResponseThrottleInfo} = require('../lib')
+const ctx = require('../ctx');
+const _ = require('lodash');
+const {ResponseThrottleInfo} = require('../lib');
 
 /**
  * perform
@@ -12,55 +12,55 @@ const {ResponseThrottleInfo} = require('../lib')
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
-  const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle)
+  const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
 
-  const logTag = `[${bundle.__zTS}] triggers.row_create`
-  z.console.time(logTag)
+  const logTag = `[${bundle.__zTS}] triggers.row_create`;
+  z.console.time(logTag);
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/`,
     headers: {Authorization: `Token ${dtableCtx.access_token}`},
     params: ctx.requestParamsBundle(bundle),
-  })
+  });
 
-  let rows = response.data.rows
+  let rows = response.data.rows;
 
-  const meta = bundle.meta
+  const meta = bundle.meta;
 
-  z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`)
+  z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`);
   if (0 === rows.length) {
-    return rows
+    return rows;
   }
 
-  rows.reverse()
+  rows.reverse();
   if (meta && meta.isLoadingSample) {
-    rows.splice(meta.limit || 3)
+    rows.splice(meta.limit || 3);
   }
 
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   rows = _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (o) => {
-    o.id = o.row_id
-    return o
-  })
+    o.id = o.row_id;
+    return o;
+  });
 
-  rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows)
-  rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows)
+  rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
+  rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
 
-  return rows
-}
+  return rows;
+};
 
 const outputFields = async (z, bundle) => {
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   return [
     {key: 'row_id', label: 'Original ID'},
     {key: 'row_mtime', label: 'Last Modified'},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
     ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
-  ]
-}
+  ];
+};
 
 module.exports = {
   key: 'row_create',
@@ -81,4 +81,4 @@ module.exports = {
     },
     outputFields: [outputFields],
   },
-}
+};

@@ -7,4 +7,4 @@ module.exports = {
   'dtable_socket': 'https://cloud.seatable.io/',
   'workspace_id': 4881,
   'dtable_name': 'Test Tables',
-}
+};

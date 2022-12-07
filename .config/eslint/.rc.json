@@ -1,0 +1,59 @@
+{
+    "env": {
+        "commonjs": true,
+        "es2019": true,
+        "node": true
+    },
+    "extends": "google",
+    "overrides": [
+    ],
+    "parserOptions": {
+        "ecmaVersion": "latest"
+    },
+    "rules": {
+        "camelcase": "warn",
+        "comma-dangle": "warn",
+        "guard-for-in": "warn",
+        "indent": [
+            "error", 2, {
+                "CallExpression": {
+                    "arguments": 2
+                },
+                "FunctionDeclaration": {
+                    "body": 1,
+                    "parameters": 2
+                },
+                "FunctionExpression": {
+                    "body": 1,
+                    "parameters": 2
+                },
+                "MemberExpression": 2,
+                "ObjectExpression": 1,
+                "SwitchCase": 1,
+                "ignoredNodes": [
+                    "ConditionalExpression"
+                ]
+            }
+        ],
+        "max-len": [
+            "warn",
+            {
+                "code": 120,
+                "tabWidth": 2,
+                "ignoreComments": true,
+                "ignoreUrls": true,
+                "ignoreStrings": true,
+                "ignoreTemplateLiterals": true
+            }
+        ],
+        "no-unused-vars": "warn",
+        "operator-linebreak": "warn",
+        "padded-blocks": "warn",
+        "prefer-const": "warn",
+        "quote-props": "warn",
+        "require-jsdoc": "warn",
+        "semi": "error",
+        "space-before-function-paren": "warn",
+        "valid-jsdoc": "warn"
+    }
+}

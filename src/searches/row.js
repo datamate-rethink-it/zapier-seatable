@@ -1,5 +1,5 @@
-const ctx = require('../ctx')
-const _ = require('lodash')
+const ctx = require('../ctx');
+const _ = require('lodash');
 
 /**
  * perform
@@ -11,7 +11,7 @@ const _ = require('lodash')
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
-  const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle)
+  const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -20,28 +20,28 @@ const perform = async (z, bundle) => {
     params: ctx.requestParamsSid(bundle.inputData.table_name),
     allowGetBody: true,
     body: {'filters': [await ctx.filter(z, bundle, 'search')]},
-  })
+  });
 
-  let rows = response.data.rows
+  let rows = response.data.rows;
 
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
-  rows = _.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o))
+  rows = _.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o));
 
-  rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows)
-  rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows)
+  rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
+  rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
 
-  return rows
-}
+  return rows;
+};
 
 const searchColumn = async (z, bundle) => {
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   const choices = _.merge(..._.map(_.filter(tableMetadata.columns, (o) => {
     return !ctx.struct.columns.filter.not.includes(o.type) &&
-        !ctx.struct.columns.zapier.hide_search.includes(o.type)
+        !ctx.struct.columns.zapier.hide_search.includes(o.type);
   }), (o) => {
-    return {[`column:${o.key}`]: o.name}
-  }))
+    return {[`column:${o.key}`]: o.name};
+  }));
   return {
     key: 'search_column',
     required: true,
@@ -49,8 +49,8 @@ const searchColumn = async (z, bundle) => {
     helpText: 'Pick a field from the Seatable table for your search.',
     altersDynamicFields: true,
     choices,
-  }
-}
+  };
+};
 
 /**
  * Dynamic Input Field for the Search Value
@@ -71,32 +71,32 @@ const searchColumn = async (z, bundle) => {
  * @return {Promise<{helpText: string, label: string, altersDynamicFields: boolean, key: string, required: boolean}>}
  */
 const searchValue = async (z, bundle) => {
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
-  const colSid = ctx.sidParse(bundle.inputData.search_column)
-  const col = _.find(tableMetadata.columns, ['key', colSid.column])
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
+  const colSid = ctx.sidParse(bundle.inputData.search_column);
+  const col = _.find(tableMetadata.columns, ['key', colSid.column]);
   const r = {
     key: 'search_value',
     required: true,
     label: 'Search Value',
     helpText: 'The unique value to search for in field.',
     altersDynamicFields: true,
-  }
+  };
   if (col !== undefined) {
-    r.helpText = `The unique value to search for in ${ctx.struct.columns.types[col.type] || `[${col.type}]`} field named "${col.name}".`
+    r.helpText = `The unique value to search for in ${ctx.struct.columns.types[col.type] || `[${col.type}]`} field named "${col.name}".`;
   }
-  return r
-}
+  return r;
+};
 
 const outputFields = async (z, bundle) => {
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   return [
     {key: 'row_id', label: 'ID'},
     {key: 'row_mtime', label: 'Last Modified'},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
     ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
-  ]
-}
+  ];
+};
 
 module.exports = {
   key: 'row',
@@ -129,4 +129,4 @@ module.exports = {
     },
     outputFields: [outputFields],
   },
-}
+};

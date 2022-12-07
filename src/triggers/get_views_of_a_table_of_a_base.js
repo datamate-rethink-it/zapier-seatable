@@ -1,5 +1,5 @@
-const ctx = require('../ctx')
-const _ = require('lodash')
+const ctx = require('../ctx');
+const _ = require('lodash');
 
 /**
  * perform
@@ -14,13 +14,13 @@ const _ = require('lodash')
  * @return {Promise<{json: {id: string, Name: string}}[]>}
  */
 const perform = async (z, bundle) => {
-  const metadata = await ctx.acquireTableMetadata(z, bundle)
+  const metadata = await ctx.acquireTableMetadata(z, bundle);
 
   return _.map(metadata.views, (o) => ({
     id: `table:${metadata._id}:view:${o._id}`,
     Name: o.name,
-  }))
-}
+  }));
+};
 
 module.exports = {
   key: 'get_views_of_a_table_of_a_base',
@@ -36,4 +36,4 @@ module.exports = {
     sample: {id: 'table:0000:view:0000', name: 'Default View'},
     outputFields: [{key: 'id'}, {key: 'name'}],
   },
-}
+};

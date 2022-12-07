@@ -1,5 +1,17 @@
 # Change-Log
 
+## [2.1.9] - 2022-12-07
+
+### Fixed
+
+* Create and update row not writing to a column named "`size`" (since
+  2.0.0).
+
+### Internal
+
+* Upgrade to Zapier Core 12.2.0
+* Fix Node and Npm versions in package.json.
+
 ## [2.1.8] - 2022-10-27
 
 ### Fixed

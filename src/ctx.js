@@ -5,10 +5,10 @@
  * Copyright 2021 SeaTable GmbH, Mainz
  */
 
-const _CONST = require('./const')
+const _CONST = require('./const');
 
-const _ = require('lodash')
-const {ResponseThrottleInfo} = require('./lib')
+const _ = require('lodash');
+const {ResponseThrottleInfo} = require('./lib');
 
 /* SeaTable Rest API Schema
  *
@@ -159,29 +159,28 @@ const struct = {
       hide_search: ['link'],
     },
   },
-}
+};
 
 function zapInit(z, bundle) {
-
-  bundle.authData.server = bundle.authData.server.replace(/\/+$/, '')
+  bundle.authData.server = bundle.authData.server.replace(/\/+$/, '');
 
   if (isEmpty(bundle.__zTS)) {
-    const val = (new Date()).valueOf() % 1000000
-    bundle.__zTS = ''.concat(val).padStart(6, ' ')
-    bundle.__zLogTag = `[${bundle.__zTS}] zap`
-    z.console.time(bundle.__zLogTag)
+    const val = (new Date()).valueOf() % 1000000;
+    bundle.__zTS = ''.concat(val).padStart(6, ' ');
+    bundle.__zLogTag = `[${bundle.__zTS}] zap`;
+    z.console.time(bundle.__zLogTag);
   }
 
-  return bundle.__zTS
+  return bundle.__zTS;
 }
 
 /**
  * @return {Promise<{}>}
  */
 async function serverInfo(z, bundle) {
-  let response
+  let response;
 
-  zapInit(z, bundle)
+  zapInit(z, bundle);
 
   /** @type {ZapierZRequestResponse} */
   response = await z.request({
@@ -189,23 +188,23 @@ async function serverInfo(z, bundle) {
     skipHandleHTTPError: true,
     skipHandleUndefinedJson: true,
     skipThrowForStatus: true,
-  })
+  });
 
   const serverInfo = {
     server: `${bundle.authData.server}`,
-  }
-  const properties = response.data && Object.keys(response.data) || []
+  };
+  const properties = response.data && Object.keys(response.data) || [];
   properties.forEach(function(property) {
-    const value = response.data[property]
+    const value = response.data[property];
     if (typeof value === 'string') {
-      serverInfo[property] = value
+      serverInfo[property] = value;
     }
-  })
+  });
   if (!~properties.indexOf('version') || !~properties.indexOf('edition')) {
-    throw new Error(_CONST.STRINGS['seatable.error.no-server-info'](bundle.authData.server))
+    throw new Error(_CONST.STRINGS['seatable.error.no-server-info'](bundle.authData.server));
   }
 
-  return bundle.serverInfo = serverInfo
+  return bundle.serverInfo = serverInfo;
 }
 
 /**
@@ -218,14 +217,14 @@ async function serverInfo(z, bundle) {
  * @return {Promise<DTable>}
  */
 const acquireServerInfo = (z, bundle) => {
-  return isEmpty(bundle.serverInfo) ? serverInfo(z, bundle) : Promise.resolve(bundle.serverInfo)
-}
+  return isEmpty(bundle.serverInfo) ? serverInfo(z, bundle) : Promise.resolve(bundle.serverInfo);
+};
 
 /**
  * @return {Promise<DTable>}
  */
 async function appAccessToken(z, bundle) {
-  await acquireServerInfo(z, bundle)
+  await acquireServerInfo(z, bundle);
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -233,21 +232,21 @@ async function appAccessToken(z, bundle) {
     headers: {Authorization: `Token ${bundle.authData.api_token}`},
     endPointPath: `/api/v2.1/dtable/app-access-token/`,
   },
-  )
+  );
 
-  const dtable = {server_address: bundle.authData.server}
-  const properties = response.data && Object.keys(response.data) || []
+  const dtable = {server_address: bundle.authData.server};
+  const properties = response.data && Object.keys(response.data) || [];
   for (const property of properties) {
-    dtable[property] = response.data[property]
+    dtable[property] = response.data[property];
   }
-  const serverInfo = bundle.serverInfo
-  z.console.timeLog(bundle.__zLogTag, `app(${dtable.workspace_id}/${dtable.dtable_uuid}) ${serverInfo.version} ${serverInfo.edition} (${bundle.authData.server})`)
+  const serverInfo = bundle.serverInfo;
+  z.console.timeLog(bundle.__zLogTag, `app(${dtable.workspace_id}/${dtable.dtable_uuid}) ${serverInfo.version} ${serverInfo.edition} (${bundle.authData.server})`);
   if (!~properties.indexOf('dtable_uuid') || !~properties.indexOf('access_token')) {
-    throw new Error(_CONST.STRINGS['seatable.error.app-access-token'](bundle.authData.server))
+    throw new Error(_CONST.STRINGS['seatable.error.app-access-token'](bundle.authData.server));
   }
-  bundle.dtable = dtable
+  bundle.dtable = dtable;
 
-  return bundle.dtable
+  return bundle.dtable;
 }
 
 /**
@@ -260,26 +259,26 @@ async function appAccessToken(z, bundle) {
  * @return {Promise<DTable>}
  */
 const acquireDtableAppAccess = (z, bundle) => {
-  return isEmpty(bundle.dtable) ? appAccessToken(z, bundle) : Promise.resolve(bundle.dtable)
-}
+  return isEmpty(bundle.dtable) ? appAccessToken(z, bundle) : Promise.resolve(bundle.dtable);
+};
 
 const featureLinkColumnsData = {
   enabled: true, // whether data of linked columns are fetched (2.1.0: true)
   childLimit: 1, // number of children (linked rows) per source row.column that are resolved (2.1.0: 1)
   resolveLimit: 10, // number of total resolves that are done
-}
+};
 
 /**
  * @param {Array<DTableColumn|DTableColumnTLink>} columns
  */
-const fileColumns = (columns) => columns.filter((s) => struct.columns.assets.indexOf(s.type) + 1)
-const noAuthColumnKey = (key) => `column:${key}-(no-auth-dl)`
-const noAuthColumnLabel = (name) => `${name} (Download w/o Authorization)`
+const fileColumns = (columns) => columns.filter((s) => struct.columns.assets.indexOf(s.type) + 1);
+const noAuthColumnKey = (key) => `column:${key}-(no-auth-dl)`;
+const noAuthColumnLabel = (name) => `${name} (Download w/o Authorization)`;
 const noAuthFilePathFromUrl = (buffer) => {
   // 'https://cloud.seatable.io/workspace/4881/asset/98d18404-03fc-4f4a-9d6d-6527441aea25/files/2021-04/magazine2.jpg'
-  const probe = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(buffer)
-  return probe && probe[1]
-}
+  const probe = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(buffer);
+  return probe && probe[1];
+};
 
 const fileNoAuthLinksField = {
   key: _CONST.FEATURE_NO_AUTH_ASSET_LINKS,
@@ -289,20 +288,20 @@ const fileNoAuthLinksField = {
   label: 'Provide access to images and files',
   helpText: 'By default (**False**) SeaTable provides links to files and images that require authentication. Choose **True** if you want to use your files and pictures in your Zapier Action, this adds additional fields with links that temporarily allow unauthorized downloads for a couple of hours.',
   altersDynamicFields: false,
-}
+};
 
 /**
  * @yield {*<{label: string, key: string}>}
  */
 const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
   if (!bundle.inputData[_CONST.FEATURE_NO_AUTH_ASSET_LINKS]) {
-    return
+    return;
   }
 
   for (const col of fileColumns(columns)) {
-    yield {key: noAuthColumnKey(col.key), label: noAuthColumnLabel(col.name)}
+    yield {key: noAuthColumnKey(col.key), label: noAuthColumnLabel(col.name)};
   }
-}
+};
 
 /**
  * add non-authorized asset links into the result
@@ -316,75 +315,75 @@ const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
  */
 const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
   if (!bundle.inputData[_CONST.FEATURE_NO_AUTH_ASSET_LINKS]) {
-    return rows
+    return rows;
   }
 
-  const logTag = `[${bundle.__zTS}] acquireFileNoAuthLinks`
-  z.console.time(logTag)
+  const logTag = `[${bundle.__zTS}] acquireFileNoAuthLinks`;
+  z.console.time(logTag);
 
-  const dtableCtx = bundle.dtable
-  const fileUrlStats = {urls: [], errors: []}
+  const dtableCtx = bundle.dtable;
+  const fileUrlStats = {urls: [], errors: []};
   const fileUrl = async (buffer) => {
-    fileUrlStats.urls.push(buffer)
-    const urlPath = noAuthFilePathFromUrl(buffer)
+    fileUrlStats.urls.push(buffer);
+    const urlPath = noAuthFilePathFromUrl(buffer);
     if (!urlPath) {
-      throw new z.errors.Error(`Failed to extract path from url: "${buffer}"`)
+      throw new z.errors.Error(`Failed to extract path from url: "${buffer}"`);
     }
     /** @type {ZapierZRequestResponse} */
-    let response
-    let exception
-    const url = `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`
+    let response;
+    let exception;
+    const url = `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`;
     try {
       response = await z.request({
         url,
         headers: {Authorization: `Token ${dtableCtx.access_token}`},
         skipThrowForStatus: true,
-      })
+      });
     } catch (e) {
-      exception = e
+      exception = e;
     }
     if (!_.isObject(response && response.data)) {
       if (_.isObject(exception) && exception.name === 'ThrottledError') {
-        throw exception
+        throw exception;
       }
-      fileUrlStats.errors.push([buffer, urlPath, url, response, exception && exception.message])
-      return null
+      fileUrlStats.errors.push([buffer, urlPath, url, response, exception && exception.message]);
+      return null;
     }
-    return response.data.download_link || null
-  }
+    return response.data.download_link || null;
+  };
   rows = await Promise.all(rows.map(async (row) => {
     for (const column of fileColumns(columns)) {
-      const field = `column:${column.key}`
-      const noAuthField = noAuthColumnKey(column.key)
-      const values = row && row[field]
-      if (!values) continue
-      if (!Array.isArray(values)) continue
-      if (!values.length) continue
+      const field = `column:${column.key}`;
+      const noAuthField = noAuthColumnKey(column.key);
+      const values = row && row[field];
+      if (!values) continue;
+      if (!Array.isArray(values)) continue;
+      if (!values.length) continue;
       if (fileUrlStats.errors.length > 0) {
         // skip further urls on error
-        z.console.timeLog(logTag, `skipping on previous error`)
-        row[noAuthField] = null
-        continue
+        z.console.timeLog(logTag, `skipping on previous error`);
+        row[noAuthField] = null;
+        continue;
       }
       row[noAuthField] = await Promise.all(values.map(async (value) => {
         if (typeof value === 'object' && value !== null && value.type === 'file' && value.url) {
-          const copy = {...value}
-          copy.url = await fileUrl(value.url)
-          return copy
+          const copy = {...value};
+          copy.url = await fileUrl(value.url);
+          return copy;
         } else if (typeof value === 'string' && value) {
-          return await fileUrl(value)
+          return await fileUrl(value);
         }
-        return value
-      }))
+        return value;
+      }));
     }
-    return row
-  }))
-  z.console.timeLog(logTag, `urls: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`)
+    return row;
+  }));
+  z.console.timeLog(logTag, `urls: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`);
   if (fileUrlStats.errors.length > 0) {
-    z.console.timeLog(logTag, 'errors:', fileUrlStats.errors)
+    z.console.timeLog(logTag, 'errors:', fileUrlStats.errors);
   }
-  return rows
-}
+  return rows;
+};
 
 /**
  * replace column.type link references with row-data in rows
@@ -397,72 +396,72 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
  * @param {Array<{object}>} rows
  */
 const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
-  const dtableCtx = bundle.dtable
+  const dtableCtx = bundle.dtable;
 
   if (0 === rows.length) {
-    return rows
+    return rows;
   }
 
-  const logTag = `[${bundle.__zTS}] acquireLinkColumnsData`
-  z.console.time(logTag)
+  const logTag = `[${bundle.__zTS}] acquireLinkColumnsData`;
+  z.console.time(logTag);
 
-  let totalRequestCount = 0
+  let totalRequestCount = 0;
 
-  const linkMap = new Map()
-  const mapMap = (m) => (a) => m.get(a) || m.set(a, new Map()).get(a)
-  const linkCache = mapMap(linkMap)
+  const linkMap = new Map();
+  const mapMap = (m) => (a) => m.get(a) || m.set(a, new Map()).get(a);
+  const linkCache = mapMap(linkMap);
 
   for (let i = 0, l = rows.length; i < l; i++) {
-    const row = rows[i]
+    const row = rows[i];
     // handle each link field (if any)
     for (const o of columns) {
-      const linkTableMetadata = columnLinkTableMetadata(o, bundle)
+      const linkTableMetadata = columnLinkTableMetadata(o, bundle);
       if (undefined === linkTableMetadata) {
-        continue
+        continue;
       }
-      const childIds = row[`column:${o.key}`]
+      const childIds = row[`column:${o.key}`];
       if (!Array.isArray(childIds)) {
-        continue
+        continue;
       }
-      childIds.length = Math.min(featureLinkColumnsData.childLimit, childIds.length)
+      childIds.length = Math.min(featureLinkColumnsData.childLimit, childIds.length);
 
-      const children = []
+      const children = [];
       for (const childId of childIds) {
-        const linkTableCache = linkCache(linkTableMetadata._id)
-        const probe = linkTableCache.get(childId)
+        const linkTableCache = linkCache(linkTableMetadata._id);
+        const probe = linkTableCache.get(childId);
         if (probe) {
-          children.push(probe)
-          continue
+          children.push(probe);
+          continue;
         }
 
-        totalRequestCount++
+        totalRequestCount++;
         /** @type {ZapierZRequestResponse} */
         const response = await z.request({
           url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${childId}/`,
           headers: {Authorization: `Token ${dtableCtx.access_token}`},
           params: {table_id: linkTableMetadata._id},
-        })
+        });
         if (!_.isObject(response.data)) {
-          throw new z.errors.Error(`Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`)
+          throw new z.errors.Error(`Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`);
         }
-        const childRow = mapColumnKeys(_.filter(linkTableMetadata.columns, (c) => c.type !== 'link'), response.data)
-        z.console.timeLog(logTag, `child row(${new ResponseThrottleInfo(response)}): ${linkTableMetadata._id}:row:${childId} (request=${totalRequestCount})`)
-        linkTableCache.set(childId, childRow)
-        children.push(childRow)
+        const childRow = mapColumnKeys(_.filter(linkTableMetadata.columns, (c) => c.type !== 'link'), response.data);
+        z.console.timeLog(logTag, `child row(${new ResponseThrottleInfo(response)}): ${linkTableMetadata._id}:row:${childId} (request=${totalRequestCount})`);
+        linkTableCache.set(childId, childRow);
+        children.push(childRow);
       }
 
       if (children.length) {
-        rows[i][`column:${o.key}`] = children
+        rows[i][`column:${o.key}`] = children;
       } else {
-        delete rows[i][`column:${o.key}`] // remove parent key as it has no children
+        delete rows[i][`column:${o.key}`]; // remove parent key as it has no children
       }
     }
   }
 
-  totalRequestCount && z.console.timeLog(logTag, `requests=${totalRequestCount} rows=${rows.length}`)
+  totalRequestCount && z.console.timeLog(logTag, `requests=${totalRequestCount} rows=${rows.length}`);
 
-  return rows
-}
+  return rows;
+};
 
 /**
  * helper function to fetch dtable metadata
@@ -476,9 +475,9 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
  */
 const acquireMetadata = async (z, bundle) => {
   /** @type {DTableEx} */
-  const dtableCtx = await module.exports.acquireDtableAppAccess(z, bundle)
+  const dtableCtx = await module.exports.acquireDtableAppAccess(z, bundle);
   if (undefined !== dtableCtx.metadata) {
-    return dtableCtx.metadata
+    return dtableCtx.metadata;
   }
 
   /** @type {DTableMetadataResponse} */
@@ -488,11 +487,11 @@ const acquireMetadata = async (z, bundle) => {
       'Authorization': `Token ${dtableCtx.access_token}`,
       'X-TABLE': bundle.inputData.table_name,
     },
-  })
+  });
 
-  bundle.dtable.metadata = response.data.metadata
-  return response.data.metadata
-}
+  bundle.dtable.metadata = response.data.metadata;
+  return response.data.metadata;
+};
 
 /**
  * get table metadata from bundle input (table_name)
@@ -512,21 +511,21 @@ const acquireMetadata = async (z, bundle) => {
  * @return {Promise<DTableTable>}
  */
 const acquireTableMetadata = async (z, bundle) => {
-  const metadata = await acquireMetadata(z, bundle)
+  const metadata = await acquireMetadata(z, bundle);
   if (!bundle.inputData.table_name) {
     return {
       _id: undefined,
       name: undefined,
       columns: [],
       views: [],
-    }
+    };
   }
-  const tableMetadata = tableFromMetadata(metadata, bundle.inputData.table_name)
+  const tableMetadata = tableFromMetadata(metadata, bundle.inputData.table_name);
   if (!tableMetadata) {
-    z.console.log(`[${bundle.__zTS}] internal: acquireTableMetadata: missing table metadata columns on input-data:`, bundle.inputData)
+    z.console.log(`[${bundle.__zTS}] internal: acquireTableMetadata: missing table metadata columns on input-data:`, bundle.inputData);
   }
-  return tableMetadata
-}
+  return tableMetadata;
+};
 
 /**
  * get table metadata from bundle input (table_name) and out of it
@@ -538,13 +537,13 @@ const acquireTableMetadata = async (z, bundle) => {
  */
 function bundle_table_meta(bundle) {
   if (!bundle.dtable) {
-    throw new Error('internal error: dtable not bundled')
+    throw new Error('internal error: dtable not bundled');
   }
-  const dtableCtx = bundle.dtable
+  const dtableCtx = bundle.dtable;
   if (!dtableCtx.metadata) {
-    throw new Error('internal error: metadata bindings missing')
+    throw new Error('internal error: metadata bindings missing');
   }
-  return tableFromMetadata(dtableCtx.metadata, bundle.inputData.table_name)
+  return tableFromMetadata(dtableCtx.metadata, bundle.inputData.table_name);
 }
 
 /**
@@ -563,47 +562,47 @@ const filter = async (z, bundle, context) => {
     filter_predicate: 'contains',
     filter_term: bundle.inputData.search_value,
     filter_term_modifier: '',
-  }
-  const tableMetadata = await acquireTableMetadata(z, bundle)
-  const sid = sidParse(bundle.inputData.search_column)
-  const col = _.find(tableMetadata.columns, ['key', sid.column])
+  };
+  const tableMetadata = await acquireTableMetadata(z, bundle);
+  const sid = sidParse(bundle.inputData.search_column);
+  const col = _.find(tableMetadata.columns, ['key', sid.column]);
   if (undefined === col) {
-    z.console.log(`[${bundle.__zTS}] filter[${context}]: search column not found:`, bundle.inputData.search_column, sid, tableMetadata.columns)
-    return f
+    z.console.log(`[${bundle.__zTS}] filter[${context}]: search column not found:`, bundle.inputData.search_column, sid, tableMetadata.columns);
+    return f;
   }
   if (struct.columns.filter.not.includes(col.type)) {
-    z.console.log(`[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`, col.type)
-    throw new z.errors.Error(`Search in ${struct.columns.types[col.type] || `[${col.type}]`} field named "${col.name}" is not supported, please choose a different column.`)
+    z.console.log(`[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`, col.type);
+    throw new z.errors.Error(`Search in ${struct.columns.types[col.type] || `[${col.type}]`} field named "${col.name}" is not supported, please choose a different column.`);
   }
-  f.column_name = col.name
+  f.column_name = col.name;
   switch (col.type) {
-  case 'text':
-  case 'formula':
-    break
-  case 'number':
-    f.filter_predicate = 'equal'
-    break
-  case 'auto-number':
-  case 'checkbox':
-  case 'single-select':
-  case 'date':
-  case 'ctime':
-  case 'mtime':
-    f.filter_predicate = 'is'
-    break
-  case 'multi-select':
-    f.filter_predicate = 'has_any_of'
-    f.filter_term = [f.filter_term]
-    break
-  case 'creator':
-  case 'last-modifier':
-    f.filter_term = [f.filter_term]
-    break
-  default:
-    z.console.log(`[${bundle.__zTS}] filter[${context}]: unknown column type (fall-through):`, col.type)
+    case 'text':
+    case 'formula':
+      break;
+    case 'number':
+      f.filter_predicate = 'equal';
+      break;
+    case 'auto-number':
+    case 'checkbox':
+    case 'single-select':
+    case 'date':
+    case 'ctime':
+    case 'mtime':
+      f.filter_predicate = 'is';
+      break;
+    case 'multi-select':
+      f.filter_predicate = 'has_any_of';
+      f.filter_term = [f.filter_term];
+      break;
+    case 'creator':
+    case 'last-modifier':
+      f.filter_term = [f.filter_term];
+      break;
+    default:
+      z.console.log(`[${bundle.__zTS}] filter[${context}]: unknown column type (fall-through):`, col.type);
   }
-  return f
-}
+  return f;
+};
 
 /**
  * map table id or name onto metadata
@@ -619,30 +618,30 @@ const filter = async (z, bundle, context) => {
  * @return {DTableTable}|undefined metadata of table, undefined if no table metadata
  */
 const tableFromMetadata = (metadata, sid) => {
-  const s = sidParse(sid)
+  const s = sidParse(sid);
   const predicate = (name, property) => {
-    const hop = (p) => Object.prototype.hasOwnProperty.call(s, p)
+    const hop = (p) => Object.prototype.hasOwnProperty.call(s, p);
     // named identifier
     if (hop(name)) {
-      return [property, s[name]]
+      return [property, s[name]];
     }
-    return []
-  }
+    return [];
+  };
 
-  return _.find(metadata.tables, predicate('table', '_id'))
-}
+  return _.find(metadata.tables, predicate('table', '_id'));
+};
 
 const isEmpty = (v) => {
   if (v === undefined) {
-    return true
+    return true;
   }
 
   // noinspection LoopStatementThatDoesntLoopJS
   for (const i in v) {
-    return false
+    return false;
   }
-  return true
-}
+  return true;
+};
 
 /**
  * parse seatable api sub-identifier (sid)
@@ -678,23 +677,23 @@ const isEmpty = (v) => {
  * @throws Error if sid is of invalid syntax
  */
 const sidParse = (sid) => {
-  let result = false
+  let result = false;
   if ((typeof sid === 'string' || sid instanceof String)) {
     result = sid.match(
-      new RegExp(
-        '^(table:(?<table>[a-zA-Z0-9_-]{4,})(:view:(?<view>[a-zA-Z0-9_-]{4,})|:row:(?<row>[a-zA-Z0-9_-]{4,}))?|column:(?<column>[a-zA-Z0-9_-]{4,}))$',
-      ),
-    )
+        new RegExp(
+            '^(table:(?<table>[a-zA-Z0-9_-]{4,})(:view:(?<view>[a-zA-Z0-9_-]{4,})|:row:(?<row>[a-zA-Z0-9_-]{4,}))?|column:(?<column>[a-zA-Z0-9_-]{4,}))$',
+        ),
+    );
   } else {
-    return {}
+    return {};
   }
 
   if (!result) {
-    throw new Error(`unable to parse (invalid) sid: "${sid}"`)
+    throw new Error(`unable to parse (invalid) sid: "${sid}"`);
   }
   // noinspection JSValidateTypes
-  return _.pickBy(result.groups, _.identity)
-}
+  return _.pickBy(result.groups, _.identity);
+};
 
 /**
  * request parameters for bundle
@@ -706,23 +705,23 @@ const sidParse = (sid) => {
  */
 function requestParamsBundle(bundle) {
   /* @type {table_name?: string, table_view?: string} */
-  const input = bundle.inputData
+  const input = bundle.inputData;
 
   // prefer more fine-grained view first
   if (input.table_view) {
-    const r = requestParamsSid(input.table_view)
+    const r = requestParamsSid(input.table_view);
     // check against leading table, if any
     if (input.table_name) {
-      const c = requestParamsSid(input.table_name)
+      const c = requestParamsSid(input.table_name);
       // use leading table if view is in another table
       if (c.table_id !== r.table_id) {
-        return c
+        return c;
       }
     }
-    return r
+    return r;
   }
 
-  return requestParamsSid(input.table_name)
+  return requestParamsSid(input.table_name);
 }
 
 /**
@@ -732,10 +731,10 @@ function requestParamsBundle(bundle) {
  * @return {{table_id?: {string}, view_id?: {string}}}
  */
 function requestParamsSid(sid) {
-  const r = {}
+  const r = {};
   const s = sidParse(sid);
-  ['table', 'view'].forEach((x) => (s[x] && (r[`${x}_id`] = s[x])))
-  return r
+  ['table', 'view'].forEach((x) => (s[x] && (r[`${x}_id`] = s[x])));
+  return r;
 }
 
 /**
@@ -751,23 +750,23 @@ function requestParamsSid(sid) {
  * @return {object} distinguished column-key mapped row
  */
 const mapColumnKeys = (columns, row) => {
-  const r = {}
-  const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b)
+  const r = {};
+  const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
   // step 1: implicit row properties
-  const implicit = ['_id', '_mtime']
+  const implicit = ['_id', '_mtime'];
   for (const p of implicit) {
     if (hop(row, p)) {
-      r[`row${p}`] = row[p]
+      r[`row${p}`] = row[p];
     }
   }
   // step 2: column.name
   for (const c of columns) {
     if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
-      r[`column:${c.key}`] = row[c.name]
+      r[`column:${c.key}`] = row[c.name];
     }
   }
-  return r
-}
+  return r;
+};
 
 /**
  * map keys of a create row operation for output
@@ -775,21 +774,21 @@ const mapColumnKeys = (columns, row) => {
  * @param  {DTableRow} row
  */
 const mapCreateRowKeys = (row) => {
-  const r = {}
+  const r = {};
 
   for (const k in row) {
     if (!Object.prototype.hasOwnProperty.call(row, k)) {
-      continue
+      continue;
     }
-    const v = row[k]
+    const v = row[k];
     if (k === '_id') {
-      r[`row${k}`] = v
-      continue
+      r[`row${k}`] = v;
+      continue;
     }
-    r[`column:${k}`] = v
+    r[`column:${k}`] = v;
   }
-  return r
-}
+  return r;
+};
 
 /**
  * link column meta-data
@@ -806,13 +805,13 @@ const columnLinkTableMetadata = (col, bundle) => {
       undefined === col.data ||
       undefined === col.data.table_id ||
       undefined === col.data.other_table_id) {
-    return undefined
+    return undefined;
   }
   const linkTableId = bundle_table_meta(bundle)._id === col.data.other_table_id ?
     col.data.table_id :
-    col.data.other_table_id
-  return _.find(bundle.dtable.metadata.tables, ['_id', linkTableId])
-}
+    col.data.other_table_id;
+  return _.find(bundle.dtable.metadata.tables, ['_id', linkTableId]);
+};
 
 /**
  * standard output fields based on the bundled table meta-data
@@ -825,25 +824,25 @@ const columnLinkTableMetadata = (col, bundle) => {
  */
 const outputFieldsRows = function* (columns, bundle) {
   for (const col of columns) {
-    const f = {key: `column:${col.key}`, label: col.name}
+    const f = {key: `column:${col.key}`, label: col.name};
 
     // link field handling
-    const linkTableMetadata = columnLinkTableMetadata(col, bundle)
+    const linkTableMetadata = columnLinkTableMetadata(col, bundle);
     if (undefined !== linkTableMetadata) {
       const children = [{key: `${f.key}[]row_id`, label: `${col.name}: ID`}, {
         key: `${f.key}[]row_mtime`,
         label: `${col.name}: Last Modified`,
-      }]
+      }];
       for (const c of linkTableMetadata.columns) {
-        if (c.type === 'link') continue
-        children.push({key: `${f.key}[]column:${c.key}`, label: `${col.name}: ${c.name}`})
+        if (c.type === 'link') continue;
+        children.push({key: `${f.key}[]column:${c.key}`, label: `${col.name}: ${c.name}`});
       }
-      f.children = children
+      f.children = children;
     }
 
-    yield f
+    yield f;
   }
-}
+};
 
 /**
  * table_view input dropdowns
@@ -857,7 +856,7 @@ const tableView = async (z, bundle) => {
     bundle.inputData.table_name &&
       bundle.inputData.table_view &&
       !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`)
-  )
+  );
 
   // base configuration
   const def = {
@@ -867,27 +866,27 @@ const tableView = async (z, bundle) => {
     label: 'View',
     helpText: 'You can optionally pick a view of the table.',
     altersDynamicFields: true,
-  }
+  };
   // input choices
-  const choices = {}
-  const tableMetadata = await acquireTableMetadata(z, bundle)
+  const choices = {};
+  const tableMetadata = await acquireTableMetadata(z, bundle);
   for ({_id, name} of tableMetadata.views) {
-    choices[`table:${tableMetadata._id}:view:${_id}`] = name
+    choices[`table:${tableMetadata._id}:view:${_id}`] = name;
   }
-  def.choices = choices
+  def.choices = choices;
   // default value
   if (tableMetadata._id) {
-    def.default = `table:${tableMetadata._id}:view:0000`
-    bundle.inputData.table_view = def.default
-    def.placeholder = `${tableMetadata.views && tableMetadata.views[0].name || 'Default View'}`
+    def.default = `table:${tableMetadata._id}:view:0000`;
+    bundle.inputData.table_view = def.default;
+    def.placeholder = `${tableMetadata.views && tableMetadata.views[0].name || 'Default View'}`;
   }
 
   if (viewIsInvalid && tableMetadata._id) {
-    def.helpText = `${def.helpText} **Note:** The default view of table **${tableMetadata.name}** above is in use. Click drop-down to select another view.`
+    def.helpText = `${def.helpText} **Note:** The default view of table **${tableMetadata.name}** above is in use. Click drop-down to select another view.`;
   }
 
-  return def
-}
+  return def;
+};
 
 /**
  * table_name + table_view input dropdowns
@@ -908,8 +907,8 @@ const tableFields = async (z, bundle) => {
       altersDynamicFields: true,
     },
     await tableView(z, bundle),
-  ]
-}
+  ];
+};
 
 module.exports = {
   acquireServerInfo,
@@ -938,4 +937,4 @@ module.exports = {
   fileNoAuthLinksField,
   // mtimeFilter
   FEATURE_MTIME_FILTER: _CONST.FEATURE_MTIME_FILTER,
-}
+};

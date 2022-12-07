@@ -1,15 +1,15 @@
-require('should')
+require('should');
 
-const zapier = require('zapier-platform-core')
+const zapier = require('zapier-platform-core');
 
-const App = require('../index')
-const appTester = zapier.createAppTester(App)
+const App = require('../index');
+const appTester = zapier.createAppTester(App);
 
-const _CONST = require('../src/const')
-const ctx = require('../src/ctx')
+const _CONST = require('../src/const');
+const ctx = require('../src/ctx');
 
 describe('serverInfo', () => {
-  zapier.tools.env.inject()
+  zapier.tools.env.inject();
   const bundle = {
     authData: {
       server: process.env.SERVER,
@@ -20,36 +20,36 @@ describe('serverInfo', () => {
       table_view: 'table:0000:view:0000',
       [ctx.FEATURE_NO_AUTH_ASSET_LINKS]: true,
     },
-  }
+  };
 
   it('should acquire server info', async () => {
-    bundle.serverInfo = undefined
+    bundle.serverInfo = undefined;
     const result = await appTester(async (z, bundle) => {
-      const result = await ctx.acquireServerInfo(z, bundle)
-      result.should.be.Object()
-      result.should.have.properties('version', 'edition')
+      const result = await ctx.acquireServerInfo(z, bundle);
+      result.should.be.Object();
+      result.should.have.properties('version', 'edition');
       const knownVersions = [
         '3.1.13',
         '3.2.5',
-      ]
-      knownVersions.indexOf(result.version).should.greaterThan(-1, `${result.version} (known are: ${knownVersions}; this test fails when the server version changes on cloud.seatable.io, extend known versions then.)`)
-      result.edition.should.eql('enterprise edition', 'cloud.seatable.io runs enterprise edition')
-    }, bundle)
-  })
+      ];
+      knownVersions.indexOf(result.version).should.greaterThan(-1, `${result.version} (known are: ${knownVersions}; this test fails when the server version changes on cloud.seatable.io, extend known versions then.)`);
+      result.edition.should.eql('enterprise edition', 'cloud.seatable.io runs enterprise edition');
+    }, bundle);
+  });
 
   it('should error server info', async () => {
-    bundle.serverInfo = undefined
-    bundle.authData.server = 'https://seatable.io/?'
+    bundle.serverInfo = undefined;
+    bundle.authData.server = 'https://seatable.io/?';
     const result = await appTester(async (z, bundle) => {
-      let result
+      let result;
       try {
-        result = await ctx.acquireServerInfo(z, bundle)
+        result = await ctx.acquireServerInfo(z, bundle);
       } catch (e) {
-        result = e
+        result = e;
       }
-      result.should.be.Object()
-      result.should.have.properties('stack', 'message')
-      result.message.should.match(_CONST.STRINGS['seatable.error.no-server-info'](bundle.authData.server))
-    }, bundle)
-  })
-})
+      result.should.be.Object();
+      result.should.have.properties('stack', 'message');
+      result.message.should.match(_CONST.STRINGS['seatable.error.no-server-info'](bundle.authData.server));
+    }, bundle);
+  });
+});

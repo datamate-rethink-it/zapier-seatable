@@ -1,6 +1,5 @@
-const ctx = require('../ctx')
-
-const _ = require('lodash')
+const ctx = require('../ctx');
+const _ = require('lodash');
 
 /**
  * get table columns as bundled
@@ -19,21 +18,21 @@ const getBundledViewColumns = (columns, bundle) => {
     bundle.inputData.table_name &&
       bundle.inputData.table_view &&
       !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`)
-  )
-  const tid = ctx.sidParse(bundle.inputData.table_name).table
+  );
+  const tid = ctx.sidParse(bundle.inputData.table_name).table;
   /** @type DTableTable */
-  const table = _.find(bundle.dtable.metadata.tables, ['_id', tid])
+  const table = _.find(bundle.dtable.metadata.tables, ['_id', tid]);
   if (undefined === table) {
-    return columns
+    return columns;
   }
-  const vid = viewIsInvalid ? '0000' : ctx.sidParse(bundle.inputData.table_view).view
+  const vid = viewIsInvalid ? '0000' : ctx.sidParse(bundle.inputData.table_view).view;
   /** @type DTableView */
-  const view = _.find(table.views, ['_id', vid])
+  const view = _.find(table.views, ['_id', vid]);
   if (undefined === view || undefined === view.hidden_columns || !_.isArray(view.hidden_columns)) {
-    return columns
+    return columns;
   }
-  return _.filter(columns, (col) => !view.hidden_columns.includes(col.key))
-}
+  return _.filter(columns, (col) => !view.hidden_columns.includes(col.key));
+};
 
 /**
  * get table columns for update
@@ -44,9 +43,9 @@ const getBundledViewColumns = (columns, bundle) => {
  */
 const getUpdateColumns = (columns, bundle) => {
   return _.filter(getBundledViewColumns(columns, bundle), (col) => {
-    return !ctx.struct.columns.zapier.hide_write.includes(col.type)
-  })
-}
+    return !ctx.struct.columns.zapier.hide_write.includes(col.type);
+  });
+};
 
 /**
  * perform
@@ -58,34 +57,34 @@ const getUpdateColumns = (columns, bundle) => {
  * @return {Promise<Object>}
  */
 const perform = async (z, bundle) => {
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
-  const map = new Map()
+  const map = {};
   for (const col of getUpdateColumns(tableMetadata.columns, bundle)) {
-    const key = `column:${col.key}`
+    const key = `column:${col.key}`;
     if ('   ' === bundle.inputDataRaw[key]) {
-      map[col.name] = ''
-      continue
+      map[col.name] = '';
+      continue;
     }
-    const value = bundle.inputData[key]
+    const value = bundle.inputData[key];
     if (undefined === value || '' === value) {
-      continue
+      continue;
     }
-    map[col.name] = value
+    map[col.name] = value;
   }
 
-  let rowId
+  let rowId;
   try {
-    rowId = ctx.sidParse(bundle.inputData.table_row).row
+    rowId = ctx.sidParse(bundle.inputData.table_row).row;
   } catch (e) {
-    throw new z.errors.Error(`Not a valid row: "${bundle.inputData.table_row}". Please use a valid "table:...:row:..." reference.`)
+    throw new z.errors.Error(`Not a valid row: "${bundle.inputData.table_row}". Please use a valid "table:...:row:..." reference.`);
   }
 
   const body = {
     table_name: tableMetadata.name,
     row: map,
     row_id: rowId,
-  }
+  };
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -93,13 +92,13 @@ const perform = async (z, bundle) => {
     method: 'PUT',
     headers: {Authorization: `Token ${bundle.dtable.access_token}`},
     body,
-  })
+  });
 
-  return response.data
-}
+  return response.data;
+};
 
 const inputFields = async (z, bundle) => {
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle)
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   return _.map(getUpdateColumns(tableMetadata.columns, bundle), (o) => {
     return {
@@ -108,9 +107,9 @@ const inputFields = async (z, bundle) => {
       type: o.type,
       required: false,
       help_text: `${ctx.struct.columns.types[o.type] || `[${o.type}]`} field, optional. To clear, enter exactly three spaces.`,
-    }
-  })
-}
+    };
+  });
+};
 
 module.exports = {
   key: 'row_update',
@@ -148,4 +147,4 @@ module.exports = {
     sample: {'success': true},
     outputFields: [{'key': 'success', 'type': 'boolean'}],
   },
-}
+};

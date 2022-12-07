@@ -1,7 +1,7 @@
-const ctx = require('./ctx')
+const ctx = require('./ctx');
 
 module.exports = async (z, bundle) => {
-  const serverInfo = await ctx.acquireServerInfo(z, bundle)
+  const serverInfo = await ctx.acquireServerInfo(z, bundle);
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -11,8 +11,8 @@ module.exports = async (z, bundle) => {
       'x-zapier-auth-test': `${JSON.stringify(bundle?.meta?.isTestingAuth)}`,
     },
     endPointPath: `/api/v2.1/dtable/app-access-token/`,
-  })
+  });
 
   // becomes bundle.inputData
-  return {serverInfo, dtable: response.data}
-}
+  return {serverInfo, dtable: response.data};
+};
