@@ -6,8 +6,8 @@ const _ = require('lodash');
  *
  * internal fetch all tables of a base
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<{json: {id: string, Name: string}}[]>}
  */
 const perform = async (z, bundle) => {

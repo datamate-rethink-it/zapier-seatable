@@ -1,3 +1,12 @@
+/**
+ * describe the connection
+ *
+ * SeaTable server name, version and variant in use for the zap.
+ *
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {string} {`${*} (${string} ${string}) Test Tables (Zapier Auth Test)`|`${*} (${string} ${string}) Test Tables (${string})`|`${*} (${string} ${string}) Test Tables (${*})`|`${*} (${string} ${string}) ${string} (Zapier Auth Test)`|`${*} (${string} ${string}) ${string} (${string})`|`${*} (${string} ${string}) ${string} (${*})`|`${*} (${string} ${string}) ${*} (Zapier Auth Test)`|`${*} (${string} ${string}) ${*} (${string})`|`${*} (${string} ${string}) ${*} (${*})`}
+ */
 const connectionLabel = (z, bundle) => {
   // remove https:// in front (but keep the non-secure to show)
   const address = bundle.authData.server.replace(/^https:\/\//, '').replace(/\/+$/, '');

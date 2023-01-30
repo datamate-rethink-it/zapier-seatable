@@ -6,8 +6,8 @@ const _ = require('lodash');
  *
  * finds a particular row by column and value in table
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
@@ -66,8 +66,8 @@ const searchColumn = async (z, bundle) => {
  * date-time specific inputs can be done, however with free-text input it might be that SeaTable also supports
  * relative formats which Zapier for what I know does not support. (STZ-0016)
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<{helpText: string, label: string, altersDynamicFields: boolean, key: string, required: boolean}>}
  */
 const searchValue = async (z, bundle) => {

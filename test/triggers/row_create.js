@@ -27,11 +27,11 @@ describe('Trigger - row_create', () => {
     results[0].should.eqls({key: 'row_id', label: 'Original ID'});
     results[1].should.eqls({key: 'row_mtime', label: 'Last Modified'});
     results[2].should.eqls({key: 'column:0000', label: 'Name'});
-    results[10].should.eqls({
+    results[results.length - 2].should.eqls({
       'key': 'column:wNWg-(no-auth-dl)',
       'label': 'Picture (Download w/o Authorization)',
     });
-    results[11].should.eqls({
+    results[results.length - 1].should.eqls({
       'key': 'column:6Ev4-(no-auth-dl)',
       'label': 'File (Download w/o Authorization)',
     });

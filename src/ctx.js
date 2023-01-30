@@ -8,114 +8,8 @@
 const _CONST = require('./const');
 
 const _ = require('lodash');
-const {ResponseThrottleInfo} = require('./lib');
+const {ResponseThrottleInfo, sidParse} = require('./lib');
 
-/* SeaTable Rest API Schema
- *
- * The schema is kept complete to usage only, no full API schema
- */
-
-/**
- * @typedef {object} ServerInfo
- * @property {string} version
- * @property {string} edition
- */
-
-/**
- * @typedef {object} DTable
- * @property {string} server_address {server_address} on access, non-standard
- * @property {string} app_name
- * @property {string} access_token
- * @property {string} dtable_uuid
- * @property {string} dtable_server
- * @property {string} dtable_socket
- * @property {number} workspace_id
- * @property {string} dtable_name
- */
-
-/**
- * @typedef {DTable} DTableEx
- * @property {*} metadata dtable local metadata cache
- */
-
-/**
- * @typedef {object} DTableMetadata
- * @property {DTableMetadataTables} metadata
- */
-
-/**
- * @typedef {object} DTableMetadataTables
- * @property {Array<DTableTable>} tables
- */
-
-/**
- * @typedef {object} DTableTable
- * @property {string} _id
- * @property {string} name
- * @property {Array<DTableColumn>} columns
- * @property {Array<DTableView>} views
- */
-
-/**
- * @typedef {object} DTableColumn
- * @property {string} key
- * @property {string} name
- * @property {string} type
- */
-
-/**
- * typedef {object} DTableView
- */
-
-/**
- * @typedef {DTableColumn} DTableColumnTLink
- * @property {'link'} type
- * @property {DTableColumnTLinkData} data
- */
-
-/**
- * @typedef DTableColumnTLinkData
- * @property {string} display_column_key example: 0000
- * @property {string} table_id example: 0000
- * @property {string} other_table_id example: P8z8
- * @property {boolean} is_internal_link example: true
- * @property {string} link_id example: pTbM
- */
-
-/**
- * @typedef {object} DTableView
- * @property {string} _id
- * @property {string} name
- * @property {Array<string>} hidden_columns by their column keys
- */
-
-/**
- * @typedef {object} DTableRow
- */
-
-/* Zapier API Bindings
- *
- * binding lightly for prototyping
- */
-
-/**
- * @typedef {object} ZapierZRequestResponse
- * @property {object} data
- */
-
-/**
- * @typedef {ZapierZRequestResponse} DTableMetadataResponse
- * @property {DTableMetadata} data
- */
-
-/**
- * @typedef {ZapierZRequestResponse} DTableCreateRowResponse
- * @property {DTableRow} data
- */
-
-/**
- * @typedef {object} ZapierBundle
- */
 
 /**
  * context bound dtable struct
@@ -157,33 +51,76 @@ const struct = {
       hide_write: ['file', 'image', 'link', 'auto-number', 'ctime', 'mtime', 'formula'],
       // column types that zapier should not offer to search in (hidden):
       hide_search: ['link'],
+      /**
+       * column types that zapier offers for a row-lookup
+       * @type {DTableColumnType[]}
+       */
+      row_lookup: ['text', 'number', 'date', 'url', 'email', 'auto-number'],
     },
   },
 };
 
-function zapInit(z, bundle) {
-  bundle.authData.server = bundle.authData.server.replace(/\/+$/, '');
-
-  if (isEmpty(bundle.__zTS)) {
-    const val = (new Date()).valueOf() % 1000000;
-    bundle.__zTS = ''.concat(val).padStart(6, ' ');
-    bundle.__zLogTag = `[${bundle.__zTS}] zap`;
-    z.console.time(bundle.__zLogTag);
+/**
+ * zap initializer hook for bundle in ctx
+ *
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {string} bundle rolling transaction id
+ */
+function zapInitHookBundle(z, bundle) {
+  if (bundle.__zTS) {
+    return bundle.__zTS;
   }
+
+  /**
+   * bundle init start time
+   *
+   * @type {number} of milliseconds since 1 January 1970 00:00:00 UTC
+   */
+  bundle.__zT = (new Date()).valueOf();
+
+  /**
+   * bundle rolling transaction id
+   *
+   * @type {string} 6-character width flake of the bundle transaction
+   */
+  bundle.__zTS = ''.concat(String(bundle.__zT % 1000000)).padStart(6, ' ');
+
+  /**
+   * bundle zap log-tag
+   *
+   * @type {string} zap log-tag "[<z-ts>] zap", always 12 characters
+   */
+  bundle.__zLogTag = `[${bundle.__zTS}] zap`;
+  z.console.time(bundle.__zLogTag);
 
   return bundle.__zTS;
 }
 
 /**
+ * zap initializer in ctx
+ *
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {string}
+ */
+function zapInit(z, bundle) {
+  // remove trailing slash (common user input error)
+  bundle.authData.server = bundle.authData.server.replace(/\/+$/, '');
+
+  return zapInitHookBundle(z, bundle);
+}
+
+/**
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<{}>}
  */
 async function serverInfo(z, bundle) {
-  let response;
-
   zapInit(z, bundle);
 
   /** @type {ZapierZRequestResponse} */
-  response = await z.request({
+  const response = await z.request({
     url: `${bundle.authData.server}/server-info/`,
     skipHandleHTTPError: true,
     skipHandleUndefinedJson: true,
@@ -212,8 +149,8 @@ async function serverInfo(z, bundle) {
  *
  * point of first contact with the remote system
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<DTable>}
  */
 const acquireServerInfo = (z, bundle) => {
@@ -221,6 +158,8 @@ const acquireServerInfo = (z, bundle) => {
 };
 
 /**
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<DTable>}
  */
 async function appAccessToken(z, bundle) {
@@ -254,8 +193,8 @@ async function appAccessToken(z, bundle) {
  *
  * does authentication via appAccessToken()
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<DTable>}
  */
 const acquireDtableAppAccess = (z, bundle) => {
@@ -270,6 +209,7 @@ const featureLinkColumnsData = {
 
 /**
  * @param {Array<DTableColumn|DTableColumnTLink>} columns
+ * @return {Array<DTableColumn|DTableColumnTLink>}
  */
 const fileColumns = (columns) => columns.filter((s) => struct.columns.assets.indexOf(s.type) + 1);
 const noAuthColumnKey = (key) => `column:${key}-(no-auth-dl)`;
@@ -291,6 +231,9 @@ const fileNoAuthLinksField = {
 };
 
 /**
+ * @generator
+ * @param {Array<DTableColumn|DTableColumnTLink>} columns
+ * @param {Bundle} bundle
  * @yield {*<{label: string, key: string}>}
  */
 const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
@@ -308,8 +251,8 @@ const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
  *
  * images and files, original data type (string or object) is kept, ads a new, suffixed entry.
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @param {Array<DTableColumn|DTableColumnTLink>} columns
  * @param {Array<{object}>} rows
  */
@@ -390,8 +333,8 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
  *
  * for the first reference-id if any
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @param {Array<DTableColumn|DTableColumnTLink>} columns
  * @param {Array<{object}>} rows
  */
@@ -469,12 +412,12 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
  * if the bundle.dtable.metadata entry is undefined, set it with the metadata
  * from the dtables api.
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<DTableMetadataTables>}
  */
 const acquireMetadata = async (z, bundle) => {
-  /** @type {DTableEx} */
+  /** @type {DTable} */
   const dtableCtx = await module.exports.acquireDtableAppAccess(z, bundle);
   if (undefined !== dtableCtx.metadata) {
     return dtableCtx.metadata;
@@ -506,8 +449,8 @@ const acquireMetadata = async (z, bundle) => {
  * and this error should be defined out of existence as per that request there
  * is no such table-metadata.
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<DTableTable>}
  */
 const acquireTableMetadata = async (z, bundle) => {
@@ -533,9 +476,10 @@ const acquireTableMetadata = async (z, bundle) => {
  * NOTE: for this function to work, the bundle must already be bound to a dtable
  *       and its meta-data.
  *
+ * @param {Bundle} bundle
  * @return {DTableTable}
  */
-function bundle_table_meta(bundle) {
+function bundleTableMeta(bundle) {
   if (!bundle.dtable) {
     throw new Error('internal error: dtable not bundled');
   }
@@ -551,8 +495,8 @@ function bundle_table_meta(bundle) {
  *
  * dtable metadata to row filter in z, bundle context
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @param {string} context label for logging
  * @return {Promise<{filter_predicate: string, filter_term: string, column_name: null, filter_term_modifier: string}>}
  */
@@ -636,63 +580,12 @@ const isEmpty = (v) => {
     return true;
   }
 
-  // noinspection LoopStatementThatDoesntLoopJS
   for (const i in v) {
-    return false;
+    if ({}.hasOwnProperty.call(v, i)) {
+      return false;
+    }
   }
   return true;
-};
-
-/**
- * parse seatable api sub-identifier (sid)
- *
- * parse only right now, encoding is simple string building. format definition is here.
- *
- * table:{id}     the format is not very well-defined, we can see 4 characters of a-z, A-Z and 0-9.
- *                -> request of specification from Seatable, talked with MW, no feedback yet
- * column:{key}   the format is not very well-defined, similar to table:{id} we can see 4 characters
- *                of a-z, A-Z and 0-9.
- * table:{id}:view:{id}
- *                the view is in context of a table as per base, views and tables can have the same
- *                ids. therefore it is not possible to identify the table via the view-id alone when
- *                there could be a table meant as well (only with an additional rule/data like prefer
- *                the more specific (view) over the less (table) which is not possible with a resource
- *                name alone, hence the hierarchy).
- * table:{id}:row:{id}
- *                table row
- *
- * NOTE: current implementation is lax on the length of id/keys, 4 is the minimum length, "_" and "-"
- *       are allowed to be by part anywhere while they were not seen in id/key (only in identifiers/keys
- *       of other entities)
- *
- * EXAMPLE:
- *
- *    sid: 'table:0000:view:0000' -> {table: '0000', view: '0000}
- *
- * NOTE: @returns empty object ({}) given the sid parameter is not a string. This is to allow hasOwnProperty
- *       checks on the result which only work with objects.
- *
- * @param sid {string}
- * @returns {({table: {string}, view?: {string}, row?: {string}}|{column: {string}}|{})} sid-object
- * @throws Error if sid is of invalid syntax
- */
-const sidParse = (sid) => {
-  let result = false;
-  if ((typeof sid === 'string' || sid instanceof String)) {
-    result = sid.match(
-        new RegExp(
-            '^(table:(?<table>[a-zA-Z0-9_-]{4,})(:view:(?<view>[a-zA-Z0-9_-]{4,})|:row:(?<row>[a-zA-Z0-9_-]{4,}))?|column:(?<column>[a-zA-Z0-9_-]{4,}))$',
-        ),
-    );
-  } else {
-    return {};
-  }
-
-  if (!result) {
-    throw new Error(`unable to parse (invalid) sid: "${sid}"`);
-  }
-  // noinspection JSValidateTypes
-  return _.pickBy(result.groups, _.identity);
 };
 
 /**
@@ -700,8 +593,8 @@ const sidParse = (sid) => {
  *
  * map bundle.inputData instead of sids, see requestParamsSid
  *
- * @param bundle
- * @return {{table_id?: {string}, view_id?: {string}}}
+ * @param {Bundle} bundle
+ * @return {{table_id: string?, view_id: string?}}
  */
 function requestParamsBundle(bundle) {
   /* @type {table_name?: string, table_view?: string} */
@@ -728,7 +621,7 @@ function requestParamsBundle(bundle) {
  * request parameters for sid
  *
  * @param {string} sid
- * @return {{table_id?: {string}, view_id?: {string}}}
+ * @return {{table_id: string?, view_id: string?}}
  */
 function requestParamsSid(sid) {
   const r = {};
@@ -772,6 +665,7 @@ const mapColumnKeys = (columns, row) => {
  * map keys of a create row operation for output
  *
  * @param  {DTableRow} row
+ * @return {Object.<string,any>}
  */
 const mapCreateRowKeys = (row) => {
   const r = {};
@@ -797,7 +691,7 @@ const mapCreateRowKeys = (row) => {
  * column.
  *
  * @param {DTableColumn|DTableColumnTLink} col
- * @param bundle
+ * @param {Bundle} bundle
  * @return {DTableTable}?
  */
 const columnLinkTableMetadata = (col, bundle) => {
@@ -807,7 +701,7 @@ const columnLinkTableMetadata = (col, bundle) => {
       undefined === col.data.other_table_id) {
     return undefined;
   }
-  const linkTableId = bundle_table_meta(bundle)._id === col.data.other_table_id ?
+  const linkTableId = bundleTableMeta(bundle)._id === col.data.other_table_id ?
     col.data.table_id :
     col.data.other_table_id;
   return _.find(bundle.dtable.metadata.tables, ['_id', linkTableId]);
@@ -818,9 +712,10 @@ const columnLinkTableMetadata = (col, bundle) => {
  *
  * (since 2.0.0) all the rows columns with the resolution of linked rows columns (supports column.type link)
  *
+ * @generator
  * @param {Array<DTableColumn|DTableColumnTLink>} columns (e.g. tableMetadata.columns)
- * @param bundle
- * @return {{label: string, key: string}[]}
+ * @param {Bundle} bundle
+ * @yields {{label: string, key: string}[]}
  */
 const outputFieldsRows = function* (columns, bundle) {
   for (const col of columns) {
@@ -847,8 +742,8 @@ const outputFieldsRows = function* (columns, bundle) {
 /**
  * table_view input dropdowns
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<{helpText: string, label: string, type: string, altersDynamicFields: boolean, key: string, required: boolean}>}
  */
 const tableView = async (z, bundle) => {
@@ -891,8 +786,8 @@ const tableView = async (z, bundle) => {
 /**
  * table_name + table_view input dropdowns
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<Array<{helpText: string, label: string, type: string, altersDynamicFields: boolean, key: string, required: boolean}>>}
  */
 const tableFields = async (z, bundle) => {
@@ -912,9 +807,6 @@ const tableFields = async (z, bundle) => {
 
 module.exports = {
   acquireServerInfo,
-  /**
-   * @returns {Promise<DTable>}
-   */
   acquireDtableAppAccess,
   acquireLinkColumnsData,
   acquireMetadata,

@@ -4,6 +4,7 @@
  * Written by Tom Klingenberg
  * Copyright 2022 SeaTable GmbH, Mainz
  */
+const {format} = require('./lib');
 
 const FEATURE_MTIME_FILTER = 'feature_row_modification_time_limiter';
 const FEATURE_NO_AUTH_ASSET_LINKS = 'feature_non_authorized_asset_downloads';
@@ -17,17 +18,6 @@ const FEATURE = {
   },
 };
 
-function format(strings, ...keys) {
-  return (...values) => {
-    const dict = values[values.length - 1] || {};
-    const result = [strings[0]];
-    keys.forEach((key, i) => {
-      const value = Number.isInteger(key) ? values[key] : dict[key];
-      result.push(value, strings[i + 1]);
-    });
-    return result.join('');
-  };
-}
 
 const STRINGS = {
   'seatable.error.app-access-token':

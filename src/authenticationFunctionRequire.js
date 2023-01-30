@@ -1,5 +1,10 @@
 const ctx = require('./ctx');
 
+/**
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {Promise<{serverInfo: {access_token: string, workspace_id: number, app_name: string, dtable_server: string, metadata: DTableMetadataTables, dtable_name: string, dtable_socket: string, dtable_uuid: string, server_address: string}, dtable: Object}>}
+ */
 module.exports = async (z, bundle) => {
   const serverInfo = await ctx.acquireServerInfo(z, bundle);
 

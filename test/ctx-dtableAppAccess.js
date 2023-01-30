@@ -5,7 +5,6 @@ const zapier = require('zapier-platform-core');
 const App = require('../index');
 const appTester = zapier.createAppTester(App);
 
-const _CONST = require('../src/const');
 const ctx = require('../src/ctx');
 
 describe('dtableAppAccess', () => {
@@ -38,7 +37,7 @@ describe('dtableAppAccess', () => {
   it('should claim app access', async () => {
     delete bundle.serverInfo;
     delete bundle.dtable;
-    const result = await appTester(async (z, bundle) => {
+    await appTester(async (z, bundle) => {
       const result = await ctx.acquireDtableAppAccess(z, bundle);
       result.should.be.Object();
       result.should.have.properties('dtable_uuid');

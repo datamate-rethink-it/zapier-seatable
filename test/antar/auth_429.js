@@ -64,6 +64,7 @@ const appTestBrute429onAuth = async (
       bundle,
   );
 };
+((nocall) => null)(appTestBrute429onAuth);
 
 describe('Auth 429', () => {
   zapier.tools.env.inject();
@@ -117,7 +118,7 @@ describe('Auth 429', () => {
 
   it('should make ctx.acquireTableMetadata() and return bundle', async () => {
     const result = await appTester(async (z, bundle) => {
-      const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
+      await ctx.acquireTableMetadata(z, bundle);
       return bundle;
     }, bundle);
     console.log(result);
@@ -143,17 +144,8 @@ describe('Auth 429', () => {
         delta = (new Date).valueOf() - start.valueOf();
         console.log(`${step} ${delta}: (${responses.length})`, responses.map((r) => r.status || null).join(', '));
         for (response of responses) {
-          if (response.status === 200) {
-            const headers = response.headers;
-            const headersJson = response.headers.toJSON();
-            const retryAfter = response.getHeader('retry-after');
-            // console.log('test')
-          }
           if (response.status === 429) {
             if (response && response.data && response.data.detail) {
-              const headersJson = response.headers.toJSON();
-              const retryAfter = response.getHeader('retry-after');
-
               // parse detail for number of seconds
               const detail = response.data.detail;
               const match = detail.match(/^Request was throttled\. Expected available in (\d+) seconds\.$/);
@@ -180,12 +172,11 @@ describe('Auth 429', () => {
       for (let step = 0; step < 100; step++) {
         bundle.dtable = null;
         try {
-          const result = await ctx.acquireDtableAppAccess(z, bundle, true);
+          await ctx.acquireDtableAppAccess(z, bundle);
           // TODO(tk): skipThrowForStatus: true on acquireDtableAppAccess() (optional parameter)
           console.log(step, bundle.dtable && bundle.dtable.workspace_id);
         } catch (e) {
           console.log(step, typeof e, e.message);
-          const ee = e;
         }
       }
       return null;

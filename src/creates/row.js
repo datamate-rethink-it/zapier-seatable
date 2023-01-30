@@ -6,9 +6,9 @@ const _ = require('lodash');
  *
  * creates (appends) a new row in table
  *
- * @param z
- * @param bundle
- * @return {Promise<{}>}
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {Promise<Object.<string,string>>}
  */
 const perform = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
@@ -34,6 +34,11 @@ const perform = async (z, bundle) => {
   return ctx.mapCreateRowKeys(response.data);
 };
 
+/**
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {Promise<{label: *, type: *, key: string, required: boolean, help_text: string}[]>}
+ */
 const inputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 

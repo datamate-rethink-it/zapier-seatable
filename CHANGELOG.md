@@ -1,5 +1,18 @@
 # Change-Log
 
+## [2.1.11] - 2023-01-30
+
+### Internal
+
+* Upgrade to Zapier Core 12.2.1
+* Npm v7+ modules hidden file support
+* Establish library
+* Update schema
+* CS-fixes; updated eslint rules
+* Fast turn-around for development builds
+* Stabilize tests; SeaTable 3.3.7
+* Fix build goal, now phony and depending on the increment
+
 ## [2.1.10] - 2022-12-07
 
 ### Fixed

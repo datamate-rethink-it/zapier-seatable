@@ -7,13 +7,20 @@ all : lint test build
 include .config/eslint/eslint.mk
 include .config/zapier/zapier.mk
 
-## publish :  continuous deployment (cd) goal
+## build : build artifacts
+.PHONY : build
+build : $(zapier-build-dir)/.increment
+
+## publish : continuous deployment (cd) goal
 .PHONY : publish
 publish: test upload
 
+## quick : push from worktree to zapier, test afterwards then
+.PHONY : quick
+quick : eslint-quick-fix zapier-upload test
+
 .PHONY : upload
-upload: build
-	$(zapier) upload
+upload: build zapier-upload
 
 .PHONY : test
 test: lint test/.increment
@@ -23,4 +30,5 @@ lint : src/lint.cache.increment
 
 .PHONY : clean
 clean :
-	$(git) clean -fX '.config/' 'build/*.zip*' 'src' 'test'
+	rm -f node_modules/.package-lock.json
+	$(git) clean -fX .config/ 'build/*.zip*' src test

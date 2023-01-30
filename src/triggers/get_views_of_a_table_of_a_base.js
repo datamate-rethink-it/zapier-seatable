@@ -9,8 +9,8 @@ const _ = require('lodash');
  * NOTE: the view drop-down input field now does its own API call,
  *       deprecating this internal trigger.
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<{json: {id: string, Name: string}}[]>}
  */
 const perform = async (z, bundle) => {

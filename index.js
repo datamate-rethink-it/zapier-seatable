@@ -33,8 +33,8 @@ const handleBundleRequest = (request, z, bundle) => {
  *
  * 403 /api/v2.1/dtable/app-access-token/
  *
- * @param response
- * @param z
+ * @param {HttpResponse|RawHttpResponse} response
+ * @param {ZObject} z
  * @return {{endPointPath}|*}
  */
 const handleForbiddenBaseAccess = (response, z) => {
@@ -56,8 +56,8 @@ const handleForbiddenBaseAccess = (response, z) => {
  * 404 /api/v2.1/dtable/app-access-token/
  *  `-{"error_msg": "dtable _(deleted_12345) Deleted Table not found."}
  *
- * @param response
- * @param z
+ * @param {HttpResponse|RawHttpResponse} response
+ * @param {ZObject} z
  * @return {{error_msg}|{endPointPath}|*}
  */
 const handleDeletedBaseAccess = (response, z) => {

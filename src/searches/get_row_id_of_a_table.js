@@ -6,8 +6,8 @@ const _ = require('lodash');
  *
  * finds a particular row by default column value in table
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<{id: {string}, name: {string}}[]>}
  */
 const perform = async (z, bundle) => {

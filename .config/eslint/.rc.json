@@ -46,14 +46,14 @@
                 "ignoreTemplateLiterals": true
             }
         ],
-        "no-unused-vars": "warn",
+        "no-unused-vars": "error",
         "operator-linebreak": "warn",
         "padded-blocks": "warn",
-        "prefer-const": "warn",
+        "prefer-const": "error",
         "quote-props": "warn",
-        "require-jsdoc": "warn",
+        "require-jsdoc": "error",
         "semi": "error",
-        "space-before-function-paren": "warn",
-        "valid-jsdoc": "warn"
+        "space-before-function-paren": "error",
+        "valid-jsdoc": "error"
     }
 }

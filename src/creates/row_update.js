@@ -10,8 +10,8 @@ const _ = require('lodash');
  * the columns parameter falls through.
  *
  * @param {Array<DTableColumn>} columns
- * @param bundle
- * @return Array<DTableColumn>
+ * @param {Bundle} bundle
+ * @return {Array<DTableColumn>}
  */
 const getBundledViewColumns = (columns, bundle) => {
   const viewIsInvalid = (
@@ -38,8 +38,8 @@ const getBundledViewColumns = (columns, bundle) => {
  * get table columns for update
  *
  * @param {Array<DTableColumn>} columns
- * @param bundle
- * @return Array<DTableColumn>
+ * @param {Bundle} bundle
+ * @return {Array<DTableColumn>}
  */
 const getUpdateColumns = (columns, bundle) => {
   return _.filter(getBundledViewColumns(columns, bundle), (col) => {
@@ -52,8 +52,8 @@ const getUpdateColumns = (columns, bundle) => {
  *
  * update an existing row in a table
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<Object>}
  */
 const perform = async (z, bundle) => {

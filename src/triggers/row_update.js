@@ -9,8 +9,8 @@ const _ = require('lodash');
  *
  * triggers on a table row update (or create)
  *
- * @param z
- * @param bundle
+ * @param {ZObject} z
+ * @param {Bundle} bundle
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
@@ -76,6 +76,11 @@ const perform = async (z, bundle) => {
   return rows;
 };
 
+/**
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {Promise<Array.<{label: string, key: string}>>}
+ */
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
