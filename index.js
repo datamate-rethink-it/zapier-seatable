@@ -97,7 +97,8 @@ const handleHTTPError = (response, z) => {
   }
   if (response.status === 429) {
     /* @link https://zapier.github.io/zapier-platform/#handling-throttled-requests */
-    const retryAfter = response.getHeader('retry-after') || 67;
+    const parsed = parseInt(response.getHeader('retry-after'), 10);
+    const retryAfter = (Number.isSafeInteger(parsed) && parsed > 0 ) ? parsed : 67;
     z.console.log(`[${response.request.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}]) (retryAfter=${retryAfter})`);
     throw new z.errors.ThrottledError(_CONST.STRINGS['http.error.status429'], retryAfter);
   }

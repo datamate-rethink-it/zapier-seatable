@@ -1,5 +1,15 @@
 # Change-Log
 
+## [2.1.12] - 2023-02-08
+
+### Fixed
+
+* read_poll failure: delay positive integer
+
+### Internal
+
+* Upgrade to Zapier Core 13.0.0
+
 ## [2.1.11] - 2023-01-30
 
 ### Internal

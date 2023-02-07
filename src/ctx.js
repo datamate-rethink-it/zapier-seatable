@@ -455,7 +455,7 @@ const acquireMetadata = async (z, bundle) => {
  */
 const acquireTableMetadata = async (z, bundle) => {
   const metadata = await acquireMetadata(z, bundle);
-  if (!bundle.inputData.table_name) {
+  if (!bundle?.inputData?.table_name) {
     return {
       _id: undefined,
       name: undefined,
