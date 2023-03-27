@@ -1,5 +1,17 @@
 # Change-Log
 
+## [2.1.13] - 2023-03-27
+
+### Changed
+
+* Show error message with unexpected HTTP errors (e.g. status 413)
+
+### Internal
+
+* Upgrade to Zapier Core 14.0.0
+* Stabilize tests; SeaTable 3.4.8
+* Stale Read-Me
+
 ## [2.1.12] - 2023-02-08
 
 ### Fixed

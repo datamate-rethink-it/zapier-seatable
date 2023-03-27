@@ -5,6 +5,7 @@
 * [ ] release ist auf `develop` vorbereitet
 * [ ] `develop` worktree und staging area sind ohne änderungen
   * `git diff --exit-code && git diff --cached --exit-code`
+  * `test -z "$(git status --porcelain)" # also for untracked files`
 * [ ] `develop` ist auf "seatable zapier app `major.minor.revision`"
   * `git --no-pager show --no-patch --format="%s"`
 * [ ] `develop` hat die beschreibung des releases in der commit nachricht
@@ -46,35 +47,50 @@
 * [ ] release hochladen
   * `make zapier-upload`
 * [ ] prüfung der versionsänderung / des uploads
-  * `zapier history | tee >(sleep 0.3; grep -F $(git describe --tags)) | head -n 3`
+  * `zapier history | head -n 4`
+  * `zapier versions`
 
 ## Publizieren
 
-* [ ] version publizieren
-  * `zapier promote "$(git describe --tags)"`
-* [ ] der change-log wurde geprüft
-* [ ] der change-log ist abgenommen
-* [ ] promotion der version mit change-log war erfolgreich
 * [ ] prüfung des uploads
-  * `zapier history | tee >(head -n 3) >(sleep .3; grep -F $(git describe --tags)) >/dev/null`
-* [ ] `zapier versions` zeigt den wechsel der `production` version an
+  * `zapier history | head -n 5`
+* [ ] `zapier history` zeigt die korrekte version mit dem korrekten timestamp an
 * [ ] eigenen user migrieren
-  * `zapier migrate 2.1.10 2.1.11 --user=tkl@seatable.io`
+  * `zapier migrate "$(git describe --tags HEAD~)" "$(git describe --tags)" --user=tkl@seatable.io`
+* [ ] eigener user wurde migriert
+  * `zapier history | head -n 7`
 * [ ] test mit zap in neuer version
   * mit `zapier logs` den manuellen test in neuer version prüfen
 * [ ] lauf mit zap in neuer version
   * mit `zapier logs` auf automatische lauffähigkeit des Zaps in neuer version prüfen
+* [ ] version publizieren
+  * `zapier promote "$(git describe --tags)"`
+* [ ] `zapier versions` zeigt den wechsel der `production` version an
+  * `unbuffer zapier versions >/dev/null && zapier versions`
+* [ ] der change-log wurde geprüft
+* [ ] der change-log ist abgenommen
+* [ ] promotion der version mit change-log war erfolgreich
 * [ ] canary 1% user migration auf die neue version
   * `zapier migrate "$(git describe --tags HEAD~)" "$(git describe --tags)" 1`
-  * tracking mit `zapier history | head -n 6` oder `zapier jobs` und `zapier versions`
+  * tracking mit `zapier history | head -n 6` (oder `zapier jobs`)
+  * und `unbuffer zapier versions >/dev/null && zapier versions`
 * [ ] canary 1% überwachen
-  * im monitoring auf xdg-open "https://developer.zapier.com/app/$(jq -r '.id' .zapierapprc)/version/$(git describe --tags)/monitoring"
+  * im monitoring auf `xdg-open "https://developer.zapier.com/app/$(jq -r '.id' .zapierapprc)/version/$(git describe --tags)/monitoring"`
 * [ ] 1% canaries können iteriert werden
   * erfordert prüfung auf die anzahl der user
-    * die 1. iteration kann einen user haben und
+    * die 1. iteration kann einen oder zwei, drei user haben und
     * die 2. iteration dann nicht und
     * die 3. iteration dann auch wieder keinen user, dann den prozentsatz leicht erhöhen (1% -> 2%) und
     * die 4. iteration kann dann zwei user haben
+
+~~~shell
+zapier migrate "$(git describe --tags HEAD~)" "$(git describe --tags)" 1 \
+  && sleep 60 \
+  && zapier history | head -n 6 \
+  && unbuffer zapier versions >/dev/null && zapier versions
+~~~
+_(initiate percentage, wait for migration and display users on versions)_
+
 * [ ] canary 10% user migration auf die neue version
   * `zapier migrate "$(git describe --tags HEAD~)" "$(git describe --tags)" 10`
   * tracking mit `zapier history | head -n 6` und `zapier versions` für die aktiven user auf der neuen version

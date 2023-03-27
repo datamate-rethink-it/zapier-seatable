@@ -37,8 +37,10 @@
 
 ## Notes
 
-1. Zapier Core 10 / Node 12
+1. Zapier Core 13 / Node 16
 2. [`zapier` cli app][ZAPIER-CLI] required.
 3. Mind the static test-data in `test` folder for testing.
+4. NOTE: Using `zapier build` artifacts unchanged leaks project/company
+   secrets, use the appropriate `make` goals instead.
 
 [ZAPIER-CLI]: https://platform.zapier.com/cli_tutorials/getting-started#installing-the-cli

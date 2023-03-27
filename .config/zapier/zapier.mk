@@ -17,7 +17,7 @@ $(zapier-build-dir)/.increment : node_modules/.package-lock.json src/lint.cache.
 	$(foreach zip,$(zapier-build-paths),zipinfo $(zip) > $(zip).info;)
 	touch $@
 
-build/.cache/zapier-upload.sentinel : $(zapier-build-paths)
+build/.cache/zapier-upload.sentinel : $(zapier-build-dir)/.increment $(zapier-build-paths)
 	$(zapier) upload
 	$(mkdir) -p $(@D) && touch $@
 

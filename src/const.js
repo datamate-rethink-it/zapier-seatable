@@ -35,6 +35,8 @@ const STRINGS = {
   'http.error.status429':
     '429 Too Many Requests: This Zap is running into SeaTable API' +
     ' request limits.',
+  'http.error.status4xx5xxFallback':
+    'Unexpected status code',
 };
 
 module.exports = {

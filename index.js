@@ -98,11 +98,15 @@ const handleHTTPError = (response, z) => {
   if (response.status === 429) {
     /* @link https://zapier.github.io/zapier-platform/#handling-throttled-requests */
     const parsed = parseInt(response.getHeader('retry-after'), 10);
-    const retryAfter = (Number.isSafeInteger(parsed) && parsed > 0 ) ? parsed : 67;
+    const retryAfter = (Number.isSafeInteger(parsed) && parsed > 0) ? parsed : 67;
     z.console.log(`[${response.request.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}]) (retryAfter=${retryAfter})`);
     throw new z.errors.ThrottledError(_CONST.STRINGS['http.error.status429'], retryAfter);
   }
-  throw new Error(`Unexpected status code ${response.status}`);
+
+  let message = response?.json?.error_msg || _CONST.STRINGS['http.error.status4xx5xxFallback'];
+  message = message.charAt(0).toUpperCase().concat(message.slice(1));
+
+  throw new Error(`${message} (${response.status})`);
 };
 const handleUndefinedJson = (response) => {
   if (response.request && response.request.skipHandleUndefinedJson) {
