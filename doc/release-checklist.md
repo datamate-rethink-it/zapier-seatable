@@ -3,6 +3,7 @@
 ## Vorbereitung
 
 * [ ] release ist auf `develop` vorbereitet
+  * `git checkout -q develop`
 * [ ] `develop` worktree und staging area sind ohne änderungen
   * `git diff --exit-code && git diff --cached --exit-code`
   * `test -z "$(git status --porcelain)" # also for untracked files`
@@ -17,20 +18,23 @@
 
 ## Erstellung
 
-* [ ] auf `main` wechseln
+* [ ] auf `main` wechseln / worktree prüfen
+  * `git checkout -q main`
 * [ ] `main` worktree und staging area sind ohne änderungen
+  * `git diff --exit-code && git diff --cached --exit-code`
+  * `test -z "$(git status --porcelain)" # also for untracked files`
 * [ ] in `main` die revision vorbereiten
   * `git merge --squash develop`
 * [ ] nvm auffrischen
   * `cd .`
-* [ ] packet als aktuell markieren
+* [ ] paket als aktuell markieren
   * `touch package.json`
 * [ ] npm auffrischen
   * `make -B package-lock.json`
 * [ ] versionen prüfen
   * `npm list`
 * [ ] projekt liegt im npm in release version "`major.minor.revision`" vor
-* [ ] projekt abhänigkeiten liegen in der für das release freigegeben versionen vor
+* [ ] projekt abhängigkeiten liegen in der für das release freigegeben versionen vor
 * [ ] release bauen
   * `make build`
 * [ ] release baut
