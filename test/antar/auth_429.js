@@ -68,9 +68,10 @@ const appTestBrute429onAuth = async (
 
 describe('Auth 429', () => {
   zapier.tools.env.inject();
+  // bundle.authData.server = bundle.authData.server.replace(/\/+$/, '');
   const bundle = {
     authData: {
-      server: process.env.SERVER,
+      server: process.env.SERVER.replace(/\/+$/, ''),
       api_token: process.env.API_TOKEN,
     },
     inputData: {
@@ -80,7 +81,6 @@ describe('Auth 429', () => {
   };
 
   it('should get server-info first to verify it is a seatable server', async () => {
-    bundle.authData.server = bundle.authData.server.replace(/\/+$/, '');
     await appTester(
         async (z, bundle) => {
           const response = await z.request({
@@ -99,7 +99,7 @@ describe('Auth 429', () => {
     await appTester(
         async (z, bundle) => {
         // put the application into 429 state on the real API
-          const result = await brute429onAuth(z, bundle, null, 5, 30);
+          const result = await brute429onAuth(z, bundle, null, 10, 300);
           should(result.status).eql(429);
           const seconds = result.getHeader('retry-after');
           should(seconds).greaterThan(10);
@@ -116,7 +116,7 @@ describe('Auth 429', () => {
         },
         bundle,
     );
-  }).timeout(4000);
+  }).timeout(40000);
 
   it('should make z.request() for auth', async () => {
     const result = await appTester(async (z, bundle) => {
@@ -157,7 +157,7 @@ describe('Auth 429', () => {
         const responses = await Promise.all(promises);
         delta = (new Date).valueOf() - start.valueOf();
         console.log(`${step} ${delta}: (${responses.length})`, responses.map((r) => r.status || null).join(', '));
-        for (response of responses) {
+        for (const response of responses) {
           if (response.status === 429) {
             if (response && response.data && response.data.detail) {
               // parse detail for number of seconds
@@ -179,23 +179,5 @@ describe('Auth 429', () => {
     should.exist(results.status);
     console.log(results.status.should);
     should.be(results.status, 429);
-  }).timeout(20000);
-
-  it('it spills 402', async () => {
-    const results = await appTester(async (z, bundle) => {
-      for (let step = 0; step < 100; step++) {
-        bundle.dtable = null;
-        try {
-          await ctx.acquireDtableAppAccess(z, bundle);
-          // TODO(tk): skipThrowForStatus: true on acquireDtableAppAccess() (optional parameter)
-          console.log(step, bundle.dtable && bundle.dtable.workspace_id);
-        } catch (e) {
-          console.log(step, typeof e, e.message);
-        }
-      }
-      return null;
-    }, bundle);
-    // '{"detail":"Request was throttled. Expected available in 31 seconds."}';
-    console.log(results);
   }).timeout(20000);
 });
