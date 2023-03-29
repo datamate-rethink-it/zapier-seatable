@@ -17,7 +17,7 @@ publish: test upload
 
 ## quick : push from worktree to zapier, test afterwards then
 .PHONY : quick
-quick : eslint-quick-fix zapier-upload test
+quick : eslint-quick-fix build/.cache/quick-upload.sentinel test build
 
 .PHONY : upload
 upload: build zapier-upload

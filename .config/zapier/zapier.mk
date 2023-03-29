@@ -9,15 +9,26 @@ zapier-build-paths := $(patsubst %,$(zapier-build-dir)/%,$(zapier-build-zips))
 zapier-package-files := $(wildcard package*.json)
 zapier-files := $(zapier-package-files) $(build-files)
 
+define run-zapier-build =
+$(zapier) build
+$(zip) -ur build/build.zip src/authenticationFunctionRequire.js
+$(zip) -qd build/source.zip \
+	.config/\* .idea/\* .nvmrc Makefile \*.md doc\* src/schema.js test\*
+$(foreach zip,$(zapier-build-paths),zipinfo $(zip) > $(zip).info;)
+endef
+
 $(zapier-build-dir)/.increment : node_modules/.package-lock.json src/lint.cache.increment test/.increment $(zapier-files)
-	$(zapier) build
-	$(zip) -ur build/build.zip src/authenticationFunctionRequire.js
-	$(zip) -qd build/source.zip \
-		.config/\* .idea/\* .nvmrc Makefile \*.md doc\* src/schema.js test\*
-	$(foreach zip,$(zapier-build-paths),zipinfo $(zip) > $(zip).info;)
+	$(run-zapier-build)
 	touch $@
 
-build/.cache/zapier-upload.sentinel : $(zapier-build-dir)/.increment $(zapier-build-paths)
+
+## build/.cache/quick-upload.sentinel : just build and upload
+build/.cache/quick-upload.sentinel : $(build-files)
+	$(run-zapier-build)
+	$(zapier) upload
+	$(mkdir) -p $(@D) && touch $@
+
+build/.cache/zapier-upload.sentinel : $(zapier-build-paths)
 	$(zapier) upload
 	$(mkdir) -p $(@D) && touch $@
 
