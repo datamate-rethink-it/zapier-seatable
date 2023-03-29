@@ -4,6 +4,7 @@
 
 ### Internal
 
+* Rename npm package to `seatable`
 * Improve test and build
 
 ## [2.1.13] - 2023-03-27
