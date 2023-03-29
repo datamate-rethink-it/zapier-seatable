@@ -79,7 +79,21 @@ describe('Auth 429', () => {
     },
   };
 
-  // TODO /server-info
+  it('should get server-info first to verify it is a seatable server', async () => {
+    bundle.authData.server = bundle.authData.server.replace(/\/+$/, '');
+    await appTester(
+        async (z, bundle) => {
+          const response = await z.request({
+            url: `${bundle.authData.server}/server-info/`,
+          });
+          response.should.be.Object();
+          response.status.should.be.equal(200);
+          response.should.have.property('json');
+          response.json.should.have.properties(...['version', 'edition']);
+        },
+        bundle,
+    );
+  });
 
   it('should do get_row_of_a_table in a 429 situation', async () => {
     await appTester(
