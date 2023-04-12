@@ -4,6 +4,7 @@
 
 ### Internal
 
+* Stabilize tests; SeaTable 3.5.10
 * Rename npm package to `seatable`
 * Improve test and build
 
