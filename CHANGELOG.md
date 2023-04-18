@@ -12,7 +12,7 @@
 
 ### Changed
 
-* Show error message with unexpected HTTP errors (e.g. status 413)
+* Show the SeaTable REST API response error message with unexpected HTTP errors if available (e.g. status 413)
 
 ### Internal
 
