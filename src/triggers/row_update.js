@@ -96,7 +96,7 @@ module.exports = {
   key: 'row_update',
   noun: 'Row Update',
   display: {
-    label: 'Row Update',
+    label: 'New or Updated Row',
     description: 'Triggers when a row is updated or created.',
   },
   operation: {
