@@ -2,6 +2,10 @@
 
 ## [2.1.14] - unreleased
 
+### Fixed
+
+* Showing the `link-formula`, `creator`, `last-modifier` and `button` columns in Create Row and Update Row action
+
 ### Internal
 
 * Stabilize tests; SeaTable 3.5.10
