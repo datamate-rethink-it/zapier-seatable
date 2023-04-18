@@ -48,7 +48,7 @@ const struct = {
     },
     zapier: {
       // column types that zapier must not write/create (hidden):
-      hide_write: ['file', 'image', 'link', 'auto-number', 'ctime', 'mtime', 'formula'],
+      hide_write: ['file', 'image', 'link', 'auto-number', 'ctime', 'mtime', 'formula', 'link-formula', 'creator', 'last-modifier', 'button'],
       // column types that zapier should not offer to search in (hidden):
       hide_search: ['link'],
       /**
