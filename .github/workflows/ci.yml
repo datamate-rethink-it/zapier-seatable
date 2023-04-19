@@ -1,0 +1,117 @@
+
+name: Node.js CI
+
+on:
+  push:
+    branches: [ develop, seen, wip/** ]
+  pull_request:
+    branches: [ develop, seen, wip/gh-actions-init ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions: write-all
+    env:
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Print Github event name
+        run: |
+          echo "${{ github.event_name }}"
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Use npm 9.6.2
+        run: |
+          npm install -g npm@9.6.2
+          npm --version
+      - name: Make
+        run: |
+          : Check-Runs :
+          function octo() {
+            local server=https://api.github.com
+            local method="$1"
+            local endpoint="$2"
+            shift 2
+            octo_last="$(curl -L -sS \
+              -X "$method" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $TOKEN"\
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$server$endpoint" \
+              "$@" | tee /dev/null)"
+          }
+          check_runs=/repos/${{ github.repository }}/check-runs
+          echo "::group::Enqueue check-run commits"
+          if [[ "${{ github.event_name }}" = "push" ]]; then
+            git_branch="$(git rev-parse --abbrev-ref HEAD)"
+            if [[ $git_branch = "HEAD" ]]; then
+              printf >&2 'fatal: no branch on push\n'
+              exit 1
+            fi
+            git_head="$(git rev-parse --verify "${{ github.sha }}")"
+            git -c advice.detachedHead=false checkout "$git_head"
+            git fetch -f origin "refs/heads/*:refs/heads/*"
+            git checkout "$git_branch"
+            if [[ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]]; then
+              branch_base="${{ github.event.commits[0].id }}"
+              git rev-parse --verify "$branch_base"
+              commits=("$branch_base")
+              readarray -t -O "${#commits[@]}" commits < <(git rev-list --reverse "$branch_base"..${{ github.sha }})
+            elif ! git rev-list --reverse ${{ github.event.before }}..${{ github.sha }}; then
+              git fetch -v origin ${{ github.event.before }}
+              merge_base=$(git merge-base ${{ github.event.before }} ${{ github.sha }})
+              printf 'merge_base: %s\n' "$merge_base"
+              git -P log --oneline -1 "$merge_base"
+              readarray -t commits < <(git rev-list --reverse "$merge_base"..${{ github.sha }})
+            else
+              readarray -t commits < <(git rev-list --reverse ${{ github.event.before }}..${{ github.sha }})
+            fi
+          else
+            git fetch -f origin "refs/heads/*:refs/heads/*"
+            git_head="$(git rev-parse --verify "${{ github.head_ref }}")"
+            readarray -t commits < <(git rev-list --reverse ${{ github.base_ref }}..${{ github.head_ref }})
+          fi
+          declare -A ids
+          for key in "${!commits[@]}"; do
+              commit="${commits[$key]}"
+              printf "%s (%d/%d)\n" "$commit" "$(($key+1))" "${#commits[@]}"
+              octo POST "$check_runs" \
+                -d '{"name":"make","head_sha":"'"$commit"'","external_id":"42-'"$commit"'","started_at":"'"$(date --utc --iso-8601=seconds)"'","output":{"title":"make report","summary":"just make '"$commit"'","text":"# make of\n\n* sha: '"$commit"'"}}'
+              ids["$commit"]="$(echo "$octo_last" | jq '.id')"
+              octo POST "$check_runs" \
+                -d '{"name":"make '"$(printf "[%02d/%02d]" "$(($key+1))" "${#commits[@]}")"'","head_sha":"'"$git_head"'","external_id":"head-'"$commit"'","started_at":"'"$(date --utc --iso-8601=seconds)"'","output":{"title":"make report","summary":"just make '"$commit"'","text":"# make of\n\n* sha: '"$commit"'"}}'
+              ids["head-$commit"]="$(echo "$octo_last" | jq '.id')"
+          done
+          echo "::endgroup::"
+          did_fail=0
+          for key in "${!commits[@]}"; do
+              commit="${commits[$key]}"
+              printf "::group::Check-Run %s (%d/%d)\n" "$commit" "$(($key+1))" "${#commits[@]}"
+              octo PATCH "$check_runs/${ids["$commit"]}" -d '{"status":"in_progress","started_at":"'"$(date --utc --iso-8601=seconds)"'"}'
+              octo PATCH "$check_runs/${ids["head-$commit"]}" -d '{"status":"in_progress","started_at":"'"$(date --utc --iso-8601=seconds)"'"}'
+              git -c advice.detachedHead=false checkout "$commit"
+              npm ci
+              if make eslint-fix; then
+                echo "::endgroup::"
+                octo PATCH "$check_runs/${ids["$commit"]}" -d '{"conclusion":"success"}'
+                octo PATCH "$check_runs/${ids["head-$commit"]}" -d '{"conclusion":"success"}'
+              else
+                echo "::error title=make $commit::failed"
+                octo PATCH "$check_runs/${ids["$commit"]}" -d '{"conclusion":"failure"}'
+                octo PATCH "$check_runs/${ids["head-$commit"]}" -d '{"conclusion":"failure"}'
+                did_fail=1
+              fi
+          done
+          if [[ $did_fail -ne 0 ]]; then
+            exit 1
+          fi
