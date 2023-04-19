@@ -8,6 +8,7 @@
 
 ### Internal
 
+* CI/CD workflow first remote bindings on Microsoft Github
 * Stabilize tests; SeaTable 3.5.10
 * Rename npm package to `seatable`
 * Improve test and build
