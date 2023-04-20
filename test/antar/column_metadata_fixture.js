@@ -31,6 +31,17 @@ describe('Column Metadata Fixture', () => {
   const store = new FixtureStore();
   const htmlFile = FixtureStore.staticColumnNamesHtmlFile;
 
+  it('should look for context options', async () => {
+    const structTypes = ctx.struct.columns.types;
+    should(structTypes).be.instanceOf(Object);
+    const names = Object.values(structTypes);
+    store.columnNames.map((name) => {
+      should(names.includes(name)).be.true(`${name}`);
+    });
+
+    names.length.should.be.eql(store.columnCount);
+  });
+
   it('should load fixture file', async () => {
     const fs = require('fs');
     const data = fs.readFileSync(htmlFile, 'utf8');

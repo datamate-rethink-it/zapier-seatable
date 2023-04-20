@@ -43,7 +43,7 @@ describe('Search row', () => {
       e.message.should.be.String();
       const json = JSON.parse(e.message);
       json.message.should.match(
-          /^Search in Long Text field named "LongTextColumn" is not supported, please choose a different column\.$/,
+          /^Search in Long text field named "LongTextColumn" is not supported, please choose a different column\.$/,
       );
     }
   });
