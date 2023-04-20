@@ -8,6 +8,7 @@
 
 ### Internal
 
+* Complete columns in struct
 * Improve column type fixture; SeaTable 3.5.10
 * Add link-formula and button type to struct
 * CI/CD workflow first remote bindings on Microsoft Github
