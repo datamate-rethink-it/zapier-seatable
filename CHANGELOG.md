@@ -1,5 +1,11 @@
 # Change-Log
 
+## [unreleased]
+
+### Added
+
+* New File Trigger
+
 ## [2.1.14] - unreleased
 
 ### Fixed
@@ -8,6 +14,8 @@
 
 ### Internal
 
+* Improve column type fixture; SeaTable 3.5.10
+* Add link-formula and button type to struct
 * CI/CD workflow first remote bindings on Microsoft Github
 * Stabilize tests; SeaTable 3.5.10
 * Rename npm package to `seatable`

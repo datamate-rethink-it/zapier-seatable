@@ -19,121 +19,6 @@ function format(strings, ...keys) {
   };
 }
 
-/**
- * @typedef {object} SidObjRoot
- */
-
-/**
- * @typedef {object} SidObjTable
- * @property {string} table
- * @property {string} [view]
- * @property {string} [row]
- */
-
-/**
- * @typedef {object} SidObjColumnOnly
- * @property {string} column
- */
-
-/**
- * sid object w/ identity (SidObj)
- *
- * @extends SidObjTable
- * @extends SidObjColumnOnly
- * @extends {}
- */
-class SidObj {
-  /**
-   * @param {object} object
-   */
-  constructor(object) {
-    const noUndefinedProps = Object.fromEntries(
-        Object.entries(object).filter(([, value]) => value !== undefined),
-    );
-    Object.assign(
-        this,
-        noUndefinedProps,
-    );
-  }
-
-  /**
-   * @return {string} sid
-   */
-  toString() {
-    let buffer = '';
-    for (const [key, value] of Object.entries(this)) {
-      buffer = buffer.concat(buffer ? ':' : '', key, ':', value);
-    }
-    return buffer;
-  }
-}
-
-/**
- * parse seatable api sub-identifier (sid)
- *
- * parse only right now, encoding is simple string building. format definition is here.
- *
- * table:{id}     the format is not very well-defined, we can see 4 characters of a-z, A-Z and 0-9.
- *                -> request of specification from Seatable, talked with MW, no feedback yet
- * column:{key}   the format is not very well-defined, similar to table:{id} we can see 4 characters
- *                of a-z, A-Z and 0-9.
- * table:{id}:view:{id}
- *                the view is in context of a table as per base, views and tables can have the same
- *                ids. therefore it is not possible to identify the table via the view-id alone when
- *                there could be a table meant as well (only with an additional rule/data like prefer
- *                the more specific (view) over the less (table) which is not possible with a resource
- *                name alone, hence the hierarchy).
- * table:{id}:row:{id}
- *                table row
- *
- * NOTE: current implementation is lax on the length of id/keys, 4 is the minimum length, "_" and "-"
- *       are allowed to be by part anywhere while they were not seen in id/key (only in identifiers/keys
- *       of other entities)
- *
- * EXAMPLE:
- *
- *    sid: 'table:0000:view:0000' -> {table: '0000', view: '0000}
- *
- * NOTE: returns an empty object ({}) given the sid parameter is not a string. This is to allow hasOwnProperty
- *       checks on the result which only work with objects.
- *
- * @param {string|SidObj} sid
- * @param {any} fallback [optional] zero or one, zero throws, one is default otherwise
- * @return {SidObj} sid-object (which can be empty, e.g. not table, column etc. properties
- * @throws Error if sid is of invalid syntax
- */
-function sidParse(sid, ...fallback) {
-  let result = false;
-  if (sid instanceof SidObj) {
-    sid = String(sid);
-  }
-  const isString = (typeof sid === 'string' || sid instanceof String);
-  if (!isString) {
-    return fallback.length ? fallback[0] : {};
-  }
-
-  const idAny = '[a-zA-Z0-9_-]{4,}';
-  const id = (name) => `${name}:(?<${name}>${idAny})`;
-  for (const token of [
-    `${id('table')}`,
-    `${id('column')}`,
-    `${id('table')}:${id('view')}`,
-    `${id('table')}:${id('row')}`,
-    `${id('table')}:${id('column')}`,
-  ]) {
-    result = result || sid.match(new RegExp( `^${token}$` ));
-  }
-
-  if (!result && fallback.length) {
-    return fallback[0];
-  }
-  if (!result) {
-    throw new Error(`unable to parse (invalid) sid: "${sid}"`);
-  }
-
-  return new SidObj(result.groups);
-}
-
 const tryStringToPositiveInteger = (v) => {
   if (typeof v !== 'string' && !Number.isInteger(v)) {
     return null;
@@ -201,7 +86,5 @@ function ResponseThrottleInfo(response) {
 
 module.exports = {
   format,
-  sidParse,
-  SidObj,
   ResponseThrottleInfo,
 };

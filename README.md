@@ -5,6 +5,7 @@
 ## Actions
 
 * ***Triggers:***
+    * New File
     * New Row
     * Updated Row
     * (internal) Tables

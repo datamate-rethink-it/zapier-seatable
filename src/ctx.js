@@ -8,7 +8,8 @@
 const _CONST = require('./const');
 
 const _ = require('lodash');
-const {ResponseThrottleInfo, sidParse} = require('./lib');
+const {ResponseThrottleInfo} = require('./lib');
+const {sidParse} = require('./lib/sid');
 
 
 /**
@@ -20,26 +21,29 @@ const struct = {
   columns: {
     types: {
       'text': 'Text',
+      'long-text': 'Long text',
       'number': 'Number',
       'checkbox': 'Checkbox',
       'date': 'Date',
-      'single-select': 'Single Select',
-      'long-text': 'Long Text',
+      'single-select': 'Single select',
       'image': 'Image',
       'file': 'File',
-      'multiple-select': 'Multiple Select',
+      'multiple-select': 'Multiple select',
       'collaborator': 'Collaborator',
       'url': 'URL',
       'email': 'Email',
       'duration': 'Duration',
       'geolocation': 'Geolocation',
+      'rate': 'Rating',
       'formula': 'Formula',
-      'link': 'Link other records',
+      'link-formula': 'Link formula',
+      'link': 'Link to other records',
       'auto-number': 'Auto number',
       'creator': 'Creator',
       'ctime': 'Created time',
-      'last-modifier': 'Last Modifier',
+      'last-modifier': 'Last modifier',
       'mtime': 'Last modified time',
+      'button': 'Button',
     },
     assets: ['file', 'image'],
     filter: {
