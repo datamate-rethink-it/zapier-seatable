@@ -1,5 +1,8 @@
 const ctx = require('../ctx');
+const {sidParse} = require('../lib/sid');
 const _ = require('lodash');
+const {ZapBundle} = require('../ctx/ZapBundle');
+
 
 /**
  * get table columns as bundled
@@ -62,11 +65,11 @@ const perform = async (z, bundle) => {
   const map = {};
   for (const col of getUpdateColumns(tableMetadata.columns, bundle)) {
     const key = `column:${col.key}`;
-    if ('   ' === bundle.inputDataRaw[key]) {
+    if ('   ' === bundle.inputDataRaw?.[key]) {
       map[col.name] = '';
       continue;
     }
-    const value = bundle.inputData[key];
+    const value = bundle.inputData?.[key];
     if (undefined === value || '' === value) {
       continue;
     }
@@ -78,6 +81,34 @@ const perform = async (z, bundle) => {
     rowId = ctx.sidParse(bundle.inputData.table_row).row;
   } catch (e) {
     throw new z.errors.Error(`Not a valid row: "${bundle.inputData.table_row}". Please use a valid "table:...:row:..." reference.`);
+  }
+
+  let row;
+  const zb = new ZapBundle(z, bundle);
+  const fileUploader = zb.fileUploader();
+  for (const col of getUpdateColumns(tableMetadata.columns, bundle)) {
+    if (!['file', 'image'].includes(col.type)) {
+      continue;
+    }
+    const key = `column:${col.key}`;
+    if ('   ' === bundle.inputDataRaw?.[key]) {
+      map[col.name] = [];
+      continue;
+    }
+    const value = bundle.inputData?.[key];
+    if (undefined === value || '' === value) {
+      delete map[col.name];
+      continue;
+    }
+
+    if (!row) {
+      const tableId = sidParse(bundle.inputData.table_row).table;
+      ({data: row} = await zb.request(`/dtable-server/api/v1/dtables/{{dtable_uuid}}/rows/${rowId}/?table_id=${tableId}`));
+    }
+    const current = row?.[col.name] || [];
+    const columnAssetData = await fileUploader.uploadUrlAssetPromise(value, col.type);
+    current.push(columnAssetData);
+    map[col.name] = current;
   }
 
   const body = {
@@ -104,7 +135,7 @@ const inputFields = async (z, bundle) => {
     return {
       key: `column:${o.key}`,
       label: o.name,
-      type: o.type,
+      type: ['file', 'image'].includes(o.type) ? 'file' : o.type,
       required: false,
       help_text: `${ctx.struct.columns.types[o.type] || `[${o.type}]`} field, optional. To clear, enter exactly three spaces.`,
     };

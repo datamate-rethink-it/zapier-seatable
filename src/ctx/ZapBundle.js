@@ -1,6 +1,7 @@
 const ctx = require('../ctx');
 
 const {ZapBundleFileHandler} = require('./ZapBundleFileHandler');
+const {ZapBundleFileUploader} = require('./ZapBundleFileUploader');
 const {ZapSql} = require('./ZapSql');
 const {Metadata} = require('../lib/metadata');
 const {ZapRowLookup} = require('./ZapRowLookup');
@@ -146,6 +147,13 @@ class ZapBundle {
    */
   sqlQuery(sql, convertKeys = false, context = {}, throwSqlError = true) {
     return (new ZapSql(this, sql, convertKeys, context)).run(throwSqlError);
+  }
+
+  /**
+   * @return {ZapBundleFileUploader}
+   */
+  fileUploader() {
+    return /** @type ZapBundleFileUploader*/ new ZapBundleFileUploader(this);
   }
 
   /**

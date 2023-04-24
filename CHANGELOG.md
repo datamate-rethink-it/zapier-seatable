@@ -4,6 +4,7 @@
 
 ### Added
 
+* New File/Image column support for Row and Update Row Creates
 * New File Trigger
 
 ## [2.1.14] - unreleased
