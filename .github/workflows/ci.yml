@@ -11,6 +11,9 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    permissions: write-all
+    env:
+      TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     strategy:
       matrix:
@@ -18,9 +21,70 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Print Github event name
+        run: |
+          echo "${{ github.event_name }}"
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: make eslint-fix
+      - name: Use npm 9.6.2
+        run: |
+          sudo npm install -g npm@9.6.2
+      - name: Make
+        run: |
+          git fetch -f origin "refs/heads/*:refs/heads/*" || true
+          function api() {
+            local server=https://api.github.com
+            local method="$1"
+            local endpoint="$2"
+            shift 2
+            last_api="$(curl -L -sS \
+              -X "$method" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $TOKEN"\
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$server$endpoint" \
+              "$@" | tee /dev/null)"
+          }
+          check_runs=/repos/${{ github.repository }}/check-runs
+          echo "::group::enqueue"
+          if [[ "${{ github.event_name }}" = "push" ]]; then
+            git_head="$(git rev-parse --verify "${{ github.sha }}")"
+            readarray -t commits < <(git rev-list --reverse ${{ github.event.before }}..${{ github.sha }})
+          else
+            git_head="$(git rev-parse --verify "${{ github.head_ref }}")"
+            readarray -t commits < <(git rev-list --reverse ${{ github.base_ref }}..${{ github.head_ref }})
+          fi
+          declare -A ids
+          for key in "${!commits[@]}"; do
+              commit="${commits[$key]}"
+              number="$(($key+1))"
+              printf "%s (%d/%d)\n" "$commit" "$number" "${#commits[@]}"
+              api POST "$check_runs" \
+                -d '{"name":"make","head_sha":"'"$commit"'","external_id":"42-'"$commit"'","started_at":"'"$(date --utc --iso-8601=seconds)"'","output":{"title":"make report","summary":"just make '"$commit"'","text":"# make of\n\n* sha: '"$commit"'"}}'
+              ids["$commit"]="$(echo "$last_api" | jq '.id')"
+              api POST "$check_runs" \
+                -d '{"name":"make '"$(printf "[%02d/%02d]" "$number" "${#commits[@]}")"'","head_sha":"'"$git_head"'","external_id":"head-'"$commit"'","started_at":"'"$(date --utc --iso-8601=seconds)"'","output":{"title":"make report","summary":"just make '"$commit"'","text":"# make of\n\n* sha: '"$commit"'"}}'
+              ids["head-$commit"]="$(echo "$last_api" | jq '.id')"
+          done
+          echo "::endgroup::"
+          for commit in "${commits[@]}"; do
+              echo "::group::make $commit"
+              api PATCH "$check_runs/${ids["$commit"]}" -d '{"status":"in_progress","started_at":"'"$(date --utc --iso-8601=seconds)"'"}'
+              api PATCH "$check_runs/${ids["head-$commit"]}" -d '{"status":"in_progress","started_at":"'"$(date --utc --iso-8601=seconds)"'"}'
+              git -c advice.detachedHead=false checkout "$commit"
+              npm ci
+              if make eslint-fix; then
+                echo "::endgroup::"
+                api PATCH "$check_runs/${ids["$commit"]}" -d '{"conclusion":"success"}'
+                api PATCH "$check_runs/${ids["head-$commit"]}" -d '{"conclusion":"success"}'
+              else
+                echo "::error title=make $commit::failed"
+                api PATCH "$check_runs/${ids["$commit"]}" -d '{"conclusion":"failure"}'
+                api PATCH "$check_runs/${ids["head-$commit"]}" -d '{"conclusion":"failure"}'
+                exit 1
+              fi
+          done
