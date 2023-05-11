@@ -16,6 +16,8 @@ const createRowUpdate = require('./src/creates/row_update');
 const findRow = require('./src/searches/row');
 const getRowIdOfATable = require('./src/searches/get_row_id_of_a_table');
 
+const getrowResource = require("./src/searches/getrow");
+
 const featureHttpAlwaysLogging = {
   key: _CONST.FEATURE_HTTP_MIDDLEWARE_ALWAYS_LOG_THROTTLING,
   enabled: false,
@@ -132,14 +134,16 @@ module.exports = {
   version: require('./package.json').version,
   platformVersion: require('zapier-platform-core').version,
   hydrators: require('./src/hydrators'),
-
   authentication,
+
   requestTemplate: {
     method: 'GET',
     headers: {Accept: 'application/json'},
   },
+
   beforeRequest: [handleBundleRequest],
   afterResponse: [handleForbiddenBaseAccess, handleDeletedBaseAccess, handleHTTPError, handleUndefinedJson],
+
   triggers: {
     [getRowOfATable.key]: getRowOfATable,
     [getTablesOfABase.key]: getTablesOfABase,
@@ -148,14 +152,17 @@ module.exports = {
     [rowUpdate.key]: rowUpdate,
     [fileCreate.key]: fileCreate,
   },
+
   creates: {
     [createRow.key]: createRow,
     [createRowUpdate.key]: createRowUpdate,
   },
+
   searches: {
     [findRow.key]: findRow,
     [getRowIdOfATable.key]: getRowIdOfATable,
   },
+
   searchOrCreates: {
     [findRow.key]: {
       key: findRow.key,
@@ -167,4 +174,8 @@ module.exports = {
       create: createRow.key,
     },
   },
+
+  resources: {
+    [getrowResource.key]: getrowResource
+  }
 };
