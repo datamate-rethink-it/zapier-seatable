@@ -108,7 +108,7 @@ module.exports = {
   search: {
     display: {
       label: 'Find Many Rows (With Line Item Support)',
-      description: 'Finds many rows give.'
+      description: 'Finds multiple rows ( 10 max ).'
     },
     operation: {
       inputFields: [

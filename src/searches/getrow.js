@@ -119,7 +119,7 @@ module.exports = {
 
   display: {
     label: "Find Row",
-      description: "Finds a Row (SQL QUERY) give.",
+      description: "Finds a row using SQL Query search syntax, ",
       important: true,
   },
 
