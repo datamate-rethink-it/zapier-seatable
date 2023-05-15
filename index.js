@@ -161,11 +161,6 @@ module.exports = {
     [createRowUpdate.key]: createRowUpdate,
   },
 
-  // searches: {
-  //   [findRow.key]: findRow,
-  //   [getRowIdOfATable.key]: getRowIdOfATable,
-  // },
-  
   searches: {
     [findGetrow.key]: findGetrow
   },
