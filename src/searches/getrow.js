@@ -31,7 +31,7 @@ const perform = async (z, bundle) => {
   if (RowData.length > 0) {
     return [response.json["results"][0]];
   } else if (
-    RowData.length === 0 &&
+    RowData.length === 0 ||
     bundle.inputDataRaw._zap_search_success_on_miss
   ) {
     return [];
