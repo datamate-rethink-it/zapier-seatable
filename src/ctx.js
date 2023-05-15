@@ -908,6 +908,7 @@ const tableNameId = async (z, bundle, context) => {
   let TABLE_ID = new_table_id[1];
   let colName = "";
   let tableName = "";
+  let colType='';
   const MetaData = await acquireMetadata(z, bundle);
   const tableMetadata = await acquireTableMetadata(z, bundle);
   const sid = sidParse(bundle.inputData.search_column);
@@ -925,6 +926,7 @@ const tableNameId = async (z, bundle, context) => {
     z.console.log(
       `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
       col.type
+      
     );
     throw new z.errors.Error(
       `Search in ${
@@ -934,6 +936,7 @@ const tableNameId = async (z, bundle, context) => {
       }" is not supported, please choose a different column.`
     );
   }
+  colType =col.type
   colName = col.name;
   let tb = _.map(
     _.filter(MetaData.tables, (table) => {
@@ -945,8 +948,9 @@ const tableNameId = async (z, bundle, context) => {
     }
   );
   tableName = tb[0];
+  // const query = colType==="Text"?`${colName} = "${bundle.inputData.search_value}"`:`${colName} = ${bundle.inputData.search_value}`;
   let f = {
-    sql: `SELECT * FROM ${tableName} WHERE ${colName} = "${bundle.inputData.search_value}"`,
+    sql: `SELECT * FROM ${tableName} WHERE ${colName} = "${bundle.inputData.search_value}" LIMIT 10`,
     convert_keys: true,
   };
   return f;

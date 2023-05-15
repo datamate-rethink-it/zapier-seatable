@@ -11,7 +11,7 @@ const _ = require("lodash");
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 
-const perform = async (z, bundle) => {
+const performSearch = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -22,14 +22,13 @@ const perform = async (z, bundle) => {
       Authorization: `Token ${bundle.dtable.access_token}`,
       "Content-Type": "application/json",
     },
-    // params: ctx.requestParamsSid(bundle.inputData.table_name),
     allowGetBody: true,
     body: await ctx.tableNameId(z, bundle, "search"),
   });
   const RowData = response.json["results"];
-  // const inputDatat =response.request.input.bundle.inputDataRaw._zap_search_success_on_miss;
+  const data =response.json.results;
   if (RowData.length > 0) {
-    return [response.json["results"][0]];
+    return [{Data : response.json.results}];
   } else if (
     RowData.length === 0 &&
     bundle.inputDataRaw._zap_search_success_on_miss
@@ -101,65 +100,42 @@ const searchValue = async (z, bundle) => {
   }
   return r;
 };
-const outputFields = async (z, bundle) => {
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-
-  return [
-    {key: 'row_id', label: 'ID'},
-    {key: 'row_mtime', label: 'Last Modified'},
-    ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
-    ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
-  ];
-};
 module.exports = {
-  // see here for a full list of available properties:
-  // https://github.com/zapier/zapier-platform/blob/main/packages/schema/docs/build/schema.md#searchschema
-  key: 'getrow',
-  noun: 'Getrow',
 
-  display: {
-    label: "Find Row",
-      description: "Finds a Row (SQL QUERY) give.",
-      important: true,
+  key: 'getmany_rows',
+  noun: 'Getmanyrows',
+
+  search: {
+    display: {
+      label: 'Find Many Rows (With Line Item Support)',
+      description: 'Finds many rows give.'
+    },
+    operation: {
+      inputFields: [
+        {
+          key: "table_name",
+          required: true,
+          label: "Table",
+          helpText: "Pick a SeaTable table you want to search.",
+          type: "string",
+          dynamic: "get_tables_of_a_base.id.name",
+          altersDynamicFields: true,
+        },
+        searchColumn,
+        searchValue,
+        ctx.fileNoAuthLinksField,
+      ],
+      perform: performSearch,
+    },
   },
 
-  operation: {
-    perform,
+  sample: {
+    id: 1,
+    name: "Test",
+  },
 
-    // `inputFields` defines the fields a user could provide
-    // Zapier will pass them in as `bundle.inputData` later. Searches need at least one `inputField`.
-    inputFields: [
-      {
-        key: "table_name",
-        required: true,
-        label: "Table",
-        helpText: "Pick a SeaTable table you want to search.",
-        type: "string",
-        dynamic: "get_tables_of_a_base.id.name",
-        altersDynamicFields: true,
-      },
-      searchColumn,
-      searchValue,
-      ctx.fileNoAuthLinksField,
-    ],
-
-    // In cases where Zapier needs to show an example record to the user, but we are unable to get a live example
-    // from the API, Zapier will fallback to this hard-coded sample. It should reflect the data structure of
-    // returned records, and have obvious placeholder values that we can show to any user.
-    sample: {
-      id: 1,
-      name: 'Test'
-    },
-
-    // If fields are custom to each user (like spreadsheet columns), `outputFields` can create human labels
-    // For a more complete example of using dynamic fields see
-    // https://github.com/zapier/zapier-platform/tree/main/packages/cli#customdynamic-fields
-    // Alternatively, a static field definition can be provided, to specify labels for the fields
-    outputFields: [
-      outputFields
-      // these are placeholders to match the example `perform` above
-      // {key: 'id', label: 'Person ID'},
-      // {key: 'name', label: 'Person Name'}
-    ]
-  }
+  outputFields: [
+    { key: "id", label: "ID" },
+    { key: "name", label: "Name" },
+  ],
 };

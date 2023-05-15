@@ -8,11 +8,11 @@ const appTester = zapier.createAppTester(App);
 // read the `.env` file into the environment, if available
 zapier.tools.env.inject();
 
-describe('searches.getrow', () => {
+describe('resources.getmany_rows', () => {
   it('should run', async () => {
     const bundle = { inputData: {} };
 
-    const results = await appTester(App.searches.getrow.operation.perform, bundle);
+    const results = await appTester(App.searches.getmany_rows.list.operation.perform, bundle);
     expect(results).toBeDefined();
     // TODO: add more assertions
   });
