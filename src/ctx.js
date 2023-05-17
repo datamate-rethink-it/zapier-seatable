@@ -973,7 +973,24 @@ const getCollaborator = async (z, bundle,value) => {
   );
   return collData;
 };
-
+const getCollaboratorData = async (z, bundle,value) => {
+  let collaboratorEmail=value;
+  const collaborator = await z.request({
+    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
+    method: 'GET',
+    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
+  });
+  const collaboratorData = collaborator.json.user_list;
+  const collData = _.map(
+    _.filter(collaboratorData, (o) => {
+      return o.email === collaboratorEmail;
+    }),
+    (o) => {
+      return {username:o.email,email:o.contact_email,name:o.name};
+    }
+  );
+  return collData;
+};
 module.exports = {
   acquireServerInfo,
   acquireDtableAppAccess,
@@ -983,6 +1000,7 @@ module.exports = {
   filter,
   tableNameId,
   getCollaborator,
+  getCollaboratorData,
   mapColumnKeys,
   mapCreateRowKeys,
   requestParamsSid,
