@@ -13,14 +13,8 @@ const getViewsOfATableOfAView = require('./src/triggers/get_views_of_a_table_of_
 const createRow = require('./src/creates/row');
 const createRowUpdate = require('./src/creates/row_update');
 /* Search */
-// const findRow = require('./src/searches/row');
-// const getRowIdOfATable = require('./src/searches/get_row_id_of_a_table');
-
-
 const getmanyRowsResource = require("./src/searches/getmany_rows");
-
 const findGetrow = require("./src/searches/getrow");
-
 const featureHttpAlwaysLogging = {
   key: _CONST.FEATURE_HTTP_MIDDLEWARE_ALWAYS_LOG_THROTTLING,
   enabled: false,
@@ -165,15 +159,6 @@ module.exports = {
     [findGetrow.key]: findGetrow
   },
   searchOrCreates: {
-    // [findRow.key]: {
-    //   key: findRow.key,
-    //   display: {
-    //     label: 'Find Row (Search or Create)',
-    //     description: '(intentionally left blank)',
-    //   },
-    //   search: findRow.key,
-    //   create: createRow.key,
-    // },
     [findGetrow.key]:{
       key:findGetrow.key,
       display: {

@@ -31,7 +31,7 @@ const perform = async (z, bundle) => {
   if (RowData.length > 0) {
     return [response.json["results"][0]];
   } else if (
-    RowData.length === 0 &&
+    RowData.length === 0 ||
     bundle.inputDataRaw._zap_search_success_on_miss
   ) {
     return [];
@@ -119,7 +119,7 @@ module.exports = {
 
   display: {
     label: "Find Row",
-      description: "Finds a Row (SQL QUERY) give.",
+      description: "Finds a row using SQL Query search syntax, ",
       important: true,
   },
 
