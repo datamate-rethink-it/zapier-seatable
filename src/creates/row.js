@@ -17,12 +17,17 @@ const perform = async (z, bundle) => {
   const inputData = bundle.inputData;
 
   for (const {key, name} of tableMetadata.columns) {
+    if ('Collaborator' === name) {
+      const value =[inputData && inputData[`column:${key}`]];
+      map[name] = await ctx.getCollaborator(z,bundle,value[0]);
+      continue;
+    }
     map[name] = inputData && inputData[`column:${key}`];
   }
 
   /** @type {DTableCreateRowResponse} */
   const response = await z.request({
-    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/rows`,
+    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/rows/`,
     method: 'POST',
     headers: {Authorization: `Token ${bundle.dtable.access_token}`},
     body: {

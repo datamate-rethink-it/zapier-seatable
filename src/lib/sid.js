@@ -158,7 +158,8 @@ function sidParse(sid, ...fallback) {
     return fallback[0];
   }
   if (!result) {
-    throw new Error(`unable to parse (invalid) sid: "${sid}"`);
+    // throw new Error(`unable to parse (invalid) sid: "${sid}"`);
+    return false;
   }
 
   return new SidObj(result.groups);

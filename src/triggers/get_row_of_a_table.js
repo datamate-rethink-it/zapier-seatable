@@ -22,7 +22,7 @@ const perform = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   return _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (r) => {
     return {
-      id: `table:${tableMetadata._id}:row:${r.row_id}`,
+      id: `${r.row_id}`,
       name: r['column:0000'], // r['column:0000'] can be "undefined", perhaps filter first
     };
   },

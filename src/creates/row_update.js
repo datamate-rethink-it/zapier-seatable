@@ -70,15 +70,21 @@ const perform = async (z, bundle) => {
     if (undefined === value || '' === value) {
       continue;
     }
+    if ('Collaborator' === col.name) {
+
+      map[col.name] = await ctx.getCollaborator(z,bundle,value);
+      continue;
+    }
     map[col.name] = value;
   }
 
   let rowId;
-  try {
-    rowId = ctx.sidParse(bundle.inputData.table_row).row;
-  } catch (e) {
-    throw new z.errors.Error(`Not a valid row: "${bundle.inputData.table_row}". Please use a valid "table:...:row:..." reference.`);
-  }
+  // try {
+  rowId = (ctx.sidParse(`table:${bundle.inputData.table_name}:row:${bundle.inputData.table_row}`).row)?ctx.sidParse(bundle.inputData.table_row).row:bundle.inputData.table_row;
+  // } catch (e) {
+  //   throw new z.errors.Error(`Not a valid row: "${bundle.inputData.table_row}". Please use a valid "table:...:row:..." reference.`);
+  //   rowId = `table:${bundle.inputData.table_name}:row:${bundle.inputData.table_row}`;
+  // }
 
   const body = {
     table_name: tableMetadata.name,
