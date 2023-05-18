@@ -36,7 +36,7 @@ const perform = async (z, bundle) => {
     },
   });
 
-  return ctx.mapCreateRowKeys(response.data);
+  return ctx.mapCreateRowKeys(z,bundle,response.data);
 };
 
 /**

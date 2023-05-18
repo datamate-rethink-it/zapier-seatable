@@ -40,11 +40,11 @@ const perform = async (z, bundle) => {
 
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
-  rows = _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (o) => {
-    o.id = o.row_id;
-    return o;
-  });
-
+  rows = await Promise.all(_.map(rows, async (o) => {
+    const transformedObj = await ctx.mapColumnKeys(z, bundle, tableMetadata.columns, o);
+    transformedObj.id = `${transformedObj.row_id}`;
+    return transformedObj;
+  }));
   rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
   rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
 

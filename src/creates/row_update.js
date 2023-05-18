@@ -71,8 +71,7 @@ const perform = async (z, bundle) => {
       continue;
     }
     if ('Collaborator' === col.name) {
-
-      map[col.name] = await ctx.getCollaborator(z,bundle,value);
+      map[col.name] = await ctx.getCollaborator(z,bundle,value[0]);
       continue;
     }
     map[col.name] = value;

@@ -27,9 +27,10 @@ const perform = async (z, bundle) => {
     body: await ctx.tableNameId(z, bundle, "search"),
   });
   const RowData = response.json["results"];
-  // const inputDatat =response.request.input.bundle.inputDataRaw._zap_search_success_on_miss;
+  const f = response.json["results"][0];
+  f.Collaborator=await ctx.getCollaboratorData(z,bundle,f.Collaborator);
   if (RowData.length > 0) {
-    return [response.json["results"][0]];
+    return [f];
   } else if (
     RowData.length === 0 ||
     bundle.inputDataRaw._zap_search_success_on_miss

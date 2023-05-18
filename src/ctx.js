@@ -730,23 +730,32 @@ function requestParamsSid(sid) {
  * @param {object} row
  * @return {object} distinguished column-key mapped row
  */
-const mapColumnKeys = (columns, row) => {
-  const r = {};
-  const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
-  // step 1: implicit row properties
-  const implicit = ["_id", "_mtime"];
-  for (const p of implicit) {
-    if (hop(row, p)) {
-      r[`row${p}`] = row[p];
+const mapColumnKeys = async (z, bundle, columns, row) => {
+    const r = {};
+    const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
+    // step 1: implicit row properties
+    const implicit = ["_id", "_mtime"];
+    for (const p of implicit) {
+      if (hop(row, p)) {
+        r[`row${p}`] = row[p];
+      }
     }
-  }
-  // step 2: column.name
-  for (const c of columns) {
-    if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
-      r[`column:${c.key}`] = row[c.name];
+    // step 2: column.name
+    for (const c of columns) {
+      if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
+        const regex = /^\w{32}@auth\.local$/;
+        const v = row[c.name];
+        if (regex.test(v[0])) {
+          r[`column:${c.key}`] =await getCollaboratorData(z,bundle,v);
+          continue;
+        }else if(regex.test(v)){
+          r[`column:${c.key}`] =await getCollaboratorData(z,bundle,[v]);
+          continue;
+        }
+        r[`column:${c.key}`] = row[c.name];
+      }
     }
-  }
-  return r;
+    return r;
 };
 
 /**
@@ -755,14 +764,19 @@ const mapColumnKeys = (columns, row) => {
  * @param  {DTableRow} row
  * @return {Object.<string,any>}
  */
-const mapCreateRowKeys = (row) => {
+const mapCreateRowKeys = async (z, bundle, row) => {
   const r = {};
 
   for (const k in row) {
     if (!Object.prototype.hasOwnProperty.call(row, k)) {
       continue;
     }
+    const regex = /^\w{32}@auth\.local$/;
     const v = row[k];
+    if (regex.test(v)) {
+      r[`row${k}`] = await getCollaboratorData(z, bundle, v);
+      continue;
+    }
     if (k === "_id") {
       r[`row${k}`] = v;
       continue;
@@ -908,7 +922,7 @@ const tableNameId = async (z, bundle, context) => {
   let TABLE_ID = new_table_id[1];
   let colName = "";
   let tableName = "";
-  let colType='';
+  let colType = "";
   const MetaData = await acquireMetadata(z, bundle);
   const tableMetadata = await acquireTableMetadata(z, bundle);
   const sid = sidParse(bundle.inputData.search_column);
@@ -926,7 +940,6 @@ const tableNameId = async (z, bundle, context) => {
     z.console.log(
       `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
       col.type
-      
     );
     throw new z.errors.Error(
       `Search in ${
@@ -936,7 +949,7 @@ const tableNameId = async (z, bundle, context) => {
       }" is not supported, please choose a different column.`
     );
   }
-  colType =col.type
+  colType = col.type;
   colName = col.name;
   let tb = _.map(
     _.filter(MetaData.tables, (table) => {
@@ -955,12 +968,12 @@ const tableNameId = async (z, bundle, context) => {
   };
   return f;
 };
-const getCollaborator = async (z, bundle,value) => {
-  let collaboratorEmail=value;
+const getCollaborator = async (z, bundle, value) => {
+  let collaboratorEmail = value;
   const collaborator = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
-    method: 'GET',
-    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
+    method: "GET",
+    headers: { Authorization: `Token ${bundle.dtable.access_token}` },
   });
   const collaboratorData = collaborator.json.user_list;
   const collData = _.map(
@@ -973,20 +986,25 @@ const getCollaborator = async (z, bundle,value) => {
   );
   return collData;
 };
-const getCollaboratorData = async (z, bundle,value) => {
-  let collaboratorEmail=value;
+const getCollaboratorData = async (z, bundle, value) => {
+  let collaboratorUsers = value;
   const collaborator = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
-    method: 'GET',
-    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
+    method: "GET",
+    headers: { Authorization: `Token ${bundle.dtable.access_token}` },
   });
   const collaboratorData = collaborator.json.user_list;
   const collData = _.map(
     _.filter(collaboratorData, (o) => {
-      return o.email === collaboratorEmail;
+      const regex = /^\w{32}@auth\.local$/;
+        for(let i=0;i<collaboratorUsers.length;i++){
+            if(o.email === collaboratorUsers[i] && regex.test(collaboratorUsers[i])){
+                return o.email === collaboratorUsers[i];
+            }
+        }
     }),
     (o) => {
-      return {username:o.email,email:o.contact_email,name:o.name};
+      return { username: o.email, email: o.contact_email, name: o.name };
     }
   );
   return collData;
