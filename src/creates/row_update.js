@@ -106,7 +106,225 @@ const perform = async (z, bundle) => {
 const inputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
-  return _.map(getUpdateColumns(tableMetadata.columns, bundle), (o) => {
+  return _.map(getUpdateColumns(tableMetadata.columns, bundle), (o) => {    
+    switch(o.type) {
+      case "text":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+      
+      case "long-text":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "number":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "collaborator":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+        
+      case "date":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "duration":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "single-select":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+      
+      case "multiple-select":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "image":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "file":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "email":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "url":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "checkbox":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "rate":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "formula":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "link-formula":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "geolocation":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "link":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "creator":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "ctime":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "last-modifier":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "mtime":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "auto-number":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+
+      case "button":
+        return {
+          key: `column:${o.key}`,
+          label: o.name,
+          type: o.type,
+          required: false,
+          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
+        };
+    }
+
     return {
       key: `column:${o.key}`,
       label: o.name,
