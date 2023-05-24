@@ -787,6 +787,11 @@ const mapColumnKeys = async (z, zb, bundle, columns, row) => {
         r[`column:${c.key}`] = await downloadLink(z, bundle, value);
         continue;
       }
+      if ("Image" === c.name) {
+        const value = row[c.name];
+        r[`column:${c.key}`] = value[1];
+        continue;
+      }
       r[`column:${c.key}`] = row[c.name];
     }
   }
