@@ -1,7 +1,7 @@
 const _CONST = require('../const');
 const ctx = require('../ctx');
 const {ResponseThrottleInfo} = require('../lib');
-
+const {ZapBundle} = require('../ctx/ZapBundle');
 const _ = require('lodash');
 
 /**
@@ -15,7 +15,9 @@ const _ = require('lodash');
  */
 const perform = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
-
+  //
+  const zb = new ZapBundle(z, bundle);
+  //
   const logTag = `[${bundle.__zTS}] triggers.row_update`;
   z.console.time(logTag);
 
@@ -43,7 +45,7 @@ const perform = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   rows = await Promise.all(_.map(rows, async (o) => {
-    const transformedObj = await ctx.mapColumnKeys(z, bundle, tableMetadata.columns, o);
+    const transformedObj = await ctx.mapColumnKeys(z,zb, bundle, tableMetadata.columns, o);
     transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;
     return transformedObj;
   }));

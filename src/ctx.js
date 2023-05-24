@@ -4,9 +4,10 @@
  * Written by Tom Klingenberg
  * Copyright 2021 SeaTable GmbH, Mainz
  */
+// const {ZapBundle} = require('./ctx/ZapBundle');
 
 const _CONST = require("./const");
-
+const { stashFile } = require("./hydrators");
 const _ = require("lodash");
 const { ResponseThrottleInfo } = require("./lib");
 const { sidParse } = require("./lib/sid");
@@ -729,33 +730,67 @@ function requestParamsSid(sid) {
  * @param {Array<DTableColumn>} columns
  * @param {object} row
  * @return {object} distinguished column-key mapped row
- */
-const mapColumnKeys = async (z, bundle, columns, row) => {
-    const r = {};
-    const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
-    // step 1: implicit row properties
-    const implicit = ["_id", "_mtime"];
-    for (const p of implicit) {
-      if (hop(row, p)) {
-        r[`row${p}`] = row[p];
-      }
+ */ const downloadLink = async (z, bundle, URL) => {
+  const dataFile =[];
+  for (const file of URL) {
+    let fileUrl = file.url;
+    const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
+      fileUrl
+    )?.[1];
+    if (!urlPath) {
+      throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
     }
-    // step 2: column.name
-    for (const c of columns) {
-      if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
-        const regex = /^\w{32}@auth\.local$/;
-        const v = row[c.name];
-        if (regex.test(v[0])) {
-          r[`column:${c.key}`] =await getCollaboratorData(z,bundle,v);
-          continue;
-        }else if(regex.test(v)){
-          r[`column:${c.key}`] =await getCollaboratorData(z,bundle,[v]);
-          continue;
-        }
-        r[`column:${c.key}`] = row[c.name];
-      }
+    const collaborator = await z.request({
+      url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
+      method: "GET",
+      headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+    });
+    const data = collaborator.json;
+    if (!data.download_link) {
+      throw new z.errors.Error(
+        `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`
+      );
     }
-    return r;
+    const downloadedUrl = data.download_link;
+    const hydratedUrl = z.dehydrateFile(stashFile, {
+      downloadUrl: downloadedUrl,
+    });
+    dataFile.push(hydratedUrl);
+  }
+  return dataFile;
+};
+
+const mapColumnKeys = async (z, zb, bundle, columns, row) => {
+  const r = {};
+  const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
+  // step 1: implicit row properties
+  const implicit = ["_id", "_mtime"];
+  for (const p of implicit) {
+    if (hop(row, p)) {
+      r[`row${p}`] = row[p];
+    }
+  }
+  // step 2: column.name
+  for (const c of columns) {
+    if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
+      const regex = /^\w{32}@auth\.local$/;
+      const v = row[c.name];
+      if (regex.test(v[0])) {
+        r[`column:${c.key}`] = await getCollaboratorData(z, bundle, v);
+        continue;
+      } else if (regex.test(v)) {
+        r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
+        continue;
+      }
+      if ("File" === c.name) {
+        const value = row[c.name];
+        r[`column:${c.key}`] = await downloadLink(z, bundle, value);
+        continue;
+      }
+      r[`column:${c.key}`] = row[c.name];
+    }
+  }
+  return r;
 };
 
 /**
@@ -997,11 +1032,14 @@ const getCollaboratorData = async (z, bundle, value) => {
   const collData = _.map(
     _.filter(collaboratorData, (o) => {
       const regex = /^\w{32}@auth\.local$/;
-        for(let i=0;i<collaboratorUsers.length;i++){
-            if(o.email === collaboratorUsers[i] && regex.test(collaboratorUsers[i])){
-                return o.email === collaboratorUsers[i];
-            }
+      for (let i = 0; i < collaboratorUsers.length; i++) {
+        if (
+          o.email === collaboratorUsers[i] &&
+          regex.test(collaboratorUsers[i])
+        ) {
+          return o.email === collaboratorUsers[i];
         }
+      }
     }),
     (o) => {
       return { username: o.email, email: o.contact_email, name: o.name };
@@ -1023,6 +1061,7 @@ module.exports = {
   mapCreateRowKeys,
   requestParamsSid,
   requestParamsBundle,
+  downloadLink,
   sidParse,
   struct,
   tableFields,

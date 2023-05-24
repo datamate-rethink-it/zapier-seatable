@@ -8,7 +8,7 @@ const _ = require('lodash');
  *
  * if table or view metadata is not available for table_name / table_view (alt: default view)
  * the columns parameter falls through.
- *
+ *@
  * @param {Array<DTableColumn>} columns
  * @param {Bundle} bundle
  * @return {Array<DTableColumn>}
@@ -58,7 +58,7 @@ const getUpdateColumns = (columns, bundle) => {
  */
 const perform = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-
+  
   const map = {};
   for (const col of getUpdateColumns(tableMetadata.columns, bundle)) {
     const key = `column:${col.key}`;
@@ -74,16 +74,12 @@ const perform = async (z, bundle) => {
       map[col.name] = await ctx.getCollaborator(z,bundle,value[0]);
       continue;
     }
+    
     map[col.name] = value;
   }
 
   let rowId;
-  // try {
   rowId = (ctx.sidParse(`table:${bundle.inputData.table_name}:row:${bundle.inputData.table_row}`).row)?ctx.sidParse(bundle.inputData.table_row).row:bundle.inputData.table_row;
-  // } catch (e) {
-  //   throw new z.errors.Error(`Not a valid row: "${bundle.inputData.table_row}". Please use a valid "table:...:row:..." reference.`);
-  //   rowId = `table:${bundle.inputData.table_name}:row:${bundle.inputData.table_row}`;
-  // }
 
   const body = {
     table_name: tableMetadata.name,
@@ -366,6 +362,7 @@ module.exports = {
         altersDynamicFields: false,
       },
       inputFields,
+      ctx.fileNoAuthLinksField,
     ],
     sample: {'success': true},
     outputFields: [{'key': 'success', 'type': 'boolean'}],

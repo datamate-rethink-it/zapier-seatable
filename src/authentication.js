@@ -39,7 +39,7 @@ module.exports = {
       required: true,
       label: 'API-Token (of a Base)',
       type: 'string',
-      helpText: 'Create an [API-Token](https://seatable.io/docs/handbuch/become-a-pro/api-tokens/?lang=auto) for one of your bases inside SeaTable.',
+      helpText: 'Create an [API-Token](https://seatable.io/docs/integrationen/zapier-integration/) for one of your bases inside SeaTable.',
     },
   ],
   connectionLabel,
