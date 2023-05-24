@@ -20,13 +20,13 @@ const perform = async (z, bundle) => {
   });
   const rows = response.data.rows;
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-  return _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (r) => {
+  return await Promise.all(_.map(rows, async (o) => {
+    let transformedObj = await ctx.mapColumnKeys(z, bundle, tableMetadata.columns, o);
     return {
-      id: `${r.row_id}`,
-      name: r['column:0000'], // r['column:0000'] can be "undefined", perhaps filter first
+      id: transformedObj.row_id,
+      name: transformedObj['column:0000'],
     };
-  },
-  );
+  }));
 };
 
 module.exports = {

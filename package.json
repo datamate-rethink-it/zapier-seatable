@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --recursive --exclude 'test/antar/*_*' -t 10000"
+    
   },
   "engines": {
     "node": ">=v16",

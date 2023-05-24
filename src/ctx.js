@@ -4,9 +4,10 @@
  * Written by Tom Klingenberg
  * Copyright 2021 SeaTable GmbH, Mainz
  */
+// const {ZapBundle} = require('./ctx/ZapBundle');
 
 const _CONST = require("./const");
-
+const { stashFile } = require("./hydrators");
 const _ = require("lodash");
 const { ResponseThrottleInfo } = require("./lib");
 const { sidParse } = require("./lib/sid");
@@ -729,8 +730,37 @@ function requestParamsSid(sid) {
  * @param {Array<DTableColumn>} columns
  * @param {object} row
  * @return {object} distinguished column-key mapped row
- */
-const mapColumnKeys = (columns, row) => {
+ */ const downloadLink = async (z, bundle, URL) => {
+  const dataFile =[];
+  for (const file of URL) {
+    let fileUrl = file.url;
+    const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
+      fileUrl
+    )?.[1];
+    if (!urlPath) {
+      throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
+    }
+    const collaborator = await z.request({
+      url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
+      method: "GET",
+      headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+    });
+    const data = collaborator.json;
+    if (!data.download_link) {
+      throw new z.errors.Error(
+        `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`
+      );
+    }
+    const downloadedUrl = data.download_link;
+    const hydratedUrl = z.dehydrateFile(stashFile, {
+      downloadUrl: downloadedUrl,
+    });
+    dataFile.push(hydratedUrl);
+  }
+  return dataFile;
+};
+
+const mapColumnKeys = async (z, zb, bundle, columns, row) => {
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
   // step 1: implicit row properties
@@ -743,6 +773,25 @@ const mapColumnKeys = (columns, row) => {
   // step 2: column.name
   for (const c of columns) {
     if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
+      const regex = /^\w{32}@auth\.local$/;
+      const v = row[c.name];
+      if (regex.test(v[0])) {
+        r[`column:${c.key}`] = await getCollaboratorData(z, bundle, v);
+        continue;
+      } else if (regex.test(v)) {
+        r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
+        continue;
+      }
+      if ("File" === c.name) {
+        const value = row[c.name];
+        r[`column:${c.key}`] = await downloadLink(z, bundle, value);
+        continue;
+      }
+      if ("Image" === c.name) {
+        const value = row[c.name];
+        r[`column:${c.key}`] = value[1];
+        continue;
+      }
       r[`column:${c.key}`] = row[c.name];
     }
   }
@@ -755,14 +804,19 @@ const mapColumnKeys = (columns, row) => {
  * @param  {DTableRow} row
  * @return {Object.<string,any>}
  */
-const mapCreateRowKeys = (row) => {
+const mapCreateRowKeys = async (z, bundle, row) => {
   const r = {};
 
   for (const k in row) {
     if (!Object.prototype.hasOwnProperty.call(row, k)) {
       continue;
     }
+    const regex = /^\w{32}@auth\.local$/;
     const v = row[k];
+    if (regex.test(v)) {
+      r[`row${k}`] = await getCollaboratorData(z, bundle, v);
+      continue;
+    }
     if (k === "_id") {
       r[`row${k}`] = v;
       continue;
@@ -908,7 +962,7 @@ const tableNameId = async (z, bundle, context) => {
   let TABLE_ID = new_table_id[1];
   let colName = "";
   let tableName = "";
-  let colType='';
+  let colType = "";
   const MetaData = await acquireMetadata(z, bundle);
   const tableMetadata = await acquireTableMetadata(z, bundle);
   const sid = sidParse(bundle.inputData.search_column);
@@ -926,7 +980,6 @@ const tableNameId = async (z, bundle, context) => {
     z.console.log(
       `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
       col.type
-      
     );
     throw new z.errors.Error(
       `Search in ${
@@ -936,7 +989,7 @@ const tableNameId = async (z, bundle, context) => {
       }" is not supported, please choose a different column.`
     );
   }
-  colType =col.type
+  colType = col.type;
   colName = col.name;
   let tb = _.map(
     _.filter(MetaData.tables, (table) => {
@@ -955,12 +1008,12 @@ const tableNameId = async (z, bundle, context) => {
   };
   return f;
 };
-const getCollaborator = async (z, bundle,value) => {
-  let collaboratorEmail=value;
+const getCollaborator = async (z, bundle, value) => {
+  let collaboratorEmail = value;
   const collaborator = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
-    method: 'GET',
-    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
+    method: "GET",
+    headers: { Authorization: `Token ${bundle.dtable.access_token}` },
   });
   const collaboratorData = collaborator.json.user_list;
   const collData = _.map(
@@ -973,7 +1026,32 @@ const getCollaborator = async (z, bundle,value) => {
   );
   return collData;
 };
-
+const getCollaboratorData = async (z, bundle, value) => {
+  let collaboratorUsers = value;
+  const collaborator = await z.request({
+    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
+    method: "GET",
+    headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+  });
+  const collaboratorData = collaborator.json.user_list;
+  const collData = _.map(
+    _.filter(collaboratorData, (o) => {
+      const regex = /^\w{32}@auth\.local$/;
+      for (let i = 0; i < collaboratorUsers.length; i++) {
+        if (
+          o.email === collaboratorUsers[i] &&
+          regex.test(collaboratorUsers[i])
+        ) {
+          return o.email === collaboratorUsers[i];
+        }
+      }
+    }),
+    (o) => {
+      return { username: o.email, email: o.contact_email, name: o.name };
+    }
+  );
+  return collData;
+};
 module.exports = {
   acquireServerInfo,
   acquireDtableAppAccess,
@@ -983,10 +1061,12 @@ module.exports = {
   filter,
   tableNameId,
   getCollaborator,
+  getCollaboratorData,
   mapColumnKeys,
   mapCreateRowKeys,
   requestParamsSid,
   requestParamsBundle,
+  downloadLink,
   sidParse,
   struct,
   tableFields,

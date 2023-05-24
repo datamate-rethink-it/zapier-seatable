@@ -1,7 +1,7 @@
 const _CONST = require('../const');
 const ctx = require('../ctx');
 const {ResponseThrottleInfo} = require('../lib');
-
+const {ZapBundle} = require('../ctx/ZapBundle');
 const _ = require('lodash');
 
 /**
@@ -15,7 +15,9 @@ const _ = require('lodash');
  */
 const perform = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
-
+  //
+  const zb = new ZapBundle(z, bundle);
+  //
   const logTag = `[${bundle.__zTS}] triggers.row_update`;
   z.console.time(logTag);
 
@@ -42,11 +44,12 @@ const perform = async (z, bundle) => {
 
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
-  rows = _.map(_.map(rows, (o) => ctx.mapColumnKeys(tableMetadata.columns, o)), (o) => {
-    o.id = `${o.row_id}-${o.row_mtime}`;
-    return o;
-  });
-
+  rows = await Promise.all(_.map(rows, async (o) => {
+    const transformedObj = await ctx.mapColumnKeys(z,zb, bundle, tableMetadata.columns, o);
+    transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;
+    return transformedObj;
+  }));
+  
   const unfilteredLength = rows.length;
 
   const featureMTime = _CONST.FEATURE[_CONST.FEATURE_MTIME_FILTER] || undefined;
@@ -70,9 +73,7 @@ const perform = async (z, bundle) => {
 
   rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
   rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
-
   z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
-
   return rows;
 };
 
