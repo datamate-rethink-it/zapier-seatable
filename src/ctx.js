@@ -52,6 +52,8 @@ const struct = {
     },
     zapier: {
       // column types that zapier must not write/create (hidden):
+      // "file",
+      //   "image",
       hide_write: [
         "file",
         "image",
@@ -730,7 +732,8 @@ function requestParamsSid(sid) {
  * @param {Array<DTableColumn>} columns
  * @param {object} row
  * @return {object} distinguished column-key mapped row
- */ const downloadLink = async (z, bundle, URL) => {
+ */ 
+const downloadLink = async (z, bundle, URL) => {
   const dataFile =[];
   for (const file of URL) {
     let fileUrl = file.url;
@@ -738,6 +741,39 @@ function requestParamsSid(sid) {
       fileUrl
     )?.[1];
     if (!urlPath) {
+      // dataFile.push(fileUrl);
+      // continue;
+      throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
+    }
+    const collaborator = await z.request({
+      url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
+      method: "GET",
+      headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+    });
+    const data = collaborator.json;
+    if (!data.download_link) {
+      throw new z.errors.Error(
+        `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`
+      );
+    }
+    const downloadedUrl = data.download_link;
+    const hydratedUrl = z.dehydrateFile(stashFile, {
+      downloadUrl: downloadedUrl,
+    });
+    dataFile.push(hydratedUrl);
+  }
+  return dataFile;
+};
+const downloadImageLink = async (z, bundle, URL) => {
+  const dataFile =[];
+  for (const file of URL) {
+    let fileUrl = file;
+    const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
+      fileUrl
+    )?.[1];
+    if (!urlPath) {
+      // dataFile.push(fileUrl);
+      // continue;
       throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
     }
     const collaborator = await z.request({
@@ -760,7 +796,7 @@ function requestParamsSid(sid) {
   return dataFile;
 };
 
-const mapColumnKeys = async (z, zb, bundle, columns, row) => {
+const mapColumnKeys = async (z, bundle, columns, row) => {
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
   // step 1: implicit row properties
@@ -782,15 +818,19 @@ const mapColumnKeys = async (z, zb, bundle, columns, row) => {
         r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
         continue;
       }
-      if ("File" === c.name) {
-        const value = row[c.name];
-        r[`column:${c.key}`] = await downloadLink(z, bundle, value);
-        continue;
-      }
-      if ("Image" === c.name) {
-        const value = row[c.name];
-        r[`column:${c.key}`] = value[1];
-        continue;
+      if(bundle.inputData.feature_non_authorized_asset_downloads){
+        if ("File" === c.name) {
+          const value = row[c.name];
+          // r[`column:${c.key}`] = value;
+          r[`column:${c.key}`] = await downloadLink(z, bundle, value);
+          continue;
+        }
+        if ("Image" === c.name) {
+          const value = row[c.name];
+          // r[`column:${c.key}`] = value[0];
+          r[`column:${c.key}`] = await downloadImageLink(z, bundle, value);
+          continue;
+        }
       }
       r[`column:${c.key}`] = row[c.name];
     }
@@ -1067,6 +1107,7 @@ module.exports = {
   requestParamsSid,
   requestParamsBundle,
   downloadLink,
+  downloadImageLink,
   sidParse,
   struct,
   tableFields,
