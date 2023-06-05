@@ -21,7 +21,7 @@ const perform = async (z, bundle) => {
   const rows = response.data.rows;
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   return await Promise.all(_.map(rows, async (o) => {
-    let transformedObj = await ctx.mapColumnKeys(z, bundle, tableMetadata.columns, o);
+    let transformedObj = await ctx.mapColumnKeysRow(tableMetadata.columns, o);
     return {
       id: transformedObj.row_id,
       name: transformedObj['column:0000'],

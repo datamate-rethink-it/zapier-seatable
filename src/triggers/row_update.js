@@ -71,8 +71,8 @@ const perform = async (z, bundle) => {
     z.console.timeLog(logTag, `filtered rows length: ${rows.length} (offset=${unfilteredLength - rows.length} minutes=${mTimeFilterMinutes})`);
   }
 
-  rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
-  rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
+  // rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
+  // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
   z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
   return rows;
 };

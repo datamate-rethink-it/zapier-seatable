@@ -45,8 +45,8 @@ const perform = async (z, bundle) => {
     transformedObj.id = `${transformedObj.row_id}`;
     return transformedObj;
   }));
-  rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
-  rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
+  // rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
+  // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
 
   return rows;
 };

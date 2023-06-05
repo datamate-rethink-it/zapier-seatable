@@ -74,7 +74,10 @@ const perform = async (z, bundle) => {
       map[col.name] = await ctx.getCollaborator(z,bundle,value[0]);
       continue;
     }
-    
+    if ('link' === col.type) {
+      await ctx.linkRecord(z,bundle,key);
+      continue;
+    }
     map[col.name] = value;
   }
 
@@ -94,7 +97,7 @@ const perform = async (z, bundle) => {
     headers: {Authorization: `Token ${bundle.dtable.access_token}`},
     body,
   });
-
+  // response.request.body
   return response.data;
 };
 
