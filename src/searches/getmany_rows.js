@@ -26,11 +26,11 @@ const performSearch = async (z, bundle) => {
     body: await ctx.tableNameId(z, bundle, "search"),
   });
   const RowData = response.json["results"];
-  const data =response.json.results;
-  if (RowData.length > 0) {
+  const newRowData = await ctx.getCollAndImage(z, bundle, response.json.results)
+  if (newRowData.length > 0) {
     return [{Data : response.json.results}];
   } else if (
-    RowData.length === 0 &&
+    newRowData.length === 0 &&
     bundle.inputDataRaw._zap_search_success_on_miss
   ) {
     return [];

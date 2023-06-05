@@ -52,10 +52,12 @@ const struct = {
     },
     zapier: {
       // column types that zapier must not write/create (hidden):
+      // "file",
+      //   "image",
       hide_write: [
         "file",
         "image",
-        "link",
+        // "link",
         "auto-number",
         "ctime",
         "mtime",
@@ -730,15 +732,49 @@ function requestParamsSid(sid) {
  * @param {Array<DTableColumn>} columns
  * @param {object} row
  * @return {object} distinguished column-key mapped row
- */ const downloadLink = async (z, bundle, URL) => {
-  const dataFile =[];
+ */
+const downloadLink = async (z, bundle, URL) => {
+  const dataFile = [];
   for (const file of URL) {
     let fileUrl = file.url;
     const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
       fileUrl
     )?.[1];
     if (!urlPath) {
-      throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
+      dataFile.push(fileUrl);
+      return dataFile;
+      // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
+    }
+    const collaborator = await z.request({
+      url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
+      method: "GET",
+      headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+    });
+    const data = collaborator.json;
+    if (!data.download_link) {
+      throw new z.errors.Error(
+        `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`
+      );
+    }
+    const downloadedUrl = data.download_link;
+    const hydratedUrl = z.dehydrateFile(stashFile, {
+      downloadUrl: downloadedUrl,
+    });
+    dataFile.push(hydratedUrl);
+  }
+  return dataFile;
+};
+const downloadImageLink = async (z, bundle, URL) => {
+  const dataFile = [];
+  for (const file of URL) {
+    let fileUrl = file;
+    const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
+      fileUrl
+    )?.[1];
+    if (!urlPath) {
+      dataFile.push(fileUrl);
+      return dataFile;
+      // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
     }
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
@@ -760,7 +796,7 @@ function requestParamsSid(sid) {
   return dataFile;
 };
 
-const mapColumnKeys = async (z, zb, bundle, columns, row) => {
+const mapColumnKeys = async (z, bundle, columns, row) => {
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
   // step 1: implicit row properties
@@ -782,16 +818,38 @@ const mapColumnKeys = async (z, zb, bundle, columns, row) => {
         r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
         continue;
       }
-      if ("File" === c.name) {
-        const value = row[c.name];
-        r[`column:${c.key}`] = await downloadLink(z, bundle, value);
-        continue;
+      if (bundle.inputData.feature_non_authorized_asset_downloads) {
+        if ("File" === c.name) {
+          const value = row[c.name];
+          // r[`column:${c.key}`] = value;
+          r[`column:${c.key}`] = await downloadLink(z, bundle, value);
+          continue;
+        }
+        if ("Image" === c.name) {
+          const value = row[c.name];
+          // r[`column:${c.key}`] = value[0];
+          r[`column:${c.key}`] = await downloadImageLink(z, bundle, value);
+          continue;
+        }
       }
-      if ("Image" === c.name) {
-        const value = row[c.name];
-        r[`column:${c.key}`] = value[1];
-        continue;
-      }
+      r[`column:${c.key}`] = row[c.name];
+    }
+  }
+  return r;
+};
+const mapColumnKeysRow = async (columns, row) => {
+  const r = {};
+  const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
+  // step 1: implicit row properties
+  const implicit = ["_id", "_mtime"];
+  for (const p of implicit) {
+    if (hop(row, p)) {
+      r[`row${p}`] = row[p];
+    }
+  }
+  // step 2: column.name
+  for (const c of columns) {
+    if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
       r[`column:${c.key}`] = row[c.name];
     }
   }
@@ -817,6 +875,7 @@ const mapCreateRowKeys = async (z, bundle, row) => {
       r[`row${k}`] = await getCollaboratorData(z, bundle, v);
       continue;
     }
+    
     if (k === "_id") {
       r[`row${k}`] = v;
       continue;
@@ -1052,6 +1111,122 @@ const getCollaboratorData = async (z, bundle, value) => {
   );
   return collData;
 };
+const linkRecord = async (z, bundle, value) => {
+  const metadata = await acquireMetadata(z, bundle);
+  const data = metadata.tables;
+  const columns = data[0].columns;
+  const TablesData = _.map(data, (o) => {
+    return { _id: o._id, name: o.name };
+  });
+  const res = _.map(
+    _.filter(columns, (o) => {
+      return o.type === "link";
+    }),
+    (o) => {
+      const result = o.data;
+      const linkData = {
+        table_id: result.table_id,
+        other_table_id: result.other_table_id,
+        link_id: result.link_id,
+      };
+      let data = {
+        table_name: "",
+        other_table_name: "",
+        link_id: linkData.link_id,
+        table_row_id: bundle.inputData.table_row,
+        other_table_row_id: bundle.inputData[value],
+      };
+      const finalRes = _.map(TablesData, (o) => {
+        if (linkData.table_id === o._id) {
+          data.table_name = o.name;
+        }
+        if (linkData.other_table_id === o._id) {
+          data.other_table_name = o.name;
+        }
+      });
+      return data;
+    }
+  );
+  const bodyData = res[0];
+  return await linkRequest(z, bundle, bodyData);
+};
+const linkCreateRecord = async (z, bundle, value, id) => {
+  const metadata = await acquireMetadata(z, bundle);
+  const data = metadata.tables;
+  const columns = data[0].columns;
+  const TablesData = _.map(data, (o) => {
+    return { _id: o._id, name: o.name };
+  });
+  const res = _.map(
+    _.filter(columns, (o) => {
+      return o.type === "link";
+    }),
+    (o) => {
+      const result = o.data;
+      const linkData = {
+        table_id: result.table_id,
+        other_table_id: result.other_table_id,
+        link_id: result.link_id,
+      };
+      let data = {
+        table_name: "",
+        other_table_name: "",
+        link_id: linkData.link_id,
+        table_row_id: id ,
+        other_table_row_id: value,
+      };
+      const finalRes = _.map(TablesData, (o) => {
+        if (linkData.table_id === o._id) {
+          data.table_name = o.name;
+        }
+        if (linkData.other_table_id === o._id) {
+          data.other_table_name = o.name;
+        }
+      });
+      return data;
+    }
+  );
+  const bodyData = res[0];
+  return await linkRequest(z, bundle, bodyData);
+};
+const linkRequest = async (z, bundle, bodyData) => {
+  const linkTwoRecord = await z.request({
+    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/links/`,
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      Authorization: `Token ${bundle.dtable.access_token}`,
+    },
+    body: JSON.stringify({
+      table_name: bodyData.table_name,
+      other_table_name: bodyData.other_table_name,
+      link_id: bodyData.link_id,
+      table_row_id: bodyData.table_row_id,
+      other_table_row_id: bodyData.other_table_row_id,
+    }),
+  });
+  return linkTwoRecord;
+};
+const getImageData = (value) => {
+  let Images = value;
+  const imageData = _.map(Images, (o) => {
+    const regex = /([^/]+)$/;
+    const match = o.match(regex);
+    const filename = match[1];
+    return { name: filename, type: "image", url: o };
+  });
+  return imageData;
+};
+const getCollAndImage = async (z, bundle, value) => {
+  let Data = value;
+  const newArray = _.map(Data, async (o) => {
+    o.Image = getImageData(o.Image);
+    o.Collaborator = await getCollaboratorData(z, bundle, o.Collaborator);
+    return o;
+  });
+  return newArray;
+};
 module.exports = {
   acquireServerInfo,
   acquireDtableAppAccess,
@@ -1062,11 +1237,18 @@ module.exports = {
   tableNameId,
   getCollaborator,
   getCollaboratorData,
+  getImageData,
+  getCollAndImage,
   mapColumnKeys,
+  mapColumnKeysRow,
   mapCreateRowKeys,
   requestParamsSid,
   requestParamsBundle,
   downloadLink,
+  downloadImageLink,
+  linkRecord,
+  linkCreateRecord,
+  linkRequest,
   sidParse,
   struct,
   tableFields,

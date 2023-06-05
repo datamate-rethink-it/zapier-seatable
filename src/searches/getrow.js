@@ -28,7 +28,8 @@ const perform = async (z, bundle) => {
   });
   const RowData = response.json["results"];
   const f = response.json["results"][0];
-  f.Collaborator=await ctx.getCollaboratorData(z,bundle,f.Collaborator);
+  f.Image = ctx.getImageData(f.Image);
+  f.Collaborator = await ctx.getCollaboratorData(z, bundle, f.Collaborator);
   if (RowData.length > 0) {
     return [f];
   } else if (
@@ -106,8 +107,8 @@ const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   return [
-    {key: 'row_id', label: 'ID'},
-    {key: 'row_mtime', label: 'Last Modified'},
+    { key: "row_id", label: "ID" },
+    { key: "row_mtime", label: "Last Modified" },
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
     ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
   ];
@@ -115,13 +116,13 @@ const outputFields = async (z, bundle) => {
 module.exports = {
   // see here for a full list of available properties:
   // https://github.com/zapier/zapier-platform/blob/main/packages/schema/docs/build/schema.md#searchschema
-  key: 'getrow',
-  noun: 'Getrow',
+  key: "getrow",
+  noun: "Getrow",
 
   display: {
     label: "Find Row",
-      description: "Finds a row using SQL Query search syntax, ",
-      important: true,
+    description: "Finds a row using SQL Query search syntax, ",
+    important: true,
   },
 
   operation: {
@@ -149,7 +150,7 @@ module.exports = {
     // returned records, and have obvious placeholder values that we can show to any user.
     sample: {
       id: 1,
-      name: 'Test'
+      name: "Test",
     },
 
     // If fields are custom to each user (like spreadsheet columns), `outputFields` can create human labels
@@ -157,10 +158,10 @@ module.exports = {
     // https://github.com/zapier/zapier-platform/tree/main/packages/cli#customdynamic-fields
     // Alternatively, a static field definition can be provided, to specify labels for the fields
     outputFields: [
-      outputFields
+      outputFields,
       // these are placeholders to match the example `perform` above
       // {key: 'id', label: 'Person ID'},
       // {key: 'name', label: 'Person Name'}
-    ]
-  }
+    ],
+  },
 };

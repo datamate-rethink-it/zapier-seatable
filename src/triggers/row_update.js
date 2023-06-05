@@ -45,7 +45,7 @@ const perform = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   rows = await Promise.all(_.map(rows, async (o) => {
-    const transformedObj = await ctx.mapColumnKeys(z,zb, bundle, tableMetadata.columns, o);
+    const transformedObj = await ctx.mapColumnKeys(z, bundle, tableMetadata.columns, o);
     transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;
     return transformedObj;
   }));
@@ -71,8 +71,8 @@ const perform = async (z, bundle) => {
     z.console.timeLog(logTag, `filtered rows length: ${rows.length} (offset=${unfilteredLength - rows.length} minutes=${mTimeFilterMinutes})`);
   }
 
-  rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
-  rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
+  // rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
+  // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
   z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
   return rows;
 };
