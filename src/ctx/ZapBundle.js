@@ -100,7 +100,7 @@ class ZapBundle {
               options?.url?.replace('{{dtable_uuid}}', dtable.dtable_uuid),
           ),
           headers: Object.assign(
-              {Authorization: `Token ${dtable.access_token}`},
+              {Authorization: `Token 695ded42368c287fd508e9e3b7da5a3e35d446b0`},
               options.headers || {},
           ),
         },
