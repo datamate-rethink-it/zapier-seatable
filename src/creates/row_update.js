@@ -71,7 +71,7 @@ const perform = async (z, bundle) => {
       continue;
     }
     if ('Collaborator' === col.name) {
-      map[col.name] = await ctx.getCollaborator(z,bundle,value[0]);
+      map[col.name] = await ctx.getCollaborator(z,bundle,value);
       continue;
     }
     if ('link' === col.type) {

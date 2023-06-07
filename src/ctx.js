@@ -779,7 +779,7 @@ const downloadImageLink = async (z, bundle, URL) => {
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: "GET",
-      headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+      headers: { Authorization: `Token ${bundle.authData.api_token}` },
     });
     const data = collaborator.json;
     if (!data.download_link) {

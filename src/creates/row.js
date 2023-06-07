@@ -15,11 +15,14 @@ const perform = async (z, bundle) => {
 
   const map = {};
   const inputData = bundle.inputData;
+  let tester;
 
-  for (const {key, name,type} of tableMetadata.columns) {
-    if ('Collaborator' === name) {
+  for (const {key, name} of tableMetadata.columns) {
+    if (name === 'Collaborator') {
       const value =[inputData && inputData[`column:${key}`]];
+      // map[name] = value;
       map[name] = await ctx.getCollaborator(z,bundle,value[0]);
+      // tester = await ctx.getCollaborator(z,bundle,value);
       continue;
     }
     if ('Image' === name) {
@@ -45,8 +48,10 @@ const perform = async (z, bundle) => {
   for (const {key,type} of tableMetadata.columns) {
     if ('link' === type) {
       const value = inputData && inputData[`column:${key}`];
-      await ctx.linkCreateRecord(z,bundle,value,data)
-      continue;
+      if (value) {
+        await ctx.linkCreateRecord(z,bundle,value,data)
+        continue;
+      }
     }
   }
   return ctx.mapCreateRowKeys(z,bundle,response.data);
