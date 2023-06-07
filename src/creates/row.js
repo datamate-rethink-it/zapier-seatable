@@ -45,8 +45,10 @@ const perform = async (z, bundle) => {
   for (const {key,type} of tableMetadata.columns) {
     if ('link' === type) {
       const value = inputData && inputData[`column:${key}`];
-      await ctx.linkCreateRecord(z,bundle,value,data)
-      continue;
+      if(value){
+        await ctx.linkCreateRecord(z,bundle,value,data)
+        continue;
+      }
     }
   }
   return ctx.mapCreateRowKeys(z,bundle,response.data);
