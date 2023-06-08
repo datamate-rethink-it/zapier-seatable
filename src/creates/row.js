@@ -25,7 +25,7 @@ const perform = async (z, bundle) => {
       // tester = await ctx.getCollaborator(z,bundle,value);
       continue;
     }
-    if ('Image' === name) {
+    if (name ==='Image') {
       map[name] = [inputData && inputData[`column:${key}`]];
       continue;
     }
@@ -46,7 +46,7 @@ const perform = async (z, bundle) => {
   const data = response.data._id
   
   for (const {key,type} of tableMetadata.columns) {
-    if ('link' === type) {
+    if (type === 'link') {
       const value = inputData && inputData[`column:${key}`];
       if(value){
         await ctx.linkCreateRecord(z,bundle,value,data)
