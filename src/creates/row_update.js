@@ -70,11 +70,11 @@ const perform = async (z, bundle) => {
     if (undefined === value || '' === value) {
       continue;
     }
-    if ('Collaborator' === col.name) {
+    if (col.name === 'Collaborator') {
       map[col.name] = await ctx.getCollaborator(z,bundle,value);
       continue;
     }
-    if ('link' === col.type) {
+    if (col.type === 'link') {
       await ctx.linkRecord(z,bundle,key);
       continue;
     }
