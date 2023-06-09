@@ -48,15 +48,15 @@ const struct = {
     assets: ["file", "image"],
     filter: {
       // column types that can not be filtered:
-      not: ["file", "long-text", "image", "url"],
+      not: [ "file", "image", "long-text", "url"],
     },
     zapier: {
       // column types that zapier must not write/create (hidden):
       // "file",
       //   "image",
       hide_write: [
-        "file",
-        "image",
+         "file",
+         "image",
         // "link",
         "auto-number",
         "ctime",
@@ -748,7 +748,7 @@ const downloadLink = async (z, bundle, URL) => {
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: "GET",
-      headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+      headers: { Authorization: `Token ${bundle.authData.api_token}` },
     });
     const data = collaborator.json;
     if (!data.download_link) {
@@ -760,7 +760,7 @@ const downloadLink = async (z, bundle, URL) => {
     const hydratedUrl = z.dehydrateFile(stashFile, {
       downloadUrl: downloadedUrl,
     });
-    dataFile.push(hydratedUrl);
+    dataFile.push([hydratedUrl,downloadedUrl]);
   }
   return dataFile;
 };
@@ -791,7 +791,7 @@ const downloadImageLink = async (z, bundle, URL) => {
     const hydratedUrl = z.dehydrateFile(stashFile, {
       downloadUrl: downloadedUrl,
     });
-    dataFile.push(hydratedUrl);
+    dataFile.push([hydratedUrl,downloadedUrl]);
   }
   return dataFile;
 };

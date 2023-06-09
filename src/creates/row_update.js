@@ -78,6 +78,14 @@ const perform = async (z, bundle) => {
       await ctx.linkRecord(z,bundle,key);
       continue;
     }
+    if ('file' === col.type) {
+      map[col.name] = [value]
+      continue;
+    }
+    if ('image' === col.type) {
+      map[col.name] = [value]
+      continue;
+    }
     map[col.name] = value;
   }
 
@@ -95,6 +103,7 @@ const perform = async (z, bundle) => {
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/rows`,
     method: 'PUT',
     headers: {Authorization: `Token ${bundle.dtable.access_token}`},
+    // headers: {Authorization: `Token ${bundle.dtable.access_token}`},
     body,
   });
   // response.request.body
