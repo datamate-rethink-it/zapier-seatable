@@ -15,10 +15,12 @@ const perform = async (z, bundle) => {
 
   const map = {};
   const inputData = bundle.inputData;
+  let tester;
 
-  for (const {key, name,type} of tableMetadata.columns) {
-    if ('Collaborator' === name) {
+  for (const {key, name} of tableMetadata.columns) {
+    if (name === 'Collaborator') {
       const value =[inputData && inputData[`column:${key}`]];
+
       if(value){
         map[name] = await ctx.getCollaborator(z,bundle,value[0]);
         continue;
@@ -36,7 +38,7 @@ const perform = async (z, bundle) => {
         map[name] = [inputData && inputData[`column:${key}`]];
         continue;
       }
-     continue;
+    continue;
     }
     
     map[name] = inputData && inputData[`column:${key}`];
@@ -55,7 +57,7 @@ const perform = async (z, bundle) => {
   const data = response.data._id
   
   for (const {key,type} of tableMetadata.columns) {
-    if ('link' === type) {
+    if (type === 'link') {
       const value = inputData && inputData[`column:${key}`];
       if(value){
         await ctx.linkCreateRecord(z,bundle,value,data)
