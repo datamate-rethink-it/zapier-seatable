@@ -70,11 +70,14 @@ const perform = async (z, bundle) => {
     if (undefined === value || '' === value) {
       continue;
     }
-    if (col.name === 'Collaborator') {
-      map[col.name] = await ctx.getCollaborator(z,bundle,value);
+    if ('collaborator' === col.type) {
+      if(value){
+        map[col.name] = await ctx.getCollaborator(z,bundle,value);
+        continue;
+      }
       continue;
     }
-    if (col.type === 'link') {
+    if ('link' === col.type) {
       await ctx.linkRecord(z,bundle,key);
       continue;
     }
@@ -83,8 +86,17 @@ const perform = async (z, bundle) => {
       continue;
     }
     if ('image' === col.type) {
-      map[col.name] = [value]
-      continue;
+      if(value){
+          let newValue =value.split(",");
+          if(newValue.length > 1){
+            map[col.name] = [...newValue]
+            continue;
+          }
+          map[col.name] = [value]
+          continue;
+      }else{
+        continue;
+      }
     }
     map[col.name] = value;
   }

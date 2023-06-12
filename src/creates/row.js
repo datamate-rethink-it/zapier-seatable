@@ -20,14 +20,25 @@ const perform = async (z, bundle) => {
   for (const {key, name} of tableMetadata.columns) {
     if (name === 'Collaborator') {
       const value =[inputData && inputData[`column:${key}`]];
-      // map[name] = value;
-      map[name] = await ctx.getCollaborator(z,bundle,value[0]);
-      // tester = await ctx.getCollaborator(z,bundle,value);
+
+      if(value){
+        map[name] = await ctx.getCollaborator(z,bundle,value[0]);
+        continue;
+      }
       continue;
     }
-    if (name ==='Image') {
-      map[name] = [inputData && inputData[`column:${key}`]];
-      continue;
+    if ('image' === type) {
+      const value =inputData && inputData[`column:${key}`];
+      if(value){
+        let newValue =value.split(",");
+        if(newValue.length > 1){
+          map[name] = [...newValue]
+          continue;
+        }
+        map[name] = [inputData && inputData[`column:${key}`]];
+        continue;
+      }
+    continue;
     }
     
     map[name] = inputData && inputData[`column:${key}`];
