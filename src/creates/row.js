@@ -17,8 +17,8 @@ const perform = async (z, bundle) => {
   const inputData = bundle.inputData;
   let tester;
 
-  for (const {key, name} of tableMetadata.columns) {
-    if (name === 'Collaborator') {
+  for (const {key, name, type} of tableMetadata.columns) {
+    if (type === 'collaborator') {
       const value =[inputData && inputData[`column:${key}`]];
 
       if(value){
@@ -27,7 +27,7 @@ const perform = async (z, bundle) => {
       }
       continue;
     }
-    if ('image' === type) {
+    if (type === 'image') {
       const value =inputData && inputData[`column:${key}`];
       if(value){
         let newValue =value.split(",");
@@ -37,8 +37,9 @@ const perform = async (z, bundle) => {
         }
         map[name] = [inputData && inputData[`column:${key}`]];
         continue;
-      }
+      }else {
     continue;
+      }
     }
     
     map[name] = inputData && inputData[`column:${key}`];

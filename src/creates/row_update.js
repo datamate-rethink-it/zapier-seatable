@@ -70,22 +70,22 @@ const perform = async (z, bundle) => {
     if (undefined === value || '' === value) {
       continue;
     }
-    if ('collaborator' === col.type) {
+    if (col.type === 'collaborator') {
       if(value){
         map[col.name] = await ctx.getCollaborator(z,bundle,value);
         continue;
       }
       continue;
     }
-    if ('link' === col.type) {
+    if (col.type === 'link') {
       await ctx.linkRecord(z,bundle,key);
       continue;
     }
-    if ('file' === col.type) {
-      map[col.name] = [value]
-      continue;
-    }
-    if ('image' === col.type) {
+    // if (col.type === 'file') {
+    //   map[col.name] = [value]
+    //   continue;
+    // }
+    if (col.type === 'image') {
       if(value){
           let newValue =value.split(",");
           if(newValue.length > 1){
