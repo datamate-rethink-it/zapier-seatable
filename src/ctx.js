@@ -55,7 +55,7 @@ const struct = {
       // "file",
       //   "image",
       hide_write: [
-         "file",
+        "file",
         //  "image",
         // "link",
         "auto-number",
