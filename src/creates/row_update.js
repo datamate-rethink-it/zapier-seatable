@@ -70,8 +70,11 @@ const perform = async (z, bundle) => {
     if (undefined === value || '' === value) {
       continue;
     }
-    if ('Collaborator' === col.name) {
-      map[col.name] = await ctx.getCollaborator(z,bundle,value);
+    if ('collaborator' === col.type) {
+      if(value){
+        map[col.name] = await ctx.getCollaborator(z,bundle,value);
+        continue;
+      }
       continue;
     }
     if ('link' === col.type) {
@@ -83,8 +86,17 @@ const perform = async (z, bundle) => {
       continue;
     }
     if ('image' === col.type) {
-      map[col.name] = [value]
-      continue;
+      if(value){
+          let newValue =value.split(",");
+          if(newValue.length > 1){
+            map[col.name] = [...newValue]
+            continue;
+          }
+          map[col.name] = [value]
+          continue;
+      }else{
+        continue;
+      }
     }
     map[col.name] = value;
   }

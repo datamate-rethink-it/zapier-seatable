@@ -48,7 +48,7 @@ const struct = {
     assets: ["file", "image"],
     filter: {
       // column types that can not be filtered:
-      not: [ "file", "image", "long-text", "url"],
+      not: [ "file", "long-text", "url"],
     },
     zapier: {
       // column types that zapier must not write/create (hidden):
@@ -56,7 +56,7 @@ const struct = {
       //   "image",
       hide_write: [
          "file",
-         "image",
+        //  "image",
         // "link",
         "auto-number",
         "ctime",
@@ -244,8 +244,8 @@ const featureLinkColumnsData = {
  */
 const fileColumns = (columns) =>
   columns.filter((s) => struct.columns.assets.indexOf(s.type) + 1);
-const noAuthColumnKey = (key) => `column:${key}-(no-auth-dl)`;
-const noAuthColumnLabel = (name) => `${name} (Download w/o Authorization)`;
+// const noAuthColumnKey = (key) => `column:${key}-(no-auth-dl)`;
+// const noAuthColumnLabel = (name) => `${name} (Download w/o Authorization)`;
 const noAuthFilePathFromUrl = (buffer) => {
   // 'https://cloud.seatable.io/workspace/4881/asset/98d18404-03fc-4f4a-9d6d-6527441aea25/files/2021-04/magazine2.jpg'
   const probe = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(buffer);
@@ -274,9 +274,9 @@ const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
     return;
   }
 
-  for (const col of fileColumns(columns)) {
-    yield { key: noAuthColumnKey(col.key), label: noAuthColumnLabel(col.name) };
-  }
+  // for (const col of fileColumns(columns)) {
+  //   yield { key: noAuthColumnKey(col.key), label: noAuthColumnLabel(col.name) };
+  // }
 };
 
 /**
@@ -760,7 +760,7 @@ const downloadLink = async (z, bundle, URL) => {
     const hydratedUrl = z.dehydrateFile(stashFile, {
       downloadUrl: downloadedUrl,
     });
-    dataFile.push([hydratedUrl,downloadedUrl]);
+    dataFile.push(hydratedUrl);
   }
   return dataFile;
 };
@@ -791,7 +791,7 @@ const downloadImageLink = async (z, bundle, URL) => {
     const hydratedUrl = z.dehydrateFile(stashFile, {
       downloadUrl: downloadedUrl,
     });
-    dataFile.push([hydratedUrl,downloadedUrl]);
+    dataFile.push(hydratedUrl);
   }
   return dataFile;
 };
@@ -823,12 +823,14 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
           const value = row[c.name];
           // r[`column:${c.key}`] = value;
           r[`column:${c.key}`] = await downloadLink(z, bundle, value);
+          r[`column:${c.key} Url`] = value;
           continue;
         }
-        if ("Image" === c.name) {
+        if ("image" === c.type) {
           const value = row[c.name];
           // r[`column:${c.key}`] = value[0];
           r[`column:${c.key}`] = await downloadImageLink(z, bundle, value);
+          r[`Image Url`] = value;
           continue;
         }
       }
