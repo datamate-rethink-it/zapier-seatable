@@ -52,7 +52,7 @@ const struct = {
     },
     zapier: {
       // column types that zapier must not write/create (hidden):
-      hide_write: ['file', 'image', 'link', 'auto-number', 'ctime', 'mtime', 'formula', 'link-formula', 'creator', 'last-modifier', 'button'],
+      hide_write: ['link', 'auto-number', 'ctime', 'mtime', 'formula', 'link-formula', 'creator', 'last-modifier', 'button'],
       // column types that zapier should not offer to search in (hidden):
       hide_search: ['link'],
       /**
@@ -60,6 +60,8 @@ const struct = {
        * @type {DTableColumnType[]}
        */
       row_lookup: ['text', 'number', 'date', 'url', 'email', 'auto-number'],
+      // column types that zapier shows for file/image uploads (assets):
+      show_file: ['file', 'image'],
     },
   },
 };

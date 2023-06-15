@@ -1,6 +1,8 @@
 const ctx = require('../ctx');
 const _ = require('lodash');
 
+const {ZapBundle} = require('../ctx/ZapBundle');
+
 /**
  * perform
  *
@@ -31,6 +33,33 @@ const perform = async (z, bundle) => {
     },
   });
 
+  const {data: {_id: rowId}} = response;
+
+  const zb = new ZapBundle(z, bundle);
+  const fileUploader = zb.fileUploader();
+
+  for (const {key, name, type} of tableMetadata.columns) {
+    if (['file', 'image'].includes(type) && map?.[name]) {
+      const columnAssetData = await fileUploader.uploadUrlAssetPromise(map[name], type);
+
+      const {data} = await zb.request({
+        url: `/dtable-server/api/v1/dtables/{{dtable_uuid}}/rows/`,
+        method: rowId ? 'PUT' : 'POST',
+        body: {
+          table_name: tableMetadata.name,
+          row: {[name]: [columnAssetData]},
+          row_id: rowId,
+        },
+      });
+
+      if (data?.success !== true) {
+        throw new z.errors.HaltedError(`Failed to update uploaded ${type} ${name} column.`);
+      }
+
+      response.data[key] = [columnAssetData];
+    }
+  }
+
   return ctx.mapCreateRowKeys(response.data);
 };
 
@@ -49,7 +78,7 @@ const inputFields = async (z, bundle) => {
         return {
           key: `column:${o.key}`,
           label: o.name,
-          type: o.type,
+          type: ['file', 'image'].includes(o.type) ? 'file' : o.type,
           required: false,
           help_text: `${ctx.struct.columns.types[o.type] || `[${o.type}]`} field, optional.`,
         };
