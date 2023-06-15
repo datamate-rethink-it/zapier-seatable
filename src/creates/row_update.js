@@ -74,8 +74,9 @@ const perform = async (z, bundle) => {
       if(value){
         map[col.name] = await ctx.getCollaborator(z,bundle,value);
         continue;
+      }else{
+        continue;
       }
-      continue;
     }
     if (col.type === 'link') {
       await ctx.linkRecord(z,bundle,key);

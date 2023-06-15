@@ -24,8 +24,9 @@ const perform = async (z, bundle) => {
       if(value){
         map[name] = await ctx.getCollaborator(z,bundle,value[0]);
         continue;
+      }else{
+        continue;
       }
-      continue;
     }
     if (type === 'image') {
       const value =inputData && inputData[`column:${key}`];
