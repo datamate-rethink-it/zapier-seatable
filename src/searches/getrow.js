@@ -27,19 +27,43 @@ const perform = async (z, bundle) => {
     body: await ctx.tableNameId(z, bundle, 'search'),
   });
   const RowData = response.json['results'];
-  const f = response.json['results'][0];
-  f.Image = ctx.getImageData(f.Image);
-  f.Collaborator = await ctx.getCollaboratorData(z, bundle, f.Collaborator);
+
+  // row was found ...
   if (RowData.length > 0) {
+
+    const f = response.json['results'][0];
+  
+    // enhance collaborators and images
+    const RowMetadata = response.json['metadata'];
+    for (const {key, name, type} of RowMetadata) {
+      if (type === 'collaborator') {
+        f[name] = await ctx.getCollaboratorData(z, bundle, f[name]);
+      }
+      if (type === 'image') {
+        f[name] = ctx.getImageData(f[name]);
+      }
+    }  
+
+    // clean up unnecessary stuff
+    delete f._archived;
+    delete f._locked_by;
+    delete f._locked;
+
     return [f];
+
   } else if (
     RowData.length === 0 ||
     bundle.inputDataRaw._zap_search_success_on_miss
   ) {
     return [];
   } else {
-    throw new z.errors.Error('Failed to Find a Row in Seatable');
+    throw new z.errors.Error('Failed to find a row in SeaTable');
   }
+
+
+  
+
+
 };
 
 const searchColumn = async (z, bundle) => {
@@ -61,7 +85,7 @@ const searchColumn = async (z, bundle) => {
     key: 'search_column',
     required: true,
     label: 'Column',
-    helpText: 'Pick a field from the Seatable table for your search.',
+    helpText: 'Select the column to be searched.',
     altersDynamicFields: true,
     choices,
   };
@@ -92,15 +116,17 @@ const searchValue = async (z, bundle) => {
   const r = {
     key: 'search_value',
     required: true,
-    label: 'Search Value',
-    helpText: 'The unique value to search for in field.',
+    label: 'Search term',
+    helpText: 'What to look for? *Hint:* no fuzzy search or wildcard support.',
     altersDynamicFields: true,
   };
+  /* no dynamic description text.
   if (col !== undefined) {
     r.helpText = `The unique value to search for in ${
       ctx.struct.columns.types[col.type] || `[${col.type}]`
     } field named "${col.name}".`;
   }
+  */
   return r;
 };
 const outputFields = async (z, bundle) => {
@@ -109,6 +135,7 @@ const outputFields = async (z, bundle) => {
   return [
     {key: 'row_id', label: 'ID'},
     {key: 'row_mtime', label: 'Last Modified'},
+    {key: '_zap_search_was_found_status', label: 'Success?'}, // no idea, why this is not working.
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
     ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
   ];
@@ -117,11 +144,11 @@ module.exports = {
   // see here for a full list of available properties:
   // https://github.com/zapier/zapier-platform/blob/main/packages/schema/docs/build/schema.md#searchschema
   key: 'getrow',
-  noun: 'Getrow',
+  noun: 'row',
 
   display: {
     label: 'Find Row',
-    description: 'Finds a row using SQL Query search syntax, ',
+    description: 'Finds a row using SQL Query search syntax. ', // Optionally, create a ${noun}, if none are found
     important: true,
   },
 
@@ -135,7 +162,7 @@ module.exports = {
         key: 'table_name',
         required: true,
         label: 'Table',
-        helpText: 'Pick a SeaTable table you want to search.',
+        helpText: 'Select the table you want to search in',
         type: 'string',
         dynamic: 'get_tables_of_a_base.id.name',
         altersDynamicFields: true,

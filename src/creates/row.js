@@ -19,6 +19,7 @@ const perform = async (z, bundle) => {
   const inputData = bundle.inputData;
   let tester;
 
+  // Enhance the columns: collaboratos and image
   for (const {key, name, type} of tableMetadata.columns) {
     if (type === 'collaborator') {
       const value =[inputData && inputData[`column:${key}`]];
@@ -87,6 +88,7 @@ const perform = async (z, bundle) => {
       response.data[key] = [columnAssetData];
     }
 
+    // link column
     if (type === 'link') {
       const value = inputData && inputData[`column:${key}`];
       if (value) {

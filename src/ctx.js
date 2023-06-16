@@ -44,6 +44,7 @@ const struct = {
       'last-modifier': 'Last modifier',
       'mtime': 'Last modified time',
       'button': 'Button',
+      'digital-sign': 'Signature',
     },
     input_field_types: {
       'text': 'string',
@@ -70,6 +71,7 @@ const struct = {
       'last-modifier': 'string',
       'mtime': 'string',
       'button': 'string',
+      'digital-sign': 'file',
     },
     help_text: {
       'text': 'Hilfe für Text..',
@@ -96,6 +98,7 @@ const struct = {
       'last-modifier': 'Last modifier',
       'mtime': 'Last modified time',
       'button': 'Button',
+      'digital-sign': 'Help for digital signature',
     },
     assets: ['file', 'image'],
     filter: {
@@ -113,9 +116,10 @@ const struct = {
         'creator',
         'last-modifier',
         'button',
+        'digital-sign',
       ],
       // column types that zapier should not offer to search in (hidden):
-      hide_search: ['link'],
+      hide_search: ['link', 'formula', 'button', 'multiple-select', 'checkbox', 'digital-sign'],
       /**
        * column types that zapier offers for a row-lookup
        * @type {DTableColumnType[]}
