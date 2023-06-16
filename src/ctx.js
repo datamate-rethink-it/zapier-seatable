@@ -163,7 +163,7 @@ function zapInitHookBundle(z, bundle) {
    * @type {string} zap log-tag "[<z-ts>] zap", always 12 characters
    */
   bundle.__zLogTag = `[${bundle.__zTS}] zap`;
-  z.console.time(bundle.__zLogTag);
+  //z.console.time(bundle.__zLogTag);
 
   return bundle.__zTS;
 }
@@ -312,7 +312,7 @@ const fileNoAuthLinksField = {
   type: 'boolean',
   label: 'Provide access to images and files',
   helpText:
-    'By default (**False**) SeaTable provides links to files and images that require authentication. Choose **True** if you want to use your files and pictures in your Zapier Action, this adds additional fields with links that temporarily allow unauthorized downloads for a couple of hours.',
+    '**False:** You get only *internal links* to your files and images that require an authentication and therefore can not be used in your Zapier actions. Still you get access to the metadata of your files. **True:** You get access to your files and images. SeaTable also creates public download links (valid for a few hours). This requires additional API calls, so the [limits](https://api.seatable.io/reference/limits) may be exhausted earlier.',
   altersDynamicFields: false,
 };
 
@@ -361,7 +361,6 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
     /** @type {ZapierZRequestResponse} */
     let response;
     let exception;
-    z.console.log('acquireFileNoAuthLinks: %d', bundle.authData.api_token);
     const url = `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`;
     try {
       response = await z.request({
@@ -799,7 +798,6 @@ const downloadLink = async (z, bundle, URL) => {
       return dataFile;
       // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
     }
-    z.console.log('downloadLink: %d', bundle.authData.api_token);
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: 'GET',
@@ -815,10 +813,12 @@ const downloadLink = async (z, bundle, URL) => {
     const hydratedUrl = z.dehydrateFile(stashFile, {
       downloadUrl: downloadedUrl,
     });
-    dataFile.push(hydratedUrl);
+    return hydratedUrl;
   }
   return dataFile;
 };
+
+
 const downloadImageLink = async (z, bundle, URL) => {
   const dataFile = [];
   for (const file of URL) {
@@ -831,7 +831,6 @@ const downloadImageLink = async (z, bundle, URL) => {
       return dataFile;
       // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
     }
-    z.console.log('downloadImageLink: %d', bundle.authData.api_token);
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: 'GET',
@@ -847,54 +846,72 @@ const downloadImageLink = async (z, bundle, URL) => {
     const hydratedUrl = z.dehydrateFile(stashFile, {
       downloadUrl: downloadedUrl,
     });
-    dataFile.push(hydratedUrl);
+    return hydratedUrl;
   }
   return dataFile;
 };
 
 const mapColumnKeys = async (z, bundle, columns, row) => {
+
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
+  
   // step 1: implicit row properties
+  // (_id becomes row_id, _mtime becomes row_mtime)
   const implicit = ['_id', '_mtime'];
   for (const p of implicit) {
     if (hop(row, p)) {
       r[`row${p}`] = row[p];
     }
   }
+  
   // step 2: column.name
+  // Name becomes column:8hzP
+  // _ctime becomes: column:_ctime
   for (const c of columns) {
     if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
       const regex = /^\w{32}@auth\.local$/;
       const v = row[c.name];
-      if (regex.test(v[0])) {
+
+      // Collaborator
+      if (regex.test(v[0])) { 
         r[`column:${c.key}`] = await getCollaboratorData(z, bundle, v);
         continue;
-      } else if (regex.test(v)) {
+      }
+
+      // Creator + Modifier
+      if (regex.test(v)) {
         r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
         continue;
       }
-      if (bundle.inputData.feature_non_authorized_asset_downloads) {
-        if ('File' === c.name) {
-          const value = row[c.name];
-          // r[`column:${c.key}`] = value;
-          r[`column:${c.key}`] = await downloadLink(z, bundle, value);
-          r[`column:${c.key} Url`] = value;
-          continue;
+
+      // Files
+      if ('file' === c.type) {
+        if (bundle.inputData.feature_non_authorized_asset_downloads) { // get public access
+          v[0].asset = await downloadLink(z, bundle, v);
         }
-        if ('image' === c.type) {
-          const value = row[c.name];
-          // r[`column:${c.key}`] = value[0];
-          r[`column:${c.key}`] = await downloadImageLink(z, bundle, value);
-          r[`Image Url`] = value;
-          continue;
-        }
+        r[`column:${c.key}`] = v;
+        continue;
       }
+
+      // Image
+      if ('image' === c.type) {
+        const o = v; // getImageData expects o ?!?
+        xx = getImageData(v);
+        if (bundle.inputData.feature_non_authorized_asset_downloads) { // get public access
+          xx[0].asset = await downloadImageLink(z, bundle, v);
+        }
+        r[`column:${c.key}`] = xx;
+        continue;
+      }
+
+      // all other columns
       r[`column:${c.key}`] = row[c.name];
     }
   }
   return r;
 };
+
 const mapColumnKeysRow = async (columns, row) => {
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
@@ -1073,6 +1090,7 @@ const tableFields = async (z, bundle) => {
     await tableView(z, bundle),
   ];
 };
+
 const tableNameId = async (z, bundle, context) => {
   const table_id = bundle.inputData.table_name;
   const new_table_id = table_id.split(':');
@@ -1125,6 +1143,7 @@ const tableNameId = async (z, bundle, context) => {
   };
   return f;
 };
+
 const getCollaborator = async (z, bundle, value) => {
   const collaboratorEmail = value;
   const collaborator = await z.request({
@@ -1143,6 +1162,7 @@ const getCollaborator = async (z, bundle, value) => {
   );
   return collData;
 };
+
 const getCollaboratorData = async (z, bundle, value) => {
   const collaboratorUsers = value;
   const collaborator = await z.request({
@@ -1169,6 +1189,7 @@ const getCollaboratorData = async (z, bundle, value) => {
   );
   return collData;
 };
+
 const linkRecord = async (z, bundle, value) => {
   const metadata = await acquireMetadata(z, bundle);
   const data = metadata.tables;
@@ -1247,6 +1268,7 @@ const linkCreateRecord = async (z, bundle, value, id) => {
   const bodyData = res[0];
   return await linkRequest(z, bundle, bodyData);
 };
+
 const linkRequest = async (z, bundle, bodyData) => {
   const linkTwoRecord = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/links/`,
@@ -1266,16 +1288,20 @@ const linkRequest = async (z, bundle, bodyData) => {
   });
   return linkTwoRecord;
 };
+
+// from [https://stage.seatable.io/workspace/224/asset/c392d08d-5b00-4456-9217-2afb89e07a0c/images/2023-06/zapier-build.png] to an object with name, type, size and url
+// 
 const getImageData = (value) => {
   const Images = value;
   const imageData = _.map(Images, (o) => {
     const regex = /([^/]+)$/;
     const match = o.match(regex);
     const filename = match[1];
-    return {name: filename, type: 'image', url: o};
+    return {name: filename, size: 0, type: 'image', url: o};
   });
   return imageData;
 };
+
 const getCollAndImage = async (z, bundle, value) => {
   const Data = value;
   const newArray = _.map(Data, async (o) => {

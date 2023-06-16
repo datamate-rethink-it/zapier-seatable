@@ -44,14 +44,26 @@ const perform = async (z, bundle) => {
 
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
+  z.console.log("VOR mapColumnKeys", rows);
+  /**
+   * OUTPUT TRANSFORMATION (mapColumnKeys)
+   * 
+   * - enrich the output: Collaborators, Images/Files, Links
+   * - rewrite the keys from like "Name:" to "column:8hzP:"
+   * - different behaviour depending of fileNoAuthLinksField (true|false)
+   * 
+   */
+
   rows = await Promise.all(_.map(rows, async (o) => {
     const transformedObj = await ctx.mapColumnKeys(z, bundle, tableMetadata.columns, o);
     transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;
     return transformedObj;
   }));
 
-  const unfilteredLength = rows.length;
+  z.console.log("NACH mapColumnKeys", rows);
 
+  // this is only relevant for row_update.js
+  const unfilteredLength = rows.length;
   const featureMTime = _CONST.FEATURE[_CONST.FEATURE_MTIME_FILTER] || undefined;
   if (featureMTime && featureMTime.enabled) {
     if (bundle._testFeature && bundle._testFeature[_CONST.FEATURE_MTIME_FILTER]) {
@@ -64,17 +76,18 @@ const perform = async (z, bundle) => {
     const mTimeFilterMinutes = featureMTime.minutes;
     const MILLISECONDS_PER_MINUTE = 60000;
     const floorEpochMilliseconds = (new Date).valueOf() - (mTimeFilterMinutes * MILLISECONDS_PER_MINUTE);
-
     rows = _.filter(rows, (o) => {
       return Date.parse(o.row_mtime) >= floorEpochMilliseconds;
     });
     z.console.timeLog(logTag, `filtered rows length: ${rows.length} (offset=${unfilteredLength - rows.length} minutes=${mTimeFilterMinutes})`);
   }
 
+  // transformation happens in ctx.js (mapColumnKeys)
   // rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
   // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
   z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
   return rows;
+
 };
 
 /**
@@ -84,13 +97,13 @@ const perform = async (z, bundle) => {
  */
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-
-  return [
+  const oF = [
     {key: 'row_id', label: 'Original ID'},
     {key: 'row_mtime', label: 'Last Modified'},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
     ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
   ];
+  return oF;
 };
 
 module.exports = {
@@ -104,11 +117,11 @@ module.exports = {
     perform,
     inputFields: [ctx.tableFields, ctx.fileNoAuthLinksField],
     sample: {
-      'id': 'N33qMZ-JQTuUlx_DiF__lQ-2021-12-02T01:23:45.678+00:00',
+      'id': 'N33qMZ-JQTuUlx_DiF__lQ',
       'row_id': 'N33qMZ-JQTuUlx_DiF__lQ',
       'row_mtime': '2021-12-02T01:23:45.678+00:00',
       'column:0000': 'Contents of the first field; a text-field',
     },
-    outputFields: [outputFields],
+    outputFields: [outputFields,],
   },
 };

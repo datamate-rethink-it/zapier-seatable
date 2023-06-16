@@ -164,6 +164,7 @@ const perform = async (z, bundle) => {
 const inputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   return _.map(getUpdateColumns(tableMetadata.columns, bundle), (o) => {
+
     return {
       key: `column:${o.key}`,
       label: o.name,

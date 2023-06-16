@@ -51,6 +51,7 @@ const perform = async (z, bundle) => {
   return rows;
 };
 
+
 /**
  * @param {ZObject} z
  * @param {Bundle} bundle
@@ -66,6 +67,7 @@ const outputFields = async (z, bundle) => {
     ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
   ];
 };
+
 
 module.exports = {
   key: 'row_create',
@@ -84,6 +86,8 @@ module.exports = {
       'row_mtime': '2021-12-02T01:23:45.678+00:00',
       'column:0000': 'Contents of the first field; a text-field',
     },
-    outputFields: [outputFields],
+    outputFields: [outputFields,],
   },
 };
+
+
