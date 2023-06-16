@@ -18,7 +18,9 @@ const perform = async (z, bundle) => {
   const zb = new ZapBundle(z, bundle);
   const logTag = `[${zb}] triggers.${key}`;
 
-  z.console.time(logTag);
+  // z.console.time(logTag); 
+  // do I need this? delivers an output like:
+  // [ 43747] zap: 903.472ms app(224/c392d08d-5b00-4456-9217-2afb89e07a0c) 4.0.7 enterprise edition (https://stage.seatable.io)
 
   const fileSid = sidParse(bundle?.inputData?.file_column);
 
@@ -78,10 +80,10 @@ const perform = async (z, bundle) => {
           size: null,
           type: null,
           metadata: {
-            colum_reference: `table:${tableMetadata._id}:row:${row._id}:column:${columnMetadata.key}`,
-            colum_key: columnMetadata.key,
-            colum_name: columnMetadata.name,
-            colum_type: columnMetadata.type,
+            column_reference: `table:${tableMetadata._id}:row:${row._id}:column:${columnMetadata.key}`,
+            column_key: columnMetadata.key,
+            column_name: columnMetadata.name,
+            column_type: columnMetadata.type,
             row_id: `${row._id}`,
             row_reference: `table:${tableMetadata._id}:row:${row._id}`,
             row_ctime: `${row._ctime}`,
@@ -112,6 +114,7 @@ const perform = async (z, bundle) => {
     }
   };
 
+
   // const rows = Array.from(process());
   const rows = [];
   for await (const val of process()) {
@@ -127,16 +130,28 @@ const perform = async (z, bundle) => {
     rows.splice(Math.min(meta.limit || 1, 1));
   }
 
+
   const assetDownloadLink = async (url) => {
     // 'https://cloud.seatable.io/workspace/4881/asset/98d18404-03fc-4f4a-9d6d-6527441aea25/files/2021-04/magazine2.jpg'
     const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(url)?.[1];
     if (!urlPath) {
       throw new z.errors.Error(`Failed to extract path from url '${url}'`);
     }
-    const link = (await zb.request(`/api/v2.1/dtable/app-download-link/?path=${urlPath}`))?.data?.download_link;
+
+    const link = `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`;
+    try {
+      response = await z.request({
+        url,
+        headers: {Authorization: `Token ${bundle.authData.api_token}`},
+        skipThrowForStatus: true,
+      });
+    } catch (e) {
+      exception = e;
+    }
     if (!link) {
       throw new z.errors.Error(`Failed to obtain asset download link for path '${urlPath}' of url '${url}'`);
     }
+
     return link;
   };
 
@@ -146,7 +161,6 @@ const perform = async (z, bundle) => {
       row.file = z.dehydrateFile(stashFile, {
         downloadUrl: url,
       });
-      delete row.url;
     }));
   }
   await Promise.all(promises);
@@ -175,21 +189,11 @@ const inputFileColumns = async (z, bundle) => {
     key: 'file_column',
     required: true,
     type: 'string',
-    label: 'File Column',
-    helpText: 'Field of the file.',
+    label: 'File/Image Column',
+    helpText: 'Select the image or file column to be monitored by this trigger. **Hint:** *Image links* are ignored.',
     altersDynamicFields: false,
     choices,
   };
-};
-
-const outputFields = async (z, bundle) => {
-  return [
-    {key: 'id', label: 'ID'},
-    {key: 'file', type: 'file', label: 'File'},
-    {key: 'name', type: 'string', label: 'Filename'},
-    {key: 'size', label: 'Filesize'},
-    {key: 'type', label: 'Filetype ("image" or "file")'},
-  ];
 };
 
 module.exports = {
@@ -207,13 +211,23 @@ module.exports = {
     ],
     sample: {
       'id': 'images/2021-04/example-email-marketing.jpg',
-      'path': 'images/2021-04/example-email-marketing.jpg',
+      'file': 'SAMPLE FILE (hydrated to)',
       'url': 'https://cloud.seatable.io/workspace/4711/asset/891d4840-30cf-f4a4-9d6d-567244a1ae52/images/2021-04/example-email-marketing.jpg',
-      'file': 'SAMPLE FILE',
       'name': 'example-email-marketing.jpg',
       'size': null,
       'type': 'image',
+      'metadata': {
+        'column_reference': 'table:0000:row:IFE52wTHSyiWxMVbDXVd-g:column:fyHY',
+        'column_key': 'fyHY',
+      }
+      
     },
-    outputFields: [outputFields],
+    outputFields: [
+      {key: 'url', label: 'Filepath (requires auth.)'},
+      {key: 'file', label: 'File/Image'},
+      {key: 'name', label: 'Filename'},
+      {key: 'size', label: 'Filesize'},
+      {key: 'type', label: 'Filetype'},
+    ],
   },
 };

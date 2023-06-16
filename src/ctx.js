@@ -357,11 +357,12 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
     /** @type {ZapierZRequestResponse} */
     let response;
     let exception;
+    z.console.log('acquireFileNoAuthLinks: %d', bundle.authData.api_token);
     const url = `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`;
     try {
       response = await z.request({
         url,
-        headers: {Authorization: `Token ${dtableCtx.access_token}`},
+        headers: {Authorization: `Token ${bundle.authData.api_token}`},
         skipThrowForStatus: true,
       });
     } catch (e) {
@@ -794,6 +795,7 @@ const downloadLink = async (z, bundle, URL) => {
       return dataFile;
       // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
     }
+    z.console.log('downloadLink: %d', bundle.authData.api_token);
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: 'GET',
@@ -825,6 +827,7 @@ const downloadImageLink = async (z, bundle, URL) => {
       return dataFile;
       // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
     }
+    z.console.log('downloadImageLink: %d', bundle.authData.api_token);
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: 'GET',
