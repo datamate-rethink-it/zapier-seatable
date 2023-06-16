@@ -1,6 +1,8 @@
 const ctx = require('../ctx');
 const _ = require('lodash');
 
+const {ZapBundle} = require('../ctx/ZapBundle');
+
 /**
  * perform
  *
@@ -21,28 +23,28 @@ const perform = async (z, bundle) => {
     if (type === 'collaborator') {
       const value =[inputData && inputData[`column:${key}`]];
 
-      if(value){
-        map[name] = await ctx.getCollaborator(z,bundle,value[0]);
+      if (value) {
+        map[name] = await ctx.getCollaborator(z, bundle, value[0]);
         continue;
-      }else{
+      } else {
         continue;
       }
     }
     if (type === 'image') {
       const value =inputData && inputData[`column:${key}`];
-      if(value){
-        let newValue =value.split(",");
-        if(newValue.length > 1){
-          map[name] = [...newValue]
+      if (value) {
+        const newValue =value.split(',');
+        if (newValue.length > 1) {
+          map[name] = [...newValue];
           continue;
         }
         map[name] = [inputData && inputData[`column:${key}`]];
         continue;
-      }else {
-    continue;
+      } else {
+        continue;
       }
     }
-    
+
     map[name] = inputData && inputData[`column:${key}`];
   }
 
@@ -56,19 +58,45 @@ const perform = async (z, bundle) => {
       row: map,
     },
   });
-  const data = response.data._id
-  
-  for (const {key,type} of tableMetadata.columns) {
+  //const data = response.data._id;
+
+  const {data: {_id: rowId}} = response;
+
+  const zb = new ZapBundle(z, bundle);
+  const fileUploader = zb.fileUploader();
+
+  for (const {key, name, type} of tableMetadata.columns) {
+
+    if (['file', 'image'].includes(type) && map?.[name]) {
+      const columnAssetData = await fileUploader.uploadUrlAssetPromise(map[name], type);
+
+      const {data} = await zb.request({
+        url: `/dtable-server/api/v1/dtables/{{dtable_uuid}}/rows/`,
+        method: rowId ? 'PUT' : 'POST',
+        body: {
+          table_name: tableMetadata.name,
+          row: {[name]: [columnAssetData]},
+          row_id: rowId,
+        },
+      });
+
+      if (data?.success !== true) {
+        throw new z.errors.HaltedError(`Failed to update uploaded ${type} ${name} column.`);
+      }
+
+      response.data[key] = [columnAssetData];
+    }
+
     if (type === 'link') {
       const value = inputData && inputData[`column:${key}`];
-      if(value){
-        await ctx.linkCreateRecord(z,bundle,value,data)
+      if (value) {
+        await ctx.linkCreateRecord(z, bundle, value, data);
         continue;
       }
     }
   }
-  return ctx.mapCreateRowKeys(z,bundle,response.data);
-  
+  return ctx.mapCreateRowKeys(z, bundle, response.data);
+
   // return {data : inputData && inputData[`column:3aM5`]};
 };
 
@@ -87,9 +115,10 @@ const inputFields = async (z, bundle) => {
         return {
           key: `column:${o.key}`,
           label: o.name,
-          type: o.type,
+          //type: ['file', 'image'].includes(o.type) ? 'file' : o.type,
+          type: ctx.struct.columns.input_field_types[o.type],
           required: false,
-          help_text: `${ctx.struct.columns.types[o.type] || `[${o.type}]`} field, optional.`,
+          help_text: `${ctx.struct.columns.help_text[o.type] || `[${o.type}]`} field, optional.`,
         };
       });
 };

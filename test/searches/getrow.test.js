@@ -1,4 +1,4 @@
-/* globals describe, expect, test, it */
+/* globals describe, expect, it */
 
 const zapier = require('zapier-platform-core');
 
@@ -10,7 +10,7 @@ zapier.tools.env.inject();
 
 describe('searches.getrow', () => {
   it('should run', async () => {
-    const bundle = { inputData: {} };
+    const bundle = {inputData: {}};
 
     const results = await appTester(App.searches.getrow.operation.perform, bundle);
     expect(results).toBeDefined();

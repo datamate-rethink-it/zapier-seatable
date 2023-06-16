@@ -49,7 +49,7 @@ const perform = async (z, bundle) => {
     transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;
     return transformedObj;
   }));
-  
+
   const unfilteredLength = rows.length;
 
   const featureMTime = _CONST.FEATURE[_CONST.FEATURE_MTIME_FILTER] || undefined;

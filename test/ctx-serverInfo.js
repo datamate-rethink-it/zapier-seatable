@@ -34,6 +34,7 @@ describe('serverInfo', () => {
         '3.3.7', // 2023-01-03
         '3.4.8', // 2023-03-23
         '3.5.10', // 2023-04-12
+        '4.0.8', // 2023-06-27
       ];
       knownVersions.indexOf(result.version).should.greaterThan(-1, `${result.version} (known are: ${knownVersions}; this test fails when the server version changes on cloud.seatable.io, extend known versions then.)`);
       result.edition.should.eql('enterprise edition', 'cloud.seatable.io runs enterprise edition');

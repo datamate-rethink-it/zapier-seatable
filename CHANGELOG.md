@@ -1,6 +1,9 @@
 # Change-Log
 
-## [unreleased]
+## [3.0.x]
+
+* Collaborator support
+* New File/Image column support for Row and Update Row Creates
 
 ### Added
 

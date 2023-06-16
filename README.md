@@ -45,3 +45,14 @@
    secrets, use the appropriate `make` goals instead.
 
 [ZAPIER-CLI]: https://platform.zapier.com/cli_tutorials/getting-started#installing-the-cli
+
+---------
+
+was ich geändert habe:
+- in .zapierapprc aufgenommen: "includeInBuild": ["src/authenticationFunctionRequire.js"]
+- ganze Makefile und linting raus... (https://eslint.org/docs/latest/use/getting-started) 
+- linting wird einfach so gestartet. `node_modules/.bin/eslint index.js`
+- hier noch was rausziehen? https://unpkg.com/browse/zapier-platform-cli@14.0.0/package.json 
+  - smoke-tests?
+- neuer Spaltentyp
+

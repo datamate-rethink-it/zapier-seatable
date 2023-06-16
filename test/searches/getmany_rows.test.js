@@ -10,7 +10,7 @@ zapier.tools.env.inject();
 
 describe('resources.getmany_rows', () => {
   it('should run', async () => {
-    const bundle = { inputData: {} };
+    const bundle = {inputData: {}};
 
     const results = await appTester(App.searches.getmany_rows.list.operation.perform, bundle);
     expect(results).toBeDefined();

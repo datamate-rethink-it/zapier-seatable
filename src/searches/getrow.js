@@ -1,5 +1,5 @@
-const ctx = require("../ctx");
-const _ = require("lodash");
+const ctx = require('../ctx');
+const _ = require('lodash');
 
 /**
  * perform
@@ -16,18 +16,18 @@ const perform = async (z, bundle) => {
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-db/api/v1/query/${dtableCtx.dtable_uuid}/`,
-    method: "POST",
+    method: 'POST',
 
     headers: {
-      Authorization: `Token ${bundle.dtable.access_token}`,
-      "Content-Type": "application/json",
+      'Authorization': `Token ${bundle.dtable.access_token}`,
+      'Content-Type': 'application/json',
     },
     // params: ctx.requestParamsSid(bundle.inputData.table_name),
     allowGetBody: true,
-    body: await ctx.tableNameId(z, bundle, "search"),
+    body: await ctx.tableNameId(z, bundle, 'search'),
   });
-  const RowData = response.json["results"];
-  const f = response.json["results"][0];
+  const RowData = response.json['results'];
+  const f = response.json['results'][0];
   f.Image = ctx.getImageData(f.Image);
   f.Collaborator = await ctx.getCollaboratorData(z, bundle, f.Collaborator);
   if (RowData.length > 0) {
@@ -38,30 +38,30 @@ const perform = async (z, bundle) => {
   ) {
     return [];
   } else {
-    throw new z.errors.Error("Failed to Find a Row in Seatable");
+    throw new z.errors.Error('Failed to Find a Row in Seatable');
   }
 };
 
 const searchColumn = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   const choices = _.merge(
-    ..._.map(
-      _.filter(tableMetadata.columns, (o) => {
-        return (
-          !ctx.struct.columns.filter.not.includes(o.type) &&
+      ..._.map(
+          _.filter(tableMetadata.columns, (o) => {
+            return (
+              !ctx.struct.columns.filter.not.includes(o.type) &&
           !ctx.struct.columns.zapier.hide_search.includes(o.type)
-        );
-      }),
-      (o) => {
-        return { [`column:${o.key}`]: o.name };
-      }
-    )
+            );
+          }),
+          (o) => {
+            return {[`column:${o.key}`]: o.name};
+          },
+      ),
   );
   return {
-    key: "search_column",
+    key: 'search_column',
     required: true,
-    label: "Column",
-    helpText: "Pick a field from the Seatable table for your search.",
+    label: 'Column',
+    helpText: 'Pick a field from the Seatable table for your search.',
     altersDynamicFields: true,
     choices,
   };
@@ -88,12 +88,12 @@ const searchColumn = async (z, bundle) => {
 const searchValue = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   const colSid = ctx.sidParse(bundle.inputData.search_column);
-  const col = _.find(tableMetadata.columns, ["key", colSid.column]);
+  const col = _.find(tableMetadata.columns, ['key', colSid.column]);
   const r = {
-    key: "search_value",
+    key: 'search_value',
     required: true,
-    label: "Search Value",
-    helpText: "The unique value to search for in field.",
+    label: 'Search Value',
+    helpText: 'The unique value to search for in field.',
     altersDynamicFields: true,
   };
   if (col !== undefined) {
@@ -107,8 +107,8 @@ const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   return [
-    { key: "row_id", label: "ID" },
-    { key: "row_mtime", label: "Last Modified" },
+    {key: 'row_id', label: 'ID'},
+    {key: 'row_mtime', label: 'Last Modified'},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
     ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
   ];
@@ -116,12 +116,12 @@ const outputFields = async (z, bundle) => {
 module.exports = {
   // see here for a full list of available properties:
   // https://github.com/zapier/zapier-platform/blob/main/packages/schema/docs/build/schema.md#searchschema
-  key: "getrow",
-  noun: "Getrow",
+  key: 'getrow',
+  noun: 'Getrow',
 
   display: {
-    label: "Find Row",
-    description: "Finds a row using SQL Query search syntax, ",
+    label: 'Find Row',
+    description: 'Finds a row using SQL Query search syntax, ',
     important: true,
   },
 
@@ -132,12 +132,12 @@ module.exports = {
     // Zapier will pass them in as `bundle.inputData` later. Searches need at least one `inputField`.
     inputFields: [
       {
-        key: "table_name",
+        key: 'table_name',
         required: true,
-        label: "Table",
-        helpText: "Pick a SeaTable table you want to search.",
-        type: "string",
-        dynamic: "get_tables_of_a_base.id.name",
+        label: 'Table',
+        helpText: 'Pick a SeaTable table you want to search.',
+        type: 'string',
+        dynamic: 'get_tables_of_a_base.id.name',
         altersDynamicFields: true,
       },
       searchColumn,
@@ -150,7 +150,7 @@ module.exports = {
     // returned records, and have obvious placeholder values that we can show to any user.
     sample: {
       id: 1,
-      name: "Test",
+      name: 'Test',
     },
 
     // If fields are custom to each user (like spreadsheet columns), `outputFields` can create human labels

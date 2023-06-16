@@ -1,5 +1,7 @@
 const ctx = require('../ctx');
+const {sidParse} = require('../lib/sid');
 const _ = require('lodash');
+const {ZapBundle} = require('../ctx/ZapBundle');
 
 /**
  * get table columns as bundled
@@ -58,52 +60,88 @@ const getUpdateColumns = (columns, bundle) => {
  */
 const perform = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-  
+
   const map = {};
   for (const col of getUpdateColumns(tableMetadata.columns, bundle)) {
     const key = `column:${col.key}`;
-    if ('   ' === bundle.inputDataRaw[key]) {
+    if ('   ' === bundle.inputDataRaw?.[key]) {
       map[col.name] = '';
       continue;
     }
-    const value = bundle.inputData[key];
+    const value = bundle.inputData?.[key];
     if (undefined === value || '' === value) {
       continue;
     }
+
     if (col.type === 'collaborator') {
-      if(value){
-        map[col.name] = await ctx.getCollaborator(z,bundle,value);
+      if (value) {
+        map[col.name] = await ctx.getCollaborator(z, bundle, value);
         continue;
-      }else{
+      } else {
         continue;
       }
     }
+
     if (col.type === 'link') {
-      await ctx.linkRecord(z,bundle,key);
+      await ctx.linkRecord(z, bundle, key);
       continue;
     }
+
     // if (col.type === 'file') {
     //   map[col.name] = [value]
     //   continue;
     // }
+
+    /*
     if (col.type === 'image') {
-      if(value){
-          let newValue =value.split(",");
-          if(newValue.length > 1){
-            map[col.name] = [...newValue]
-            continue;
-          }
-          map[col.name] = [value]
+      if (value) {
+        const newValue =value.split(',');
+        if (newValue.length > 1) {
+          map[col.name] = [...newValue];
           continue;
-      }else{
+        }
+        map[col.name] = [value];
+        continue;
+      } else {
         continue;
       }
     }
+    */
     map[col.name] = value;
   }
 
   let rowId;
   rowId = (ctx.sidParse(`table:${bundle.inputData.table_name}:row:${bundle.inputData.table_row}`).row)?ctx.sidParse(bundle.inputData.table_row).row:bundle.inputData.table_row;
+
+  // file and image handling
+  let row;
+  const zb = new ZapBundle(z, bundle);
+  const fileUploader = zb.fileUploader();
+  for (const col of getUpdateColumns(tableMetadata.columns, bundle)) {
+    if (!['file', 'image'].includes(col.type)) {
+      continue;
+    }
+    const key = `column:${col.key}`;
+    if ('   ' === bundle.inputDataRaw?.[key]) {
+      map[col.name] = [];
+      continue;
+    }
+    const value = bundle.inputData?.[key];
+    if (undefined === value || '' === value) {
+      delete map[col.name];
+      continue;
+    }
+
+    if (!row) {
+      const tableId = sidParse(bundle.inputData.table_row).table;
+      ({data: row} = await zb.request(`/dtable-server/api/v1/dtables/{{dtable_uuid}}/rows/${rowId}/?table_id=${tableId}`));
+    }
+    const current = row?.[col.name] || [];
+    const columnAssetData = await fileUploader.uploadUrlAssetPromise(value, col.type);
+    current.push(columnAssetData);
+    map[col.name] = current;
+  }
+  
 
   const body = {
     table_name: tableMetadata.name,
@@ -125,231 +163,13 @@ const perform = async (z, bundle) => {
 
 const inputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-  return _.map(getUpdateColumns(tableMetadata.columns, bundle), (o) => {    
-    switch(o.type) {
-      case "text":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-      
-      case "long-text":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "number":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "collaborator":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-        
-      case "date":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "duration":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "single-select":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-      
-      case "multiple-select":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "image":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "file":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "email":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "url":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "checkbox":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "rate":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "formula":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "link-formula":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "geolocation":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "link":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "creator":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "ctime":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "last-modifier":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "mtime":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "auto-number":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-
-      case "button":
-        return {
-          key: `column:${o.key}`,
-          label: o.name,
-          type: o.type,
-          required: false,
-          help_text: `test description (${o.type} type), test link: https://docs.seatable.io/`,
-        };
-    }
-
+  return _.map(getUpdateColumns(tableMetadata.columns, bundle), (o) => {
     return {
       key: `column:${o.key}`,
       label: o.name,
-      type: o.type,
+      type: ctx.struct.columns.input_field_types[o.type],
       required: false,
-      help_text: `${ctx.struct.columns.types[o.type] || `[${o.type}]`} field, optional. To clear, enter exactly three spaces.`,
+      help_text: `${ctx.struct.columns.help_text[o.type] || `[${o.type}]`} field, optional.`,
     };
   });
 };
@@ -386,7 +206,7 @@ module.exports = {
         altersDynamicFields: false,
       },
       inputFields,
-      ctx.fileNoAuthLinksField,
+      //ctx.fileNoAuthLinksField,   < I don't need this here!
     ],
     sample: {'success': true},
     outputFields: [{'key': 'success', 'type': 'boolean'}],

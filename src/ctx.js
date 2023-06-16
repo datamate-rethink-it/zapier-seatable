@@ -6,11 +6,11 @@
  */
 // const {ZapBundle} = require('./ctx/ZapBundle');
 
-const _CONST = require("./const");
-const { stashFile } = require("./hydrators");
-const _ = require("lodash");
-const { ResponseThrottleInfo } = require("./lib");
-const { sidParse } = require("./lib/sid");
+const _CONST = require('./const');
+const {stashFile} = require('./hydrators');
+const _ = require('lodash');
+const {ResponseThrottleInfo} = require('./lib');
+const {sidParse} = require('./lib/sid');
 
 /**
  * context bound dtable struct
@@ -20,60 +20,109 @@ const { sidParse } = require("./lib/sid");
 const struct = {
   columns: {
     types: {
-      text: "Text",
-      "long-text": "Long text",
-      number: "Number",
-      checkbox: "Checkbox",
-      date: "Date",
-      "single-select": "Single select",
-      image: "Image",
-      file: "File",
-      "multiple-select": "Multiple select",
-      collaborator: "Collaborator",
-      url: "URL",
-      email: "Email",
-      duration: "Duration",
-      geolocation: "Geolocation",
-      rate: "Rating",
-      formula: "Formula",
-      "link-formula": "Link formula",
-      link: "Link to other records",
-      "auto-number": "Auto number",
-      creator: "Creator",
-      ctime: "Created time",
-      "last-modifier": "Last modifier",
-      mtime: "Last modified time",
-      button: "Button",
+      'text': 'Text',
+      'long-text': 'Long text',
+      'number': 'Number',
+      'checkbox': 'Checkbox',
+      'date': 'Date',
+      'single-select': 'Single select',
+      'image': 'Image',
+      'file': 'File',
+      'multiple-select': 'Multiple select',
+      'collaborator': 'Collaborator',
+      'url': 'URL',
+      'email': 'Email',
+      'duration': 'Duration',
+      'geolocation': 'Geolocation',
+      'rate': 'Rating',
+      'formula': 'Formula',
+      'link-formula': 'Link formula',
+      'link': 'Link to other records',
+      'auto-number': 'Auto number',
+      'creator': 'Creator',
+      'ctime': 'Created time',
+      'last-modifier': 'Last modifier',
+      'mtime': 'Last modified time',
+      'button': 'Button',
     },
-    assets: ["file", "image"],
+    input_field_types: {
+      'text': 'string',
+      'long-text': 'string',
+      'number': 'number',
+      'checkbox': 'boolean',
+      'date': 'datetime',
+      'single-select': 'string',
+      'image': 'file',
+      'file': 'file',
+      'multiple-select': 'string',
+      'collaborator': 'string',
+      'url': 'string',
+      'email': 'string',
+      'duration': 'string',
+      'geolocation': 'string',
+      'rate': 'integer',
+      'formula': 'string',
+      'link-formula': 'string',
+      'link': 'string',
+      'auto-number': 'integer',
+      'creator': 'string',
+      'ctime': 'string',
+      'last-modifier': 'string',
+      'mtime': 'string',
+      'button': 'string',
+    },
+    help_text: {
+      'text': 'Hilfe für Text..',
+      'long-text': 'Long text Hilfe',
+      'number': 'Number ist 1 2 3',
+      'checkbox': 'Checkbox',
+      'date': 'Date',
+      'single-select': 'Single select',
+      'image': 'Image',
+      'file': 'File',
+      'multiple-select': 'Multiple select',
+      'collaborator': 'Collaborator',
+      'url': 'URL',
+      'email': 'Email',
+      'duration': 'Duration',
+      'geolocation': 'Geolocation',
+      'rate': 'Rating',
+      'formula': 'Formula',
+      'link-formula': 'Link formula',
+      'link': 'Link to other records',
+      'auto-number': 'Auto number',
+      'creator': 'Creator',
+      'ctime': 'Created time',
+      'last-modifier': 'Last modifier',
+      'mtime': 'Last modified time',
+      'button': 'Button',
+    },
+    assets: ['file', 'image'],
     filter: {
       // column types that can not be filtered:
-      not: [ "file", "long-text", "url"],
+      not: ['file', 'image', 'long-text', 'url'],
     },
     zapier: {
       // column types that zapier must not write/create (hidden):
-      // "file",
-      //   "image",
       hide_write: [
-        "file",
-        //  "image",
-        // "link",
-        "auto-number",
-        "ctime",
-        "mtime",
-        "formula",
-        "link-formula",
-        "creator",
-        "last-modifier",
-        "button",
+        'auto-number',
+        'ctime',
+        'mtime',
+        'formula',
+        'link-formula',
+        'creator',
+        'last-modifier',
+        'button',
       ],
       // column types that zapier should not offer to search in (hidden):
-      hide_search: ["link"],
+      hide_search: ['link'],
       /**
        * column types that zapier offers for a row-lookup
        * @type {DTableColumnType[]}
        */
-      row_lookup: ["text", "number", "date", "url", "email", "auto-number"],
+      row_lookup: ['text', 'number', 'date', 'url', 'email', 'auto-number'],
+      // column types that zapier shows for file/image uploads (assets):
+      show_file: ['file', 'image'],
     },
   },
 };
@@ -102,7 +151,7 @@ function zapInitHookBundle(z, bundle) {
    *
    * @type {string} 6-character width flake of the bundle transaction
    */
-  bundle.__zTS = "".concat(String(bundle.__zT % 1000000)).padStart(6, " ");
+  bundle.__zTS = ''.concat(String(bundle.__zT % 1000000)).padStart(6, ' ');
 
   /**
    * bundle zap log-tag
@@ -124,7 +173,7 @@ function zapInitHookBundle(z, bundle) {
  */
 function zapInit(z, bundle) {
   // remove trailing slash (common user input error)
-  bundle.authData.server = bundle.authData.server.replace(/\/+$/, "");
+  bundle.authData.server = bundle.authData.server.replace(/\/+$/, '');
 
   return zapInitHookBundle(z, bundle);
 }
@@ -149,15 +198,15 @@ async function serverInfo(z, bundle) {
     server: `${bundle.authData.server}`,
   };
   const properties = (response.data && Object.keys(response.data)) || [];
-  properties.forEach(function (property) {
+  properties.forEach(function(property) {
     const value = response.data[property];
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       serverInfo[property] = value;
     }
   });
-  if (!~properties.indexOf("version") || !~properties.indexOf("edition")) {
+  if (!~properties.indexOf('version') || !~properties.indexOf('edition')) {
     throw new Error(
-      _CONST.STRINGS["seatable.error.no-server-info"](bundle.authData.server)
+        _CONST.STRINGS['seatable.error.no-server-info'](bundle.authData.server),
     );
   }
 
@@ -174,9 +223,9 @@ async function serverInfo(z, bundle) {
  * @return {Promise<DTable>}
  */
 const acquireServerInfo = (z, bundle) => {
-  return isEmpty(bundle.serverInfo)
-    ? serverInfo(z, bundle)
-    : Promise.resolve(bundle.serverInfo);
+  return isEmpty(bundle.serverInfo) ?
+    serverInfo(z, bundle) :
+    Promise.resolve(bundle.serverInfo);
 };
 
 /**
@@ -190,26 +239,26 @@ async function appAccessToken(z, bundle) {
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/api/v2.1/dtable/app-access-token/`,
-    headers: { Authorization: `Token ${bundle.authData.api_token}` },
+    headers: {Authorization: `Token ${bundle.authData.api_token}`},
     endPointPath: `/api/v2.1/dtable/app-access-token/`,
   });
 
-  const dtable = { server_address: bundle.authData.server };
+  const dtable = {server_address: bundle.authData.server};
   const properties = (response.data && Object.keys(response.data)) || [];
   for (const property of properties) {
     dtable[property] = response.data[property];
   }
   const serverInfo = bundle.serverInfo;
   z.console.timeLog(
-    bundle.__zLogTag,
-    `app(${dtable.workspace_id}/${dtable.dtable_uuid}) ${serverInfo.version} ${serverInfo.edition} (${bundle.authData.server})`
+      bundle.__zLogTag,
+      `app(${dtable.workspace_id}/${dtable.dtable_uuid}) ${serverInfo.version} ${serverInfo.edition} (${bundle.authData.server})`,
   );
   if (
-    !~properties.indexOf("dtable_uuid") ||
-    !~properties.indexOf("access_token")
+    !~properties.indexOf('dtable_uuid') ||
+    !~properties.indexOf('access_token')
   ) {
     throw new Error(
-      _CONST.STRINGS["seatable.error.app-access-token"](bundle.authData.server)
+        _CONST.STRINGS['seatable.error.app-access-token'](bundle.authData.server),
     );
   }
   bundle.dtable = dtable;
@@ -227,9 +276,9 @@ async function appAccessToken(z, bundle) {
  * @return {Promise<DTable>}
  */
 const acquireDtableAppAccess = (z, bundle) => {
-  return isEmpty(bundle.dtable)
-    ? appAccessToken(z, bundle)
-    : Promise.resolve(bundle.dtable);
+  return isEmpty(bundle.dtable) ?
+    appAccessToken(z, bundle) :
+    Promise.resolve(bundle.dtable);
 };
 
 const featureLinkColumnsData = {
@@ -255,11 +304,11 @@ const noAuthFilePathFromUrl = (buffer) => {
 const fileNoAuthLinksField = {
   key: _CONST.FEATURE_NO_AUTH_ASSET_LINKS,
   required: false,
-  default: "False",
-  type: "boolean",
-  label: "Provide access to images and files",
+  default: 'False',
+  type: 'boolean',
+  label: 'Provide access to images and files',
   helpText:
-    "By default (**False**) SeaTable provides links to files and images that require authentication. Choose **True** if you want to use your files and pictures in your Zapier Action, this adds additional fields with links that temporarily allow unauthorized downloads for a couple of hours.",
+    'By default (**False**) SeaTable provides links to files and images that require authentication. Choose **True** if you want to use your files and pictures in your Zapier Action, this adds additional fields with links that temporarily allow unauthorized downloads for a couple of hours.',
   altersDynamicFields: false,
 };
 
@@ -298,7 +347,7 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
   z.console.time(logTag);
 
   const dtableCtx = bundle.dtable;
-  const fileUrlStats = { urls: [], errors: [] };
+  const fileUrlStats = {urls: [], errors: []};
   const fileUrl = async (buffer) => {
     fileUrlStats.urls.push(buffer);
     const urlPath = noAuthFilePathFromUrl(buffer);
@@ -312,14 +361,14 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
     try {
       response = await z.request({
         url,
-        headers: { Authorization: `Token ${dtableCtx.access_token}` },
+        headers: {Authorization: `Token ${dtableCtx.access_token}`},
         skipThrowForStatus: true,
       });
     } catch (e) {
       exception = e;
     }
     if (!_.isObject(response && response.data)) {
-      if (_.isObject(exception) && exception.name === "ThrottledError") {
+      if (_.isObject(exception) && exception.name === 'ThrottledError') {
         throw exception;
       }
       fileUrlStats.errors.push([
@@ -334,47 +383,47 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
     return response.data.download_link || null;
   };
   rows = await Promise.all(
-    rows.map(async (row) => {
-      for (const column of fileColumns(columns)) {
-        const field = `column:${column.key}`;
-        const noAuthField = noAuthColumnKey(column.key);
-        const values = row && row[field];
-        if (!values) continue;
-        if (!Array.isArray(values)) continue;
-        if (!values.length) continue;
-        if (fileUrlStats.errors.length > 0) {
+      rows.map(async (row) => {
+        for (const column of fileColumns(columns)) {
+          const field = `column:${column.key}`;
+          const noAuthField = noAuthColumnKey(column.key);
+          const values = row && row[field];
+          if (!values) continue;
+          if (!Array.isArray(values)) continue;
+          if (!values.length) continue;
+          if (fileUrlStats.errors.length > 0) {
           // skip further urls on error
-          z.console.timeLog(logTag, `skipping on previous error`);
-          row[noAuthField] = null;
-          continue;
-        }
-        row[noAuthField] = await Promise.all(
-          values.map(async (value) => {
-            if (
-              typeof value === "object" &&
+            z.console.timeLog(logTag, `skipping on previous error`);
+            row[noAuthField] = null;
+            continue;
+          }
+          row[noAuthField] = await Promise.all(
+              values.map(async (value) => {
+                if (
+                  typeof value === 'object' &&
               value !== null &&
-              value.type === "file" &&
+              value.type === 'file' &&
               value.url
-            ) {
-              const copy = { ...value };
-              copy.url = await fileUrl(value.url);
-              return copy;
-            } else if (typeof value === "string" && value) {
-              return await fileUrl(value);
-            }
-            return value;
-          })
-        );
-      }
-      return row;
-    })
+                ) {
+                  const copy = {...value};
+                  copy.url = await fileUrl(value.url);
+                  return copy;
+                } else if (typeof value === 'string' && value) {
+                  return await fileUrl(value);
+                }
+                return value;
+              }),
+          );
+        }
+        return row;
+      }),
   );
   z.console.timeLog(
-    logTag,
-    `urls: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`
+      logTag,
+      `urls: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`,
   );
   if (fileUrlStats.errors.length > 0) {
-    z.console.timeLog(logTag, "errors:", fileUrlStats.errors);
+    z.console.timeLog(logTag, 'errors:', fileUrlStats.errors);
   }
   return rows;
 };
@@ -418,8 +467,8 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
         continue;
       }
       childIds.length = Math.min(
-        featureLinkColumnsData.childLimit,
-        childIds.length
+          featureLinkColumnsData.childLimit,
+          childIds.length,
       );
 
       const children = [];
@@ -435,23 +484,23 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
         /** @type {ZapierZRequestResponse} */
         const response = await z.request({
           url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${childId}/`,
-          headers: { Authorization: `Token ${dtableCtx.access_token}` },
-          params: { table_id: linkTableMetadata._id },
+          headers: {Authorization: `Token ${dtableCtx.access_token}`},
+          params: {table_id: linkTableMetadata._id},
         });
         if (!_.isObject(response.data)) {
           throw new z.errors.Error(
-            `Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`
+              `Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`,
           );
         }
         const childRow = mapColumnKeys(
-          _.filter(linkTableMetadata.columns, (c) => c.type !== "link"),
-          response.data
+            _.filter(linkTableMetadata.columns, (c) => c.type !== 'link'),
+            response.data,
         );
         z.console.timeLog(
-          logTag,
-          `child row(${new ResponseThrottleInfo(response)}): ${
-            linkTableMetadata._id
-          }:row:${childId} (request=${totalRequestCount})`
+            logTag,
+            `child row(${new ResponseThrottleInfo(response)}): ${
+              linkTableMetadata._id
+            }:row:${childId} (request=${totalRequestCount})`,
         );
         linkTableCache.set(childId, childRow);
         children.push(childRow);
@@ -467,8 +516,8 @@ const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
 
   totalRequestCount &&
     z.console.timeLog(
-      logTag,
-      `requests=${totalRequestCount} rows=${rows.length}`
+        logTag,
+        `requests=${totalRequestCount} rows=${rows.length}`,
     );
 
   return rows;
@@ -495,8 +544,8 @@ const acquireMetadata = async (z, bundle) => {
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/metadata/`,
     headers: {
-      Authorization: `Token ${dtableCtx.access_token}`,
-      "X-TABLE": bundle.inputData.table_name,
+      'Authorization': `Token ${dtableCtx.access_token}`,
+      'X-TABLE': bundle.inputData.table_name,
     },
   });
 
@@ -532,13 +581,13 @@ const acquireTableMetadata = async (z, bundle) => {
     };
   }
   const tableMetadata = tableFromMetadata(
-    metadata,
-    bundle.inputData.table_name
+      metadata,
+      bundle.inputData.table_name,
   );
   if (!tableMetadata) {
     z.console.log(
-      `[${bundle.__zTS}] internal: acquireTableMetadata: missing table metadata columns on input-data:`,
-      bundle.inputData
+        `[${bundle.__zTS}] internal: acquireTableMetadata: missing table metadata columns on input-data:`,
+        bundle.inputData,
     );
   }
   return tableMetadata;
@@ -555,11 +604,11 @@ const acquireTableMetadata = async (z, bundle) => {
  */
 function bundleTableMeta(bundle) {
   if (!bundle.dtable) {
-    throw new Error("internal error: dtable not bundled");
+    throw new Error('internal error: dtable not bundled');
   }
   const dtableCtx = bundle.dtable;
   if (!dtableCtx.metadata) {
-    throw new Error("internal error: metadata bindings missing");
+    throw new Error('internal error: metadata bindings missing');
   }
   return tableFromMetadata(dtableCtx.metadata, bundle.inputData.table_name);
 }
@@ -577,63 +626,63 @@ function bundleTableMeta(bundle) {
 const filter = async (z, bundle, context) => {
   const f = {
     column_name: null,
-    filter_predicate: "contains",
+    filter_predicate: 'contains',
     filter_term: bundle.inputData.search_value,
-    filter_term_modifier: "",
+    filter_term_modifier: '',
   };
   const tableMetadata = await acquireTableMetadata(z, bundle);
   const sid = sidParse(bundle.inputData.search_column);
-  const col = _.find(tableMetadata.columns, ["key", sid.column]);
+  const col = _.find(tableMetadata.columns, ['key', sid.column]);
   if (undefined === col) {
     z.console.log(
-      `[${bundle.__zTS}] filter[${context}]: search column not found:`,
-      bundle.inputData.search_column,
-      sid,
-      tableMetadata.columns
+        `[${bundle.__zTS}] filter[${context}]: search column not found:`,
+        bundle.inputData.search_column,
+        sid,
+        tableMetadata.columns,
     );
     return f;
   }
   if (struct.columns.filter.not.includes(col.type)) {
     z.console.log(
-      `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
-      col.type
+        `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
+        col.type,
     );
     throw new z.errors.Error(
-      `Search in ${
-        struct.columns.types[col.type] || `[${col.type}]`
-      } field named "${
-        col.name
-      }" is not supported, please choose a different column.`
+        `Search in ${
+          struct.columns.types[col.type] || `[${col.type}]`
+        } field named "${
+          col.name
+        }" is not supported, please choose a different column.`,
     );
   }
   f.column_name = col.name;
   switch (col.type) {
-    case "text":
-    case "formula":
+    case 'text':
+    case 'formula':
       break;
-    case "number":
-      f.filter_predicate = "equal";
+    case 'number':
+      f.filter_predicate = 'equal';
       break;
-    case "auto-number":
-    case "checkbox":
-    case "single-select":
-    case "date":
-    case "ctime":
-    case "mtime":
-      f.filter_predicate = "is";
+    case 'auto-number':
+    case 'checkbox':
+    case 'single-select':
+    case 'date':
+    case 'ctime':
+    case 'mtime':
+      f.filter_predicate = 'is';
       break;
-    case "multi-select":
-      f.filter_predicate = "has_any_of";
+    case 'multi-select':
+      f.filter_predicate = 'has_any_of';
       f.filter_term = [f.filter_term];
       break;
-    case "creator":
-    case "last-modifier":
+    case 'creator':
+    case 'last-modifier':
       f.filter_term = [f.filter_term];
       break;
     default:
       z.console.log(
-        `[${bundle.__zTS}] filter[${context}]: unknown column type (fall-through):`,
-        col.type
+          `[${bundle.__zTS}] filter[${context}]: unknown column type (fall-through):`,
+          col.type,
       );
   }
   return f;
@@ -663,7 +712,7 @@ const tableFromMetadata = (metadata, sid) => {
     return [];
   };
 
-  return _.find(metadata.tables, predicate("table", "_id"));
+  return _.find(metadata.tables, predicate('table', '_id'));
 };
 
 const isEmpty = (v) => {
@@ -717,7 +766,7 @@ function requestParamsBundle(bundle) {
 function requestParamsSid(sid) {
   const r = {};
   const s = sidParse(sid);
-  ["table", "view"].forEach((x) => s[x] && (r[`${x}_id`] = s[x]));
+  ['table', 'view'].forEach((x) => s[x] && (r[`${x}_id`] = s[x]));
   return r;
 }
 
@@ -736,9 +785,9 @@ function requestParamsSid(sid) {
 const downloadLink = async (z, bundle, URL) => {
   const dataFile = [];
   for (const file of URL) {
-    let fileUrl = file.url;
+    const fileUrl = file.url;
     const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
-      fileUrl
+        fileUrl,
     )?.[1];
     if (!urlPath) {
       dataFile.push(fileUrl);
@@ -747,13 +796,13 @@ const downloadLink = async (z, bundle, URL) => {
     }
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
-      method: "GET",
-      headers: { Authorization: `Token ${bundle.authData.api_token}` },
+      method: 'GET',
+      headers: {Authorization: `Token ${bundle.authData.api_token}`},
     });
     const data = collaborator.json;
     if (!data.download_link) {
       throw new z.errors.Error(
-        `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`
+          `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`,
       );
     }
     const downloadedUrl = data.download_link;
@@ -767,9 +816,9 @@ const downloadLink = async (z, bundle, URL) => {
 const downloadImageLink = async (z, bundle, URL) => {
   const dataFile = [];
   for (const file of URL) {
-    let fileUrl = file;
+    const fileUrl = file;
     const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
-      fileUrl
+        fileUrl,
     )?.[1];
     if (!urlPath) {
       dataFile.push(fileUrl);
@@ -778,13 +827,13 @@ const downloadImageLink = async (z, bundle, URL) => {
     }
     const collaborator = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
-      method: "GET",
-      headers: { Authorization: `Token ${bundle.authData.api_token}` },
+      method: 'GET',
+      headers: {Authorization: `Token ${bundle.authData.api_token}`},
     });
     const data = collaborator.json;
     if (!data.download_link) {
       throw new z.errors.Error(
-        `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`
+          `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`,
       );
     }
     const downloadedUrl = data.download_link;
@@ -800,7 +849,7 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
   // step 1: implicit row properties
-  const implicit = ["_id", "_mtime"];
+  const implicit = ['_id', '_mtime'];
   for (const p of implicit) {
     if (hop(row, p)) {
       r[`row${p}`] = row[p];
@@ -819,14 +868,14 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
         continue;
       }
       if (bundle.inputData.feature_non_authorized_asset_downloads) {
-        if ("File" === c.name) {
+        if ('File' === c.name) {
           const value = row[c.name];
           // r[`column:${c.key}`] = value;
           r[`column:${c.key}`] = await downloadLink(z, bundle, value);
           r[`column:${c.key} Url`] = value;
           continue;
         }
-        if ("image" === c.type) {
+        if ('image' === c.type) {
           const value = row[c.name];
           // r[`column:${c.key}`] = value[0];
           r[`column:${c.key}`] = await downloadImageLink(z, bundle, value);
@@ -843,7 +892,7 @@ const mapColumnKeysRow = async (columns, row) => {
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
   // step 1: implicit row properties
-  const implicit = ["_id", "_mtime"];
+  const implicit = ['_id', '_mtime'];
   for (const p of implicit) {
     if (hop(row, p)) {
       r[`row${p}`] = row[p];
@@ -877,8 +926,8 @@ const mapCreateRowKeys = async (z, bundle, row) => {
       r[`row${k}`] = await getCollaboratorData(z, bundle, v);
       continue;
     }
-    
-    if (k === "_id") {
+
+    if (k === '_id') {
       r[`row${k}`] = v;
       continue;
     }
@@ -899,7 +948,7 @@ const mapCreateRowKeys = async (z, bundle, row) => {
  */
 const columnLinkTableMetadata = (col, bundle) => {
   if (
-    col.type !== "link" ||
+    col.type !== 'link' ||
     undefined === col.data ||
     undefined === col.data.table_id ||
     undefined === col.data.other_table_id
@@ -907,10 +956,10 @@ const columnLinkTableMetadata = (col, bundle) => {
     return undefined;
   }
   const linkTableId =
-    bundleTableMeta(bundle)._id === col.data.other_table_id
-      ? col.data.table_id
-      : col.data.other_table_id;
-  return _.find(bundle.dtable.metadata.tables, ["_id", linkTableId]);
+    bundleTableMeta(bundle)._id === col.data.other_table_id ?
+      col.data.table_id :
+      col.data.other_table_id;
+  return _.find(bundle.dtable.metadata.tables, ['_id', linkTableId]);
 };
 
 /**
@@ -925,20 +974,20 @@ const columnLinkTableMetadata = (col, bundle) => {
  */
 const outputFieldsRows = function* (columns, bundle) {
   for (const col of columns) {
-    const f = { key: `column:${col.key}`, label: col.name };
+    const f = {key: `column:${col.key}`, label: col.name};
 
     // link field handling
     const linkTableMetadata = columnLinkTableMetadata(col, bundle);
     if (undefined !== linkTableMetadata) {
       const children = [
-        { key: `${f.key}[]row_id`, label: `${col.name}: ID` },
+        {key: `${f.key}[]row_id`, label: `${col.name}: ID`},
         {
           key: `${f.key}[]row_mtime`,
           label: `${col.name}: Last Modified`,
         },
       ];
       for (const c of linkTableMetadata.columns) {
-        if (c.type === "link") continue;
+        if (c.type === 'link') continue;
         children.push({
           key: `${f.key}[]column:${c.key}`,
           label: `${col.name}: ${c.name}`,
@@ -966,17 +1015,17 @@ const tableView = async (z, bundle) => {
 
   // base configuration
   const def = {
-    key: "table_view",
+    key: 'table_view',
     required: false,
-    type: "string",
-    label: "View",
-    helpText: "You can optionally pick a view of the table.",
+    type: 'string',
+    label: 'View',
+    helpText: 'You can optionally pick a view of the table.',
     altersDynamicFields: true,
   };
   // input choices
   const choices = {};
   const tableMetadata = await acquireTableMetadata(z, bundle);
-  for ({ _id, name } of tableMetadata.views) {
+  for ({_id, name} of tableMetadata.views) {
     choices[`table:${tableMetadata._id}:view:${_id}`] = name;
   }
   def.choices = choices;
@@ -985,7 +1034,7 @@ const tableView = async (z, bundle) => {
     def.default = `table:${tableMetadata._id}:view:0000`;
     bundle.inputData.table_view = def.default;
     def.placeholder = `${
-      (tableMetadata.views && tableMetadata.views[0].name) || "Default View"
+      (tableMetadata.views && tableMetadata.views[0].name) || 'Default View'
     }`;
   }
 
@@ -1006,110 +1055,110 @@ const tableView = async (z, bundle) => {
 const tableFields = async (z, bundle) => {
   return [
     {
-      key: "table_name",
+      key: 'table_name',
       required: true,
-      label: "Table",
-      helpText: "Pick a SeaTable table for your new row trigger.",
-      type: "string",
-      dynamic: "get_tables_of_a_base.id.name",
+      label: 'Table',
+      helpText: 'Pick a SeaTable table for your new row trigger.',
+      type: 'string',
+      dynamic: 'get_tables_of_a_base.id.name',
       altersDynamicFields: true,
     },
     await tableView(z, bundle),
   ];
 };
 const tableNameId = async (z, bundle, context) => {
-  let table_id = bundle.inputData.table_name;
-  let new_table_id = table_id.split(":");
-  let TABLE_ID = new_table_id[1];
-  let colName = "";
-  let tableName = "";
-  let colType = "";
+  const table_id = bundle.inputData.table_name;
+  const new_table_id = table_id.split(':');
+  const TABLE_ID = new_table_id[1];
+  let colName = '';
+  let tableName = '';
+  let colType = '';
   const MetaData = await acquireMetadata(z, bundle);
   const tableMetadata = await acquireTableMetadata(z, bundle);
   const sid = sidParse(bundle.inputData.search_column);
-  const col = _.find(tableMetadata.columns, ["key", sid.column]);
+  const col = _.find(tableMetadata.columns, ['key', sid.column]);
   if (undefined === col) {
     z.console.log(
-      `[${bundle.__zTS}] filter[${context}]: search column not found:`,
-      bundle.inputData.search_column,
-      sid,
-      tableMetadata.columns
+        `[${bundle.__zTS}] filter[${context}]: search column not found:`,
+        bundle.inputData.search_column,
+        sid,
+        tableMetadata.columns,
     );
     return f;
   }
   if (struct.columns.filter.not.includes(col.type)) {
     z.console.log(
-      `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
-      col.type
+        `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
+        col.type,
     );
     throw new z.errors.Error(
-      `Search in ${
-        struct.columns.types[col.type] || `[${col.type}]`
-      } field named "${
-        col.name
-      }" is not supported, please choose a different column.`
+        `Search in ${
+          struct.columns.types[col.type] || `[${col.type}]`
+        } field named "${
+          col.name
+        }" is not supported, please choose a different column.`,
     );
   }
   colType = col.type;
   colName = col.name;
-  let tb = _.map(
-    _.filter(MetaData.tables, (table) => {
+  const tb = _.map(
+      _.filter(MetaData.tables, (table) => {
       // console.log(table);
-      return table._id === TABLE_ID;
-    }),
-    (tableObject) => {
-      return tableObject.name;
-    }
+        return table._id === TABLE_ID;
+      }),
+      (tableObject) => {
+        return tableObject.name;
+      },
   );
   tableName = tb[0];
   // const query = colType==="Text"?`${colName} = "${bundle.inputData.search_value}"`:`${colName} = ${bundle.inputData.search_value}`;
-  let f = {
+  const f = {
     sql: `SELECT * FROM ${tableName} WHERE ${colName} = "${bundle.inputData.search_value}" LIMIT 10`,
     convert_keys: true,
   };
   return f;
 };
 const getCollaborator = async (z, bundle, value) => {
-  let collaboratorEmail = value;
+  const collaboratorEmail = value;
   const collaborator = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
-    method: "GET",
-    headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+    method: 'GET',
+    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
   });
   const collaboratorData = collaborator.json.user_list;
   const collData = _.map(
-    _.filter(collaboratorData, (o) => {
-      return o.contact_email === collaboratorEmail;
-    }),
-    (o) => {
-      return o.email;
-    }
+      _.filter(collaboratorData, (o) => {
+        return o.contact_email === collaboratorEmail;
+      }),
+      (o) => {
+        return o.email;
+      },
   );
   return collData;
 };
 const getCollaboratorData = async (z, bundle, value) => {
-  let collaboratorUsers = value;
+  const collaboratorUsers = value;
   const collaborator = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
-    method: "GET",
-    headers: { Authorization: `Token ${bundle.dtable.access_token}` },
+    method: 'GET',
+    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
   });
   const collaboratorData = collaborator.json.user_list;
   const collData = _.map(
-    _.filter(collaboratorData, (o) => {
-      const regex = /^\w{32}@auth\.local$/;
-      for (let i = 0; i < collaboratorUsers.length; i++) {
-        if (
-          o.email === collaboratorUsers[i] &&
+      _.filter(collaboratorData, (o) => {
+        const regex = /^\w{32}@auth\.local$/;
+        for (let i = 0; i < collaboratorUsers.length; i++) {
+          if (
+            o.email === collaboratorUsers[i] &&
           regex.test(collaboratorUsers[i])
-        ) {
-          return o.email === collaboratorUsers[i];
+          ) {
+            return o.email === collaboratorUsers[i];
+          }
         }
-      }
-    }),
-    (o) => {
-      return { username: o.email, email: o.contact_email, name: o.name };
-    }
+      }),
+      (o) => {
+        return {username: o.email, email: o.contact_email, name: o.name};
+      },
   );
   return collData;
 };
@@ -1118,36 +1167,36 @@ const linkRecord = async (z, bundle, value) => {
   const data = metadata.tables;
   const columns = data[0].columns;
   const TablesData = _.map(data, (o) => {
-    return { _id: o._id, name: o.name };
+    return {_id: o._id, name: o.name};
   });
   const res = _.map(
-    _.filter(columns, (o) => {
-      return o.type === "link";
-    }),
-    (o) => {
-      const result = o.data;
-      const linkData = {
-        table_id: result.table_id,
-        other_table_id: result.other_table_id,
-        link_id: result.link_id,
-      };
-      let data = {
-        table_name: "",
-        other_table_name: "",
-        link_id: linkData.link_id,
-        table_row_id: bundle.inputData.table_row,
-        other_table_row_id: bundle.inputData[value],
-      };
-      const finalRes = _.map(TablesData, (o) => {
-        if (linkData.table_id === o._id) {
-          data.table_name = o.name;
-        }
-        if (linkData.other_table_id === o._id) {
-          data.other_table_name = o.name;
-        }
-      });
-      return data;
-    }
+      _.filter(columns, (o) => {
+        return o.type === 'link';
+      }),
+      (o) => {
+        const result = o.data;
+        const linkData = {
+          table_id: result.table_id,
+          other_table_id: result.other_table_id,
+          link_id: result.link_id,
+        };
+        const data = {
+          table_name: '',
+          other_table_name: '',
+          link_id: linkData.link_id,
+          table_row_id: bundle.inputData.table_row,
+          other_table_row_id: bundle.inputData[value],
+        };
+        const finalRes = _.map(TablesData, (o) => {
+          if (linkData.table_id === o._id) {
+            data.table_name = o.name;
+          }
+          if (linkData.other_table_id === o._id) {
+            data.other_table_name = o.name;
+          }
+        });
+        return data;
+      },
   );
   const bodyData = res[0];
   return await linkRequest(z, bundle, bodyData);
@@ -1157,36 +1206,36 @@ const linkCreateRecord = async (z, bundle, value, id) => {
   const data = metadata.tables;
   const columns = data[0].columns;
   const TablesData = _.map(data, (o) => {
-    return { _id: o._id, name: o.name };
+    return {_id: o._id, name: o.name};
   });
   const res = _.map(
-    _.filter(columns, (o) => {
-      return o.type === "link";
-    }),
-    (o) => {
-      const result = o.data;
-      const linkData = {
-        table_id: result.table_id,
-        other_table_id: result.other_table_id,
-        link_id: result.link_id,
-      };
-      let data = {
-        table_name: "",
-        other_table_name: "",
-        link_id: linkData.link_id,
-        table_row_id: id ,
-        other_table_row_id: value,
-      };
-      const finalRes = _.map(TablesData, (o) => {
-        if (linkData.table_id === o._id) {
-          data.table_name = o.name;
-        }
-        if (linkData.other_table_id === o._id) {
-          data.other_table_name = o.name;
-        }
-      });
-      return data;
-    }
+      _.filter(columns, (o) => {
+        return o.type === 'link';
+      }),
+      (o) => {
+        const result = o.data;
+        const linkData = {
+          table_id: result.table_id,
+          other_table_id: result.other_table_id,
+          link_id: result.link_id,
+        };
+        const data = {
+          table_name: '',
+          other_table_name: '',
+          link_id: linkData.link_id,
+          table_row_id: id,
+          other_table_row_id: value,
+        };
+        const finalRes = _.map(TablesData, (o) => {
+          if (linkData.table_id === o._id) {
+            data.table_name = o.name;
+          }
+          if (linkData.other_table_id === o._id) {
+            data.other_table_name = o.name;
+          }
+        });
+        return data;
+      },
   );
   const bodyData = res[0];
   return await linkRequest(z, bundle, bodyData);
@@ -1194,11 +1243,11 @@ const linkCreateRecord = async (z, bundle, value, id) => {
 const linkRequest = async (z, bundle, bodyData) => {
   const linkTwoRecord = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/links/`,
-    method: "POST",
+    method: 'POST',
     headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      Authorization: `Token ${bundle.dtable.access_token}`,
+      'accept': 'application/json',
+      'content-type': 'application/json',
+      'Authorization': `Token ${bundle.dtable.access_token}`,
     },
     body: JSON.stringify({
       table_name: bodyData.table_name,
@@ -1211,17 +1260,17 @@ const linkRequest = async (z, bundle, bodyData) => {
   return linkTwoRecord;
 };
 const getImageData = (value) => {
-  let Images = value;
+  const Images = value;
   const imageData = _.map(Images, (o) => {
     const regex = /([^/]+)$/;
     const match = o.match(regex);
     const filename = match[1];
-    return { name: filename, type: "image", url: o };
+    return {name: filename, type: 'image', url: o};
   });
   return imageData;
 };
 const getCollAndImage = async (z, bundle, value) => {
-  let Data = value;
+  const Data = value;
   const newArray = _.map(Data, async (o) => {
     o.Image = getImageData(o.Image);
     o.Collaborator = await getCollaboratorData(z, bundle, o.Collaborator);

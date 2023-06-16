@@ -21,7 +21,7 @@ const connectionLabel = (z, bundle) => {
 module.exports = {
   type: 'custom',
   test: {
-    require: "src/authenticationFunctionRequire.js"
+    require: 'src/authenticationFunctionRequire.js',
   },
   fields: [
     {

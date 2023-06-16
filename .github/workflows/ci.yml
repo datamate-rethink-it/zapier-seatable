@@ -3,9 +3,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ develop, seen, wip/** ]
+    branches: [ not-used-anymore ]
   pull_request:
-    branches: [ develop, seen, wip/gh-actions-init ]
+    branches: [ not-used-anymore ]
 
 jobs:
   build:
