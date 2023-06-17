@@ -137,7 +137,6 @@ const outputFields = async (z, bundle) => {
     {key: 'row_mtime', label: 'Last Modified'},
     {key: '_zap_search_was_found_status', label: 'Success?'}, // no idea, why this is not working.
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
-    ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
   ];
 };
 module.exports = {

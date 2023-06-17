@@ -64,7 +64,6 @@ const outputFields = async (z, bundle) => {
     {key: 'row_id', label: 'Original ID'},
     {key: 'row_mtime', label: 'Last Modified'},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
-    ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
   ];
 };
 

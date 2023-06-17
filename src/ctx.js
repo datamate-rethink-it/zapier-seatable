@@ -316,24 +316,10 @@ const fileNoAuthLinksField = {
   altersDynamicFields: false,
 };
 
-/**
- * @generator
- * @param {Array<DTableColumn|DTableColumnTLink>} columns
- * @param {Bundle} bundle
- * @yield {*<{label: string, key: string}>}
- */
-const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
-  if (!bundle.inputData[_CONST.FEATURE_NO_AUTH_ASSET_LINKS]) {
-    return;
-  }
-
-  // for (const col of fileColumns(columns)) {
-  //   yield { key: noAuthColumnKey(col.key), label: noAuthColumnLabel(col.name) };
-  // }
-};
 
 /**
- * add non-authorized asset links into the result
+ * add non-authorized asset links into the result 
+ * BRAUCHE ICH DAS ÜBERHAUPT NOCH???
  *
  * images and files, original data type (string or object) is kept, ads a new, suffixed entry.
  *
@@ -342,6 +328,7 @@ const outputFieldsFileNoAuthLinks = function* (columns, bundle) {
  * @param {Array<DTableColumn|DTableColumnTLink>} columns
  * @param {Array<{object}>} rows
  */
+/*
 const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
   if (!bundle.inputData[_CONST.FEATURE_NO_AUTH_ASSET_LINKS]) {
     return rows;
@@ -359,7 +346,7 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
       throw new z.errors.Error(`Failed to extract path from url: "${buffer}"`);
     }
     /** @type {ZapierZRequestResponse} */
-    let response;
+   /* let response;
     let exception;
     const url = `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`;
     try {
@@ -431,6 +418,99 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
   }
   return rows;
 };
+*/
+
+/**
+ * replace column.type link references with row-data in rows (noch in entstehung.)
+ *
+ */
+const acquireLinkColumnsDataNEU = async (z, bundle, row_ids) => {
+  const dtableCtx = bundle.dtable; 
+
+  // ich muss durch die rows nicht loopen...
+  for (let i = 0, l = row_ids.length; i < l; i++) {
+    const row_id = row_ids[i];
+
+    // wo kriege ich die metadata her? übergeben??
+
+    /** @type {ZapierZRequestResponse} */
+    const response = await z.request({
+      url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${row_id}/`,
+      headers: {Authorization: `Token ${dtableCtx.access_token}`},
+      params: {table_id: linkTableMetadata._id},
+    });
+    if (!_.isObject(response.data)) {
+      throw new z.errors.Error(
+          `Failed to retrieve table:${linkTableMetadata._id}:row:${row_id}`,
+      );
+    }
+
+    /*const childRow = mapColumnKeys(
+        _.filter(linkTableMetadata.columns, (c) => c.type !== 'link'),
+        response.data,
+    );*/
+
+      // irgendwie die response loopen und zurückgeben!
+    return {name: filename, size: 0, type: 'image', url: o};
+  }
+}
+
+/*
+    // handle each link field (if any)
+
+    // ich muss auch nicht die columns loopen...
+    for (const o of columns) {
+      const linkTableMetadata = columnLinkTableMetadata(o, bundle);
+      if (undefined === linkTableMetadata) {
+        continue;
+      }
+      const childIds = row[`column:${o.key}`];
+      if (!Array.isArray(childIds)) {
+        continue;
+      }
+      childIds.length = Math.min(
+          featureLinkColumnsData.childLimit,
+          childIds.length,
+      );
+
+      const children = [];
+      for (const childId of childIds) {
+        const linkTableCache = linkCache(linkTableMetadata._id);
+        const probe = linkTableCache.get(childId);
+        if (probe) {
+          children.push(probe);
+          continue;
+        }
+
+        const response = await z.request({
+          url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${childId}/`,
+          headers: {Authorization: `Token ${dtableCtx.access_token}`},
+          params: {table_id: linkTableMetadata._id},
+        });
+        if (!_.isObject(response.data)) {
+          throw new z.errors.Error(
+              `Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`,
+          );
+        }
+        const childRow = mapColumnKeys(
+            _.filter(linkTableMetadata.columns, (c) => c.type !== 'link'),
+            response.data,
+        );
+
+        linkTableCache.set(childId, childRow);
+        children.push(childRow);
+      }
+
+      if (children.length) {
+        rows[i][`column:${o.key}`] = children;
+      } else {
+        delete rows[i][`column:${o.key}`]; // remove parent key as it has no children
+      }
+    }
+  }
+  return row
+  */
+
 
 /**
  * replace column.type link references with row-data in rows
@@ -443,7 +523,7 @@ const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
  * @param {Array<{object}>} rows
  */
 const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
-  const dtableCtx = bundle.dtable;
+  const dtableCtx = bundle.dtable; 
 
   if (0 === rows.length) {
     return rows;
@@ -879,7 +959,7 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
         continue;
       }
 
-      // Creator + Modifier
+      // Creator + Modifier   // hier doppelte Abfrage der User-Liste -> vermeiden!
       if (regex.test(v)) {
         r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
         continue;
@@ -904,6 +984,14 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
         r[`column:${c.key}`] = xx;
         continue;
       }
+
+      // get values from links
+      /*if ('link' === c.type) {
+        z.console.log("das ist link spalte", v);
+        r[`column:${c.key}`] = row[c.name];
+        //r[`column:${c.key}`] = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
+        continue;
+      }*/
 
       // all other columns
       r[`column:${c.key}`] = row[c.name];
@@ -990,6 +1078,7 @@ const columnLinkTableMetadata = (col, bundle) => {
  * standard output fields based on the bundled table meta-data
  *
  * (since 2.0.0) all the rows columns with the resolution of linked rows columns (supports column.type link)
+ * (since 3.0.0) enhanced mapping for collaborator column
  *
  * @generator
  * @param {Array<DTableColumn|DTableColumnTLink>} columns (e.g. tableMetadata.columns)
@@ -998,17 +1087,57 @@ const columnLinkTableMetadata = (col, bundle) => {
  */
 const outputFieldsRows = function* (columns, bundle) {
   for (const col of columns) {
-    const f = {key: `column:${col.key}`, label: col.name};
+    let f = {key: `column:${col.key}`, label: col.name};
+    // generates normal label list...
+
+    if( col.type === 'collaborator'){
+      const children = [
+        {key: `${f.key}[]name`, label: `${col.name}: Name`},
+        {key: `${f.key}[]username`, label: `${col.name}: Username`,},
+        {key: `${f.key}[]email`, label: `${col.name}: Email`,},
+      ];
+      f.children = children;
+    }
+
+    if( col.type === 'button'){
+      continue;
+    }
+
+    if( col.type === 'geolocation'){
+      yield {key: `${f.key}__lat`, label: `${col.name}: Latitude`,};
+      yield {key: `${f.key}__lng`, label: `${col.name}: Longitude`,};
+      continue;
+    }
+
+    if ( col.type === "file" || col.type === "image" ){
+      const children =  [
+        {key: `${f.key}[]name`, label: `${col.name}: File name`},
+        {key: `${f.key}[]size`, label: `${col.name}: File size`,},
+        {key: `${f.key}[]type`, label: `${col.name}: File type`,},
+        {key: `${f.key}[]url`, label: `${col.name}: File URL`,},
+        {key: `${f.key}[]asset`, label: `${col.name}: File (temp. available)`,},
+      ];
+      f.children = children;
+    }
+
+    if ( col.type === "digital-sign" ){
+      yield {key: `${f.key}__sign_time`, label: `${col.name}: Username`,};
+      yield {key: `${f.key}__sign_image_url`, label: `${col.name}: Signature image URL`,};
+      yield {key: `${f.key}__username`, label: `${col.name}: Username`,};
+      continue;
+    }
+
+    // unten durch das hier ersetzen...
+    if( col.type === 'link'){
+    }
 
     // link field handling
+    /*
     const linkTableMetadata = columnLinkTableMetadata(col, bundle);
     if (undefined !== linkTableMetadata) {
       const children = [
         {key: `${f.key}[]row_id`, label: `${col.name}: ID`},
-        {
-          key: `${f.key}[]row_mtime`,
-          label: `${col.name}: Last Modified`,
-        },
+        {key: `${f.key}[]row_mtime`, label: `${col.name}: Last Modified`,},
       ];
       for (const c of linkTableMetadata.columns) {
         if (c.type === 'link') continue;
@@ -1018,7 +1147,7 @@ const outputFieldsRows = function* (columns, bundle) {
         });
       }
       f.children = children;
-    }
+    }*/
 
     yield f;
   }
@@ -1341,8 +1470,7 @@ module.exports = {
   outputFieldsRows,
   // noAuthLinks
   FEATURE_NO_AUTH_ASSET_LINKS: _CONST.FEATURE_NO_AUTH_ASSET_LINKS,
-  acquireFileNoAuthLinks,
-  outputFieldsFileNoAuthLinks,
+  //acquireFileNoAuthLinks,
   fileNoAuthLinksField,
   // mtimeFilter
   FEATURE_MTIME_FILTER: _CONST.FEATURE_MTIME_FILTER,

@@ -44,7 +44,8 @@ const perform = async (z, bundle) => {
 
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
-  z.console.log("VOR mapColumnKeys", rows);
+  //z.console.log("VOR mapColumnKeys", rows);
+
   /**
    * OUTPUT TRANSFORMATION (mapColumnKeys)
    * 
@@ -60,7 +61,11 @@ const perform = async (z, bundle) => {
     return transformedObj;
   }));
 
-  z.console.log("NACH mapColumnKeys", rows);
+  //z.console.log("NACH mapColumnKeys", rows);
+
+  // test neu zum aufbauen der links?? -> alles über linked columns
+  //rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
+  //z.console.log("LINKS mapColumnKeys", rows);
 
   // this is only relevant for row_update.js
   const unfilteredLength = rows.length;
@@ -82,9 +87,6 @@ const perform = async (z, bundle) => {
     z.console.timeLog(logTag, `filtered rows length: ${rows.length} (offset=${unfilteredLength - rows.length} minutes=${mTimeFilterMinutes})`);
   }
 
-  // transformation happens in ctx.js (mapColumnKeys)
-  // rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
-  // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
   z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
   return rows;
 
@@ -101,8 +103,8 @@ const outputFields = async (z, bundle) => {
     {key: 'row_id', label: 'Original ID'},
     {key: 'row_mtime', label: 'Last Modified'},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
-    ...ctx.outputFieldsFileNoAuthLinks(tableMetadata.columns, bundle),
   ];
+  z.console.log("Debug outputFields", oF);
   return oF;
 };
 
