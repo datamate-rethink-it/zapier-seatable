@@ -72,11 +72,12 @@ const perform = async (z, bundle) => {
     const key = `column:${col.key}`;
     const value = bundle.inputData?.[key];
 
-    if (col.type === 'link') {
-      if (value) {
-        await ctx.linkRecord(z, bundle, key, col);
-        continue;
-      }
+    if (undefined === value || '' === value) {
+      continue;
+    }
+    if (col.type === 'link') { 
+      await ctx.linkRecord(z, bundle, key, col);
+      continue;
     }
     if (!['file', 'image'].includes(col.type)) {
       continue;
@@ -125,7 +126,7 @@ const inputFields = async (z, bundle) => {
           label: o.name,
           type: ctx.struct.columns.input_field_types[o.type],
           required: false,
-          help_text: `${ctx.struct.columns.help_text[o.type] || `[${o.type}]`} field, optional.`,
+          help_text: `${ctx.struct.columns.help_text[o.type]}`,
         };
       });
 };

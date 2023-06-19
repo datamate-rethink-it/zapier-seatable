@@ -195,7 +195,7 @@ const inputFields = async (z, bundle) => {
       label: o.name,
       type: ctx.struct.columns.input_field_types[o.type],
       required: false,
-      help_text: `${ctx.struct.columns.help_text[o.type] || `[${o.type}]`} field, optional.`,
+      help_text: `${ctx.struct.columns.help_text[o.type]}`,
     };
   });
 };
