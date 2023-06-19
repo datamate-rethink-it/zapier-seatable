@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * string formatter as template tag
@@ -15,12 +15,12 @@ function format(strings, ...keys) {
       const value = Number.isInteger(key) ? values[key] : dict[key];
       result.push(value, strings[i + 1]);
     });
-    return result.join('');
+    return result.join("");
   };
 }
 
 const tryStringToPositiveInteger = (v) => {
-  if (typeof v !== 'string' && !Number.isInteger(v)) {
+  if (typeof v !== "string" && !Number.isInteger(v)) {
     return null;
   }
   const int = parseInt(v, 10);
@@ -46,13 +46,13 @@ function ResponseThrottleInfo(response) {
 
   response.getHeader || (response.getHeader = () => null);
   this.remaining = tryStringToPositiveInteger(
-      response.getHeader('x-ratelimit-remaining'));
+      response.getHeader("x-ratelimit-remaining"));
   this.limit = tryStringToPositiveInteger(
-      response.getHeader('x-ratelimit-limit'));
+      response.getHeader("x-ratelimit-limit"));
   this.reset = tryStringToPositiveInteger(
-      response.getHeader('x-ratelimit-reset'));
+      response.getHeader("x-ratelimit-reset"));
   this.retryAfter = tryStringToPositiveInteger(
-      response.getHeader('retry-after'));
+      response.getHeader("retry-after"));
 
   this.hasRateLimit = null !== this.remaining && null !== this.limit && null !==
       this.reset;
@@ -60,19 +60,19 @@ function ResponseThrottleInfo(response) {
 
   this.fmtRateLimit = function() {
     const resetDate = (new Date(this.reset * 1000)).toISOString().
-        split('.')[0] + 'Z';
+        split(".")[0] + "Z";
     return `${this.remaining}/${this.limit} @${this.reset}/${resetDate}`;
   };
   this.fmtRetry = function() {
     const retryTimestamp = Math.floor(Date.now() / 1000) + this.retryAfter;
     const retryDate = (new Date(
-        Date.now() + this.retryAfter * 1000)).toISOString().split('.')[0] + 'Z';
+        Date.now() + this.retryAfter * 1000)).toISOString().split(".")[0] + "Z";
     return `${this.retryAfter} @${retryTimestamp}/${retryDate}`;
   };
 
   this.toString = function() {
     if (this.hasRateLimit) {
-      let buffer = '';
+      let buffer = "";
       if (this.hasRetryAfter) {
         buffer = `${buffer}${this.fmtRetry()} `;
       }

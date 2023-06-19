@@ -1,14 +1,14 @@
-const should = require('should');
+const should = require("should");
 
-const zapier = require('zapier-platform-core');
+const zapier = require("zapier-platform-core");
 
-const App = require('../../index');
+const App = require("../../index");
 const appTester = zapier.createAppTester(App);
 
-const {ZapBundle} = require('../../src/ctx/ZapBundle');
-const {ZapBundleFileHandler} = require('../../src/ctx/ZapBundleFileHandler');
+const {ZapBundle} = require("../../src/ctx/ZapBundle");
+const {ZapBundleFileHandler} = require("../../src/ctx/ZapBundleFileHandler");
 
-describe('ctx - ZapBundleFileHandler', () => {
+describe("ctx - ZapBundleFileHandler", () => {
   zapier.tools.env.inject();
   const bundle = {
     authData: {
@@ -16,8 +16,8 @@ describe('ctx - ZapBundleFileHandler', () => {
       api_token: process.env.API_TOKEN,
     },
     inputData: {
-      table_name: 'table:0000',
-      file_column: 'column:wNWg',
+      table_name: "table:0000",
+      file_column: "column:wNWg",
     },
   };
 
@@ -29,7 +29,7 @@ describe('ctx - ZapBundleFileHandler', () => {
     return new ZapBundle(z, bundle);
   }, bundle);
 
-  it('should create (new)', async () => {
+  it("should create (new)", async () => {
     const zb = await zapBundleTester(bundle);
 
     const zapBundleFileHandler = new ZapBundleFileHandler(zb);
@@ -37,7 +37,7 @@ describe('ctx - ZapBundleFileHandler', () => {
     zapBundleFileHandler.should.be.instanceOf(ZapBundleFileHandler);
   });
 
-  it('should create (ZapBundle)', async () => {
+  it("should create (ZapBundle)", async () => {
     const zb = await zapBundleTester(bundle);
 
     const fileHandler = zb.fileHandler();
@@ -45,37 +45,37 @@ describe('ctx - ZapBundleFileHandler', () => {
     fileHandler.should.be.instanceOf(ZapBundleFileHandler);
   });
 
-  it('should list asset columns', async () => {
+  it("should list asset columns", async () => {
     const zb = await zapBundleTester(bundle);
     const fileHandler = zb.fileHandler();
 
     const assetColumns = await fileHandler.listAssetColumns();
 
     assetColumns.should.be.Array();
-    assetColumns.length.should.be.greaterThan(0, 'need at least one entry for assertion');
+    assetColumns.length.should.be.greaterThan(0, "need at least one entry for assertion");
 
     const assetColumn = assetColumns.shift();
     assetColumn.should.be.Object();
-    assetColumn.should.have.properties('column', 'table', 'sid');
+    assetColumn.should.have.properties("column", "table", "sid");
   }).timeout(4000);
 
-  it('should find sid in asset columns', async () => {
+  it("should find sid in asset columns", async () => {
     const zb = await zapBundleTester(bundle);
     const fileHandler = zb.fileHandler();
     const assetColumns = await fileHandler.listAssetColumns();
     const {sid} = assetColumns.shift();
 
     const assetColumn = await fileHandler.findAssetColumn(sid);
-    assetColumn.should.have.properties('column', 'table', 'sid');
+    assetColumn.should.have.properties("column", "table", "sid");
     assetColumn.sid.should.be.equal(sid);
 
-    const {table, column, sid: resultSid} = await fileHandler.findAssetColumn('table:xxx:column:yyy') || {};
+    const {table, column, sid: resultSid} = await fileHandler.findAssetColumn("table:xxx:column:yyy") || {};
     should(table).not.be;
     should(column).not.be;
     should(resultSid).not.be;
   });
 
-  it('should query assets', async () => {
+  it("should query assets", async () => {
     const zb = await zapBundleTester(bundle);
     const fileHandler = zb.fileHandler();
 

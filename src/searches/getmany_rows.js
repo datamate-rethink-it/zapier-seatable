@@ -1,5 +1,5 @@
-const ctx = require('../ctx');
-const _ = require('lodash');
+const ctx = require("../ctx");
+const _ = require("lodash");
 
 /**
  * perform
@@ -16,16 +16,16 @@ const performSearch = async (z, bundle) => {
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-db/api/v1/query/${dtableCtx.dtable_uuid}/`,
-    method: 'POST',
+    method: "POST",
 
     headers: {
-      'Authorization': `Token ${bundle.dtable.access_token}`,
-      'Content-Type': 'application/json',
+      "Authorization": `Token ${bundle.dtable.access_token}`,
+      "Content-Type": "application/json",
     },
     allowGetBody: true,
-    body: await ctx.tableNameId(z, bundle, 'search'),
+    body: await ctx.tableNameId(z, bundle, "search"),
   });
-  const RowData = response.json['results'];
+  // const RowData = response.json["results"]; anscheinend nicht gebraucht.
   const newRowData = await ctx.getCollAndImage(z, bundle, response.json.results);
   if (newRowData.length > 0) {
     return [{Data: response.json.results}];
@@ -35,7 +35,7 @@ const performSearch = async (z, bundle) => {
   ) {
     return [];
   } else {
-    throw new z.errors.Error('Failed to Find a Row in Seatable');
+    throw new z.errors.Error("Failed to Find a Row in Seatable");
   }
 };
 
@@ -55,10 +55,10 @@ const searchColumn = async (z, bundle) => {
       ),
   );
   return {
-    key: 'search_column',
+    key: "search_column",
     required: true,
-    label: 'Column',
-    helpText: 'Pick a field from the Seatable table for your search.',
+    label: "Column",
+    helpText: "Pick a field from the Seatable table for your search.",
     altersDynamicFields: true,
     choices,
   };
@@ -85,12 +85,12 @@ const searchColumn = async (z, bundle) => {
 const searchValue = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   const colSid = ctx.sidParse(bundle.inputData.search_column);
-  const col = _.find(tableMetadata.columns, ['key', colSid.column]);
+  const col = _.find(tableMetadata.columns, ["key", colSid.column]);
   const r = {
-    key: 'search_value',
+    key: "search_value",
     required: true,
-    label: 'Search Value',
-    helpText: 'The unique value to search for in field.',
+    label: "Search Value",
+    helpText: "The unique value to search for in field.",
     altersDynamicFields: true,
   };
   if (col !== undefined) {
@@ -102,23 +102,23 @@ const searchValue = async (z, bundle) => {
 };
 module.exports = {
 
-  key: 'getmany_rows',
-  noun: 'Getmanyrows',
+  key: "getmany_rows",
+  noun: "Getmanyrows",
 
   search: {
     display: {
-      label: 'Find Many Rows (With Line Item Support)',
-      description: 'Finds multiple rows ( 10 max ).',
+      label: "Find Many Rows (With Line Item Support)",
+      description: "Finds multiple rows ( 10 max ).",
     },
     operation: {
       inputFields: [
         {
-          key: 'table_name',
+          key: "table_name",
           required: true,
-          label: 'Table',
-          helpText: 'Pick a SeaTable table you want to search.',
-          type: 'string',
-          dynamic: 'get_tables_of_a_base.id.name',
+          label: "Table",
+          helpText: "Pick a SeaTable table you want to search.",
+          type: "string",
+          dynamic: "get_tables_of_a_base.id.name",
           altersDynamicFields: true,
         },
         searchColumn,
@@ -131,11 +131,11 @@ module.exports = {
 
   sample: {
     id: 1,
-    name: 'Test',
+    name: "Test",
   },
 
   outputFields: [
-    {key: 'id', label: 'ID'},
-    {key: 'name', label: 'Name'},
+    {key: "id", label: "ID"},
+    {key: "name", label: "Name"},
   ],
 };

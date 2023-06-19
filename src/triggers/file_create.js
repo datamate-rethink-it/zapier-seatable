@@ -1,9 +1,9 @@
-const {ZapBundle} = require('../ctx/ZapBundle');
-const {sidParse} = require('../lib/sid');
+const {ZapBundle} = require("../ctx/ZapBundle");
+const {sidParse} = require("../lib/sid");
 
-const {stashFile} = require('../hydrators');
+const {stashFile} = require("../hydrators");
 
-const key = 'file_create';
+const key = "file_create";
 
 /**
  * perform
@@ -16,9 +16,9 @@ const key = 'file_create';
  */
 const perform = async (z, bundle) => {
   const zb = new ZapBundle(z, bundle);
-  
+
   // const logTag = `[${zb}] triggers.${key}`;
-  // z.console.time(logTag); 
+  // z.console.time(logTag);
   // do I need this? delivers an output like:
   // [ 43747] zap: 903.472ms app(224/c392d08d-5b00-4456-9217-2afb89e07a0c) 4.0.7 enterprise edition (https://stage.seatable.io)
 
@@ -27,7 +27,7 @@ const perform = async (z, bundle) => {
   const fileTable = fileSid.table;
   const fileColumnKey = fileSid.column;
   if (!fileTable || !fileColumnKey) {
-    throw new z.errors.Error('Input: file_column invalid format error');
+    throw new z.errors.Error("Input: file_column invalid format error");
   }
 
   const fileHandler = await zb.fileHandler();
@@ -58,7 +58,7 @@ const perform = async (z, bundle) => {
       const fieldRaw = row[fileColumnKey];
       fieldRaw.reverse();
       for (const [, file] of fieldRaw.entries()) {
-        const url = typeof file === 'string' ? file : file.url;
+        const url = typeof file === "string" ? file : file.url;
 
         // each url only once
         if (urlCount(url) > 1) {
@@ -94,11 +94,11 @@ const perform = async (z, bundle) => {
         };
 
         // image
-        if (typeof file === 'string') {
+        if (typeof file === "string") {
           resultItem.url = file;
           resultItem.name = urlInfo.urlGetBasename(resultItem.url);
           resultItem.size = null;
-          resultItem.type = 'image';
+          resultItem.type = "image";
           yield resultItem;
           continue;
         }
@@ -181,17 +181,17 @@ const inputFileColumns = async (z, bundle) => {
   for (const {column, table, sid} of assetColumns) {
     choices.push({
       label: `${table.name} / ${column.name} (${column.type})`,
-      sample: 'table:0000:column:wNWn',
+      sample: "table:0000:column:wNWn",
       value: sid,
     });
   }
 
   return {
-    key: 'file_column',
+    key: "file_column",
     required: true,
-    type: 'string',
-    label: 'File/Image Column',
-    helpText: 'Select the image or file column to be monitored by this trigger. **Hint:** *Image links* are ignored.',
+    type: "string",
+    label: "File/Image Column",
+    helpText: "Select the image or file column to be monitored by this trigger. **Hint:** *Image links* are ignored.",
     altersDynamicFields: false,
     choices,
   };
@@ -199,10 +199,10 @@ const inputFileColumns = async (z, bundle) => {
 
 module.exports = {
   key,
-  noun: 'File',
+  noun: "File",
   display: {
-    label: 'New File/Image',
-    description: 'Triggers when a new file/image is available in one specific column.',
+    label: "New File/Image",
+    description: "Triggers when a new file/image is available in one specific column.",
     important: true,
   },
   operation: {
@@ -211,24 +211,24 @@ module.exports = {
       inputFileColumns,
     ],
     sample: {
-      'id': 'images/2021-04/example-email-marketing.jpg',
-      'file': 'SAMPLE FILE (hydrated to)',
-      'url': 'https://cloud.seatable.io/workspace/4711/asset/891d4840-30cf-f4a4-9d6d-567244a1ae52/images/2021-04/example-email-marketing.jpg',
-      'name': 'example-email-marketing.jpg',
-      'size': null,
-      'type': 'image',
-      'metadata': {
-        'column_reference': 'table:0000:row:IFE52wTHSyiWxMVbDXVd-g:column:fyHY',
-        'column_key': 'fyHY',
-      }
-      
+      "id": "images/2021-04/example-email-marketing.jpg",
+      "file": "SAMPLE FILE (hydrated to)",
+      "url": "https://cloud.seatable.io/workspace/4711/asset/891d4840-30cf-f4a4-9d6d-567244a1ae52/images/2021-04/example-email-marketing.jpg",
+      "name": "example-email-marketing.jpg",
+      "size": null,
+      "type": "image",
+      "metadata": {
+        "column_reference": "table:0000:row:IFE52wTHSyiWxMVbDXVd-g:column:fyHY",
+        "column_key": "fyHY",
+      },
+
     },
     outputFields: [
-      {key: 'url', label: 'Filepath (requires auth.)'},
-      {key: 'file', label: 'File/Image'},
-      {key: 'name', label: 'Filename'},
-      {key: 'size', label: 'Filesize'},
-      {key: 'type', label: 'Filetype'},
+      {key: "url", label: "Filepath (requires auth.)"},
+      {key: "file", label: "File/Image"},
+      {key: "name", label: "Filename"},
+      {key: "size", label: "Filesize"},
+      {key: "type", label: "Filetype"},
     ],
   },
 };

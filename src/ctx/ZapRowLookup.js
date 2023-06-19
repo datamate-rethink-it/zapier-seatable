@@ -1,5 +1,5 @@
-const {sqlQuote, sqlEncodeValueByColumnType} = require('./ZapSql');
-const {MetadataTable} = require('../lib/metadata');
+const {sqlQuote, sqlEncodeValueByColumnType} = require("./ZapSql");
+const {MetadataTable} = require("../lib/metadata");
 
 /**
  * @class ZapSql
@@ -50,7 +50,7 @@ class ZapRowLookup {
       this.#zb.z.console.log(`SqlError[RL-50]: ${sqlCount.error_message} (SQL: ${sqlCount.sql})`);
     }
 
-    const count = sqlCount.success ? sqlCount.results[0]['COUNT(*)'] : undefined;
+    const count = sqlCount.success ? sqlCount.results[0]["COUNT(*)"] : undefined;
 
     const sqlResult = sqlCount.success ?
         await this.#zb.sqlQuery(`SELECT _id, * FROM ${tableAndWhere} LIMIT 1;`) :

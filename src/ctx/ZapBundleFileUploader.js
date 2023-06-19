@@ -58,12 +58,14 @@ class ZapBundleFileUploader {
 
   /**
    *
+   * @param {ZObject} z
    * @return {Promise<UploadLink>}
+   *
    */
   async getUploadLink(z) {
     const resp = await z.request({
       url: `${this.#zb.bundle.authData.server}/api/v2.1/dtable/app-upload-link/`,
-      method: 'GET',
+      method: "GET",
       headers: {Authorization: `Token ${this.#zb.bundle.authData.api_token}`},
     });
     return resp.data;
@@ -223,6 +225,7 @@ class ZapBundleFileUploader {
   }
 
   /**
+   * @param {ZObject} z
    * @param {string} uploadUrl
    * @param {UploadAssetType} uploadAssetType
    * @return {Promise<DTableAssetAny>}
@@ -231,7 +234,7 @@ class ZapBundleFileUploader {
     const fileFallback = /* isFilenameAuthoritative */ Boolean(false);
     const fileOverwrite = Boolean(false);
 
-    
+
     // try to get a filename from the url
     // in case of hydrated file it delivers: Unnamed attachment
     const uploadFilename = this.getUploadFilenameFromUrl(uploadUrl);
@@ -239,7 +242,7 @@ class ZapBundleFileUploader {
 
     // get upload link
     const uploadLink = await this.getUploadLink(z);
-    z.console.log("DEBUG uploadLink", uploadLink)
+    z.console.log("DEBUG uploadLink", uploadLink);
 
     const uploadResult = await this.postUploadToLinkFromUrl(
         uploadUrl, uploadFilename, fileFallback, uploadLink, uploadAssetType, fileOverwrite,

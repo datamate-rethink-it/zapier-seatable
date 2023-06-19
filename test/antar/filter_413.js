@@ -1,24 +1,24 @@
 /* globals describe it */
-'use strict';
+"use strict";
 
-const should = require('should');
-const zapier = require('zapier-platform-core');
+const should = require("should");
+const zapier = require("zapier-platform-core");
 
-const App = require('../../index');
+const App = require("../../index");
 const appTester = zapier.createAppTester(App);
 
-const ctx = require('../../src/ctx');
+const ctx = require("../../src/ctx");
 
 
-describe('error handling on 5000+ rows', () => {
+describe("error handling on 5000+ rows", () => {
   zapier.tools.env.inject();
   const bundle = {
     authData: {
       server: process.env.SERVER,
-      base_app_name: `Big Copy 331894`, /*  ~5720 rows */
-      api_token: 'f65a5d1a4b374016416c609c29bc9322ea51f78d',
+      base_app_name: "Big Copy 331894", /*  ~5720 rows */
+      api_token: "f65a5d1a4b374016416c609c29bc9322ea51f78d",
     }, inputData: {
-      table_name: 'table:0000', table_view: 'table:0000:view:sx3j',
+      table_name: "table:0000", table_view: "table:0000:view:sx3j",
     },
   };
 
@@ -36,13 +36,13 @@ describe('error handling on 5000+ rows', () => {
    * { "error_msg": "the current API only supports the retrieval of Base with less than 5000 rows."}
    */
 
-  it('it should trigger 413 for get filtered rows', async () => {
+  it("it should trigger 413 for get filtered rows", async () => {
     await appTester(
         async (z, /** ZapierBundle */ bundle) => {
           const dtableCtx =
               await ctx.acquireDtableAppAccess(z, bundle);
 
-          bundle.inputData.search_column = 'column:0000';
+          bundle.inputData.search_column = "column:0000";
 
           /** @type {ZapierZRequestResponse} */
           let response;
@@ -53,7 +53,7 @@ describe('error handling on 5000+ rows', () => {
               headers: {Authorization: `Token ${bundle.dtable.access_token}`},
               params: ctx.requestParamsSid(bundle.inputData.table_name),
               allowGetBody: true,
-              body: {'filters': [await ctx.filter(z, bundle, 'test')]},
+              body: {"filters": [await ctx.filter(z, bundle, "test")]},
             });
           } catch (e) {
             error = e;

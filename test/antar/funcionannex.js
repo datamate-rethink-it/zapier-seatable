@@ -1,13 +1,13 @@
 /* globals describe it */
-'use strict';
+"use strict";
 
 
-const should = require('should');
-const _ = require('lodash');
+const should = require("should");
+const _ = require("lodash");
 
 
-describe('Function Annex', () => {
-  it('reviver algo', async () => {
+describe("Function Annex", () => {
+  it("reviver algo", async () => {
     /**
      * @param {object} object
      * @param {function(key: string, value: any)} reviver
@@ -21,7 +21,7 @@ describe('Function Annex', () => {
        */
       function walk(holder, key) {
         const value = holder[key];
-        if (value && typeof value === 'object') {
+        if (value && typeof value === "object") {
           for (const k in value) {
             if (Object.hasOwnProperty.call(value, k)) {
               const v = walk(value, k);
@@ -35,14 +35,14 @@ describe('Function Annex', () => {
         }
         return reviver.call(holder, key, value);
       }
-      return typeof reviver === 'function' ?
-          walk({'': object}, '') : object;
+      return typeof reviver === "function" ?
+          walk({"": object}, "") : object;
     }
 
-    const subject = {delete: 'me!', preserve: 'me!'};
+    const subject = {delete: "me!", preserve: "me!"};
 
-    const result = revive(subject, (key, value) => key === 'delete' ? undefined : value);
+    const result = revive(subject, (key, value) => key === "delete" ? undefined : value);
 
-    should(_.isEqual(result, {preserve: 'me!'})).be.true();
+    should(_.isEqual(result, {preserve: "me!"})).be.true();
   }).timeout(200);
 });

@@ -1,15 +1,15 @@
-/* globals describe, expect, test, it */
+/* globals describe, expect, it */
 
-const zapier = require('zapier-platform-core');
+const zapier = require("zapier-platform-core");
 
 // Use this to make test calls into your app:
-const App = require('../../index');
+const App = require("../../index");
 const appTester = zapier.createAppTester(App);
 // read the `.env` file into the environment, if available
 zapier.tools.env.inject();
 
-describe('resources.getmany_rows', () => {
-  it('should run', async () => {
+describe("resources.getmany_rows", () => {
+  it("should run", async () => {
     const bundle = {inputData: {}};
 
     const results = await appTester(App.searches.getmany_rows.list.operation.perform, bundle);

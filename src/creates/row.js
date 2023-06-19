@@ -1,17 +1,17 @@
-const ctx = require('../ctx');
-const {sidParse} = require('../lib/sid');
-const _ = require('lodash');
-const {ZapBundle} = require('../ctx/ZapBundle');
+const ctx = require("../ctx");
+// const {sidParse} = require("../lib/sid"); brauche ich anscheinend nicht
+const _ = require("lodash");
+const {ZapBundle} = require("../ctx/ZapBundle");
 
 /**
  * perform
  *
  * creates (appends) a new row in table
  * input data is like column:8hzP: ABC, this has to be transformed to Adress: ABC and then saved to map.
- * 
+ *
  * WAS NICHT GEHT: FILE + IMAGE HANDLING + LINKS !!!!!!!!!
- * 
- * 
+ *
+ *
  *
  * @param {ZObject} z
  * @param {Bundle} bundle
@@ -23,11 +23,11 @@ const perform = async (z, bundle) => {
   const map = {};
   const inputData = bundle.inputData;
 
-  z.console.log('Debug inputData', inputData);
+  z.console.log("Debug inputData", inputData);
 
   // Enhance the columns: collaborators + links
   for (const {key, name, type} of tableMetadata.columns) {
-    if (type === 'collaborator') {
+    if (type === "collaborator") {
       const value =[inputData && inputData[`column:${key}`]];
       if (value) {
         map[name] = await ctx.getCollaborator(z, bundle, value[0]);
@@ -43,14 +43,14 @@ const perform = async (z, bundle) => {
   /** @type {DTableCreateRowResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/rows/`,
-    method: 'POST',
+    method: "POST",
     headers: {Authorization: `Token ${bundle.dtable.access_token}`},
     body: {
       table_name: tableMetadata.name,
       row: map,
     },
   });
- 
+
   const {data: {_id: rowId}} = response;
   const zb = new ZapBundle(z, bundle);
   const fileUploader = zb.fileUploader();
@@ -58,28 +58,26 @@ const perform = async (z, bundle) => {
   // add table row to bundle, for adding links
   bundle.inputData.table_row = rowId;
 
-/* row existiert, jetzt wird erweitert mit links und images/files */
-
-
+  /* row existiert, jetzt wird erweitert mit links und images/files */
 
 
   // file + image upload + links
-  //const fileUploader = zb.fileUploader();
+  // const fileUploader = zb.fileUploader();
 
 
-  //for (const {key, name, type} of tableMetadata.columns) {
+  // for (const {key, name, type} of tableMetadata.columns) {
   for (const col of ctx.getUpdateColumns(tableMetadata.columns, bundle)) {
     const key = `column:${col.key}`;
     const value = bundle.inputData?.[key];
 
-    if (undefined === value || '' === value) {
+    if (undefined === value || "" === value) {
       continue;
     }
-    if (col.type === 'link') { 
+    if (col.type === "link") {
       await ctx.linkRecord(z, bundle, key, col);
       continue;
     }
-    if (!['file', 'image'].includes(col.type)) {
+    if (!["file", "image"].includes(col.type)) {
       continue;
     }
 
@@ -88,7 +86,7 @@ const perform = async (z, bundle) => {
     current.push(columnAssetData);
     map[col.name] = current;
   }
-  
+
   // make the update of the row!
   const body = {
     table_name: tableMetadata.name,
@@ -97,13 +95,13 @@ const perform = async (z, bundle) => {
   };
 
   /** @type {ZapierZRequestResponse} */
-  const update_response = await z.request({
+  await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/rows`,
-    method: 'PUT',
+    method: "PUT",
     headers: {Authorization: `Token ${bundle.dtable.access_token}`},
     body,
   });
-  
+
   // generate output for zapier.
   return ctx.mapCreateRowKeys(z, bundle, response.data);
 };
@@ -147,35 +145,34 @@ const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   return [
-    {key: 'row_id', label: 'Original ID'},
-    {key: 'row_mtime', label: 'Last Modified'},
+    {key: "row_id", label: "Original ID"},
+    {key: "row_mtime", label: "Last Modified"},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
   ];
 };
 
 
-
 // noinspection SpellCheckingInspection
-const sample = {'column:0000': 'I am new Row2445', 'row_id': 'AdTy5Y8-TW6MVHPXTyOeTw'};
+const sample = {"column:0000": "I am new Row2445", "row_id": "AdTy5Y8-TW6MVHPXTyOeTw"};
 
 module.exports = {
-  key: 'row',
-  noun: 'Row',
+  key: "row",
+  noun: "Row",
   display: {
-    label: 'Create Row',
-    description: 'Creates a new row, probably with input from previous steps.',
+    label: "Create Row",
+    description: "Creates a new row, probably with input from previous steps.",
     important: true,
   },
   operation: {
     perform,
     inputFields: [
       {
-        key: 'table_name',
+        key: "table_name",
         required: true,
-        label: 'Table',
-        helpText: 'Pick a SeaTable table to create the new Row in.',
-        type: 'string',
-        dynamic: 'get_tables_of_a_base.id.name',
+        label: "Table",
+        helpText: "Pick a SeaTable table to create the new Row in.",
+        type: "string",
+        dynamic: "get_tables_of_a_base.id.name",
         altersDynamicFields: true,
       },
       inputFields,

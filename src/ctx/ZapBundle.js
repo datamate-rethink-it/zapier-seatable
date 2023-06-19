@@ -1,10 +1,10 @@
-const ctx = require('../ctx');
+const ctx = require("../ctx");
 
-const {ZapBundleFileHandler} = require('./ZapBundleFileHandler');
-const {ZapBundleFileUploader} = require('./ZapBundleFileUploader');
-const {ZapSql} = require('./ZapSql');
-const {Metadata} = require('../lib/metadata');
-const {ZapRowLookup} = require('./ZapRowLookup');
+const {ZapBundleFileHandler} = require("./ZapBundleFileHandler");
+const {ZapBundleFileUploader} = require("./ZapBundleFileUploader");
+const {ZapSql} = require("./ZapSql");
+const {Metadata} = require("../lib/metadata");
+const {ZapRowLookup} = require("./ZapRowLookup");
 
 /**
  * ZapBundle.request() result
@@ -86,19 +86,19 @@ class ZapBundle {
   async request(options) {
     const dtable = await this.dtable;
 
-    if (typeof options === 'string') {
+    if (typeof options === "string") {
       options = {url: options};
     }
 
     const serverAddress = options?.url?.startsWith(dtable.server_address) ?
-        '' : dtable.server_address;
+        "" : dtable.server_address;
 
     const requestOptions = Object.assign(
-        {url: null, method: 'GET', headers: {}},
+        {url: null, method: "GET", headers: {}},
         options,
         {
           url: serverAddress.concat(
-              options?.url?.replace('{{dtable_uuid}}', dtable.dtable_uuid),
+              options?.url?.replace("{{dtable_uuid}}", dtable.dtable_uuid),
           ),
           headers: Object.assign(
               {Authorization: `Token ${dtable.access_token}`},

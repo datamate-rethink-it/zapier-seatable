@@ -1,8 +1,8 @@
-const _CONST = require('../const');
-const ctx = require('../ctx');
-const {ResponseThrottleInfo} = require('../lib');
-const {ZapBundle} = require('../ctx/ZapBundle');
-const _ = require('lodash');
+const _CONST = require("../const");
+const ctx = require("../ctx");
+const {ResponseThrottleInfo} = require("../lib");
+// const {ZapBundle} = require("../ctx/ZapBundle");
+const _ = require("lodash");
 
 /**
  * perform
@@ -16,7 +16,7 @@ const _ = require('lodash');
 const perform = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
   //
-  const zb = new ZapBundle(z, bundle);
+  // const zb = new ZapBundle(z, bundle);
   //
   const logTag = `[${bundle.__zTS}] triggers.row_update`;
   z.console.time(logTag);
@@ -38,22 +38,22 @@ const perform = async (z, bundle) => {
     return rows;
   }
 
-  rows = _.orderBy(rows, ['_mtime'], ['desc']);
+  rows = _.orderBy(rows, ["_mtime"], ["desc"]);
   if (meta && meta.isLoadingSample) {
     rows.splice(meta.limit || 3);
   }
 
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
-  //z.console.log("VOR mapColumnKeys", rows);
+  // z.console.log("VOR mapColumnKeys", rows);
 
   /**
    * OUTPUT TRANSFORMATION (mapColumnKeys)
-   * 
+   *
    * - enrich the output: Collaborators, Images/Files, Links
    * - rewrite the keys from like "Name:" to "column:8hzP:"
    * - different behaviour depending of fileNoAuthLinksField (true|false)
-   * 
+   *
    */
 
   rows = await Promise.all(_.map(rows, async (o) => {
@@ -62,11 +62,11 @@ const perform = async (z, bundle) => {
     return transformedObj;
   }));
 
-  //z.console.log("NACH mapColumnKeys", rows);
+  // z.console.log("NACH mapColumnKeys", rows);
 
   // test neu zum aufbauen der links?? -> alles über linked columns
-  //rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
-  //z.console.log("LINKS mapColumnKeys", rows);
+  // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
+  // z.console.log("LINKS mapColumnKeys", rows);
 
   // this is only relevant for row_update.js
   const unfilteredLength = rows.length;
@@ -90,7 +90,6 @@ const perform = async (z, bundle) => {
 
   z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
   return rows;
-
 };
 
 /**
@@ -101,30 +100,30 @@ const perform = async (z, bundle) => {
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   const oF = [
-    {key: 'row_id', label: 'Original ID'},
-    {key: 'row_mtime', label: 'Last Modified'},
+    {key: "row_id", label: "Original ID"},
+    {key: "row_mtime", label: "Last Modified"},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
   ];
-  //z.console.log("DEBUG outputFields", oF);
+  // z.console.log("DEBUG outputFields", oF);
   return oF;
 };
 
 module.exports = {
-  key: 'row_update',
-  noun: 'Row Update',
+  key: "row_update",
+  noun: "Row Update",
   display: {
-    label: 'New or Updated Row',
-    description: 'Triggers when a row is updated or created.',
+    label: "New or Updated Row",
+    description: "Triggers when a row is updated or created.",
   },
   operation: {
     perform,
     inputFields: [ctx.tableFields, ctx.fileNoAuthLinksField],
     sample: {
-      'id': 'N33qMZ-JQTuUlx_DiF__lQ',
-      'row_id': 'N33qMZ-JQTuUlx_DiF__lQ',
-      'row_mtime': '2021-12-02T01:23:45.678+00:00',
-      'column:0000': 'Contents of the first field; a text-field',
+      "id": "N33qMZ-JQTuUlx_DiF__lQ",
+      "row_id": "N33qMZ-JQTuUlx_DiF__lQ",
+      "row_mtime": "2021-12-02T01:23:45.678+00:00",
+      "column:0000": "Contents of the first field; a text-field",
     },
-    outputFields: [outputFields,],
+    outputFields: [outputFields],
   },
 };

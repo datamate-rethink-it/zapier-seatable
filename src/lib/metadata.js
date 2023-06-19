@@ -16,8 +16,8 @@
  *     collections have their items overloaded (they are arrays, no need to re-invent the wheel).
  */
 
-const {sidParse} = require('../lib/sid');
-const {struct} = require('../ctx');
+const {sidParse} = require("../lib/sid");
+const {struct} = require("../ctx");
 
 /**
  * Metadata node
@@ -34,15 +34,15 @@ class MetadataNode {
   constructor(metadata = undefined) {
     metadata = metadata || this;
     if (!metadata instanceof MetadataNode) {
-      throw new Error('TypeError: not a MetadataNode');
+      throw new Error("TypeError: not a MetadataNode");
     }
     this.#metadata = metadata.#metadata;
     if (!this.#metadata && this instanceof Metadata) {
       this.#metadata = /** @type Metadata */ this;
     }
     if (!this.#metadata) {
-      const error = new Error('metadata creation: no metadata');
-      error.name = 'HierarchyRequestError';
+      const error = new Error("metadata creation: no metadata");
+      error.name = "HierarchyRequestError";
       throw error;
     }
   }
@@ -86,8 +86,8 @@ class MetadataEntity extends MetadataNode {
   assignParent(parent) {
     if (this.metadata !== this && parent.metadata !== this.metadata) {
       // you can not assign a parent to the entity from a different metadata
-      const error = new Error('assigning parent: parent metadata mismatch');
-      error.name = 'HierarchyRequestError';
+      const error = new Error("assigning parent: parent metadata mismatch");
+      error.name = "HierarchyRequestError";
       throw error;
     }
 
@@ -98,8 +98,8 @@ class MetadataEntity extends MetadataNode {
       // we may need to turn this into an update operation in case this happens
       // more often (we only see it in _stale_ Zap draft test steps that recover
       // automatically when they get traction).
-      const error = new Error('assigning parent: parent already assigned');
-      error.name = 'HierarchyRequestError';
+      const error = new Error("assigning parent: parent already assigned");
+      error.name = "HierarchyRequestError";
       throw error;
     }
 
@@ -117,7 +117,7 @@ class MetadataEntity extends MetadataNode {
    * @return {MetadataEntity|undefined}
    */
   toJSON(key) {
-    if (key === 'parent') {
+    if (key === "parent") {
       return undefined;
     }
     return this;
@@ -150,26 +150,26 @@ class MetadataCollection extends Array {
     let CollectionType;
     switch (Type) {
       case MetadataTable:
-        typeName = 'table';
-        idKeyField = '_id';
+        typeName = "table";
+        idKeyField = "_id";
         CollectionType = MetadataTables;
         break;
       case MetadataTableColumn:
-        typeName = 'column';
-        idKeyField = 'key';
+        typeName = "column";
+        idKeyField = "key";
         CollectionType = MetadataTableColumns;
         break;
       case MetadataTableView:
-        typeName = 'view';
-        idKeyField = '_id';
+        typeName = "view";
+        idKeyField = "_id";
         CollectionType = MetadataTableViews;
         break;
       default:
-        throw new Error('TypeError: not a MetadataCollection type');
+        throw new Error("TypeError: not a MetadataCollection type");
     }
     const collection = new CollectionType(typeName, idKeyField, parent);
     if (!(collection instanceof MetadataCollection)) {
-      throw new Error('TypeError: not a MetadataCollection');
+      throw new Error("TypeError: not a MetadataCollection");
     }
     if (collection.length) {
       throw new Error(`TypeError: unexpected length of ${CollectionType}, constructor or parent missing?`);

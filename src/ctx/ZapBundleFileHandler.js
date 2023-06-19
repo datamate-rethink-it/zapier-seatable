@@ -1,5 +1,5 @@
-const ctx = require('../ctx');
-const {sqlQuote} = require('../ctx/ZapSql');
+const ctx = require("../ctx");
+const {sqlQuote} = require("../ctx/ZapSql");
 
 /**
  * @class AssetUrlInfo
@@ -80,7 +80,7 @@ class AssetUrlInfo {
    * @return {string}
    */
   urlGetBasename(url) {
-    return decodeURIComponent((new URL(url)).pathname.split('/').pop());
+    return decodeURIComponent((new URL(url)).pathname.split("/").pop());
   }
 }
 
@@ -179,7 +179,7 @@ class ZapBundleFileHandler {
         isAsset: await fileHandler.urlIsAsset(assetUrl),
         path: await fileHandler.urlGetAssetPath(assetUrl),
         seenCount: 0,
-        seenTypeCount: (new Map()).set('file', 0).set('image', 0),
+        seenTypeCount: (new Map()).set("file", 0).set("image", 0),
         atime: null,
         bestData: null,
         uses: new Map(),
@@ -200,7 +200,7 @@ class ZapBundleFileHandler {
       // null, string, anything else (object)
       if (!asset.bestData) {
         asset.bestData = datum;
-      } else if (typeof datum !== 'string') {
+      } else if (typeof datum !== "string") {
         asset.bestData = datum;
       }
 

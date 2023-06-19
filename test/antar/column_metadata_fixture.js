@@ -1,37 +1,37 @@
 /* globals describe it */
-'use strict';
+"use strict";
 
-const should = require('should');
-const fs = require('fs/promises');
-const {parse, HTMLElement} = require('node-html-parser');
+const should = require("should");
+const fs = require("fs/promises");
+const {parse, HTMLElement} = require("node-html-parser");
 
-const zapier = require('zapier-platform-core');
+const zapier = require("zapier-platform-core");
 
-const App = require('../../index');
+const App = require("../../index");
 const appTester = zapier.createAppTester(App);
 
-const ctx = require('../../src/ctx');
+const ctx = require("../../src/ctx");
 
-const {FixtureStore} = require('../fixture/store');
+const {FixtureStore} = require("../fixture/store");
 
-describe('Column Metadata Fixture', () => {
+describe("Column Metadata Fixture", () => {
   zapier.tools.env.inject();
   // bundle.authData.server = bundle.authData.server.replace(/\/+$/, '');
   const bundle = {
     authData: {
-      server: process.env.SERVER.replace(/\/+$/, ''),
+      server: process.env.SERVER.replace(/\/+$/, ""),
       api_token: process.env.API_TOKEN,
     },
     inputData: {
-      table_name: 'table:0000',
-      table_view: 'table:0000:view:sx3j',
+      table_name: "table:0000",
+      table_view: "table:0000:view:sx3j",
     },
   };
 
   const store = new FixtureStore();
   const htmlFile = FixtureStore.staticColumnNamesHtmlFile;
 
-  it('should look for context options', async () => {
+  it("should look for context options", async () => {
     const structTypes = ctx.struct.columns.types;
     should(structTypes).be.instanceOf(Object);
     const names = Object.values(structTypes);
@@ -42,30 +42,30 @@ describe('Column Metadata Fixture', () => {
     names.length.should.be.eql(store.columnCount);
   });
 
-  it('should load fixture file', async () => {
-    const fs = require('fs');
-    const data = fs.readFileSync(htmlFile, 'utf8');
+  it("should load fixture file", async () => {
+    const fs = require("fs");
+    const data = fs.readFileSync(htmlFile, "utf8");
     should(data).be.String();
     should(data.length).be.greaterThan(400);
   });
 
-  it('should parse fixture file', async () => {
-    const fs = require('fs');
-    const data = fs.readFileSync(htmlFile, 'utf8');
+  it("should parse fixture file", async () => {
+    const fs = require("fs");
+    const data = fs.readFileSync(htmlFile, "utf8");
     const root = parse(data);
     const {childNodes: [container]} = root;
 
     should(root.parentNode).be.eql(null);
     should(container).be.instanceOf(HTMLElement);
-    should(container.rawTagName).be.eql('div');
+    should(container.rawTagName).be.eql("div");
     should(container.innerText).be.String();
-    should(container.innerText).startWith('BasicTextLong text');
+    should(container.innerText).startWith("BasicTextLong text");
   });
 
-  it('should query fixture file', async () => {
-    const data = await fs.readFile(htmlFile, 'utf8');
+  it("should query fixture file", async () => {
+    const data = await fs.readFile(htmlFile, "utf8");
     const root = parse(data);
-    const names = root.querySelectorAll('.select-column-item')
+    const names = root.querySelectorAll(".select-column-item")
         .map((value) => value.attributes?.title);
     should(names).be.Array();
     should(names.length).be.eql(store.columnCount);
@@ -77,7 +77,7 @@ describe('Column Metadata Fixture', () => {
     names.should.be.eql(store.columnNames);
   });
 
-  it('should query table definition', async () => {
+  it("should query table definition", async () => {
     await appTester(async (z, bundle) => {
       const name = FixtureStore.staticColumnsOnlyTableName;
       const {tables} = await ctx.acquireMetadata(z, bundle);
@@ -90,7 +90,7 @@ describe('Column Metadata Fixture', () => {
 
       const list = columns.map((value, index) => {
         should(value).be.instanceOf(Object, `at index #${index} :${JSON.stringify(value)}`);
-        value.should.have.properties(['type', 'name']);
+        value.should.have.properties(["type", "name"]);
         const {type, name} = value;
 
         should(namesMap.get(name) === undefined).eql(true, `duplicate name ${name} at index ${index}`);

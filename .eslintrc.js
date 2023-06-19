@@ -2,15 +2,15 @@ module.exports = {
   env: {
     commonjs: true,
     es2021: true,
-    node: true
+    node: true,
   },
-  extends: 'google',
+  extends: "google",
   parserOptions: {
-    ecmaVersion: 'latest'
+    ecmaVersion: "latest",
   },
   rules: {
     "semi": ["error", "always"],
     "quotes": ["error", "double"],
-    "max-len": "off"
-  }
-}
+    "max-len": "off",
+  },
+};

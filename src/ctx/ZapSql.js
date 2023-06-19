@@ -5,26 +5,26 @@
  * @type {{}}
  */
 const sqlColumnTypeMap = {
-  'text': 'String',
-  'long-text': 'String',
-  'number': 'Float',
-  'single-select': 'String',
-  'multiple-select': 'List of strings',
-  'checkbox': 'Bool',
-  'date': 'Datetime',
-  'image': 'List of URL for images',
-  'file': 'List of file objects',
-  'collaborator': 'List of user IDs',
-  'link': 'List of linked rows',
-  'formula': 'The type depends on the return value of the formula',
-  'creator': 'User ID as string', // 5758ecdce3e741ad81293a304b6d3388@auth.local, default key: _creator
-  'ctime': 'Datetime', // default key: _ctime
-  'last-modifier': 'User ID as string', // 5758ecdce3e741ad81293a304b6d3388@auth.local, default key: _last_modifier
-  'mtime': 'Datetime', // default key: _mtime
-  'auto-number': 'String',
-  'url': 'String',
-  'email': 'String',
-  'duration': 'Float',
+  "text": "String",
+  "long-text": "String",
+  "number": "Float",
+  "single-select": "String",
+  "multiple-select": "List of strings",
+  "checkbox": "Bool",
+  "date": "Datetime",
+  "image": "List of URL for images",
+  "file": "List of file objects",
+  "collaborator": "List of user IDs",
+  "link": "List of linked rows",
+  "formula": "The type depends on the return value of the formula",
+  "creator": "User ID as string", // 5758ecdce3e741ad81293a304b6d3388@auth.local, default key: _creator
+  "ctime": "Datetime", // default key: _ctime
+  "last-modifier": "User ID as string", // 5758ecdce3e741ad81293a304b6d3388@auth.local, default key: _last_modifier
+  "mtime": "Datetime", // default key: _mtime
+  "auto-number": "String",
+  "url": "String",
+  "email": "String",
+  "duration": "Float",
 };
 
 /**
@@ -38,7 +38,7 @@ class SqlQuoteError extends Error {
    */
   constructor(message) {
     super(message);
-    this.name = 'SqlQuoteError';
+    this.name = "SqlQuoteError";
   }
 }
 
@@ -49,8 +49,8 @@ class SqlQuoteError extends Error {
  * @return {string}
  */
 function sqlQuote(name) {
-  name = name || '';
-  if (name.includes('`')) {
+  name = name || "";
+  if (name.includes("`")) {
     throw new SqlQuoteError(`Quote Error: backtick in identifier "${name}"`);
   }
   return `\`${name}\``;
@@ -63,7 +63,7 @@ function sqlQuote(name) {
  * @return {string}
  */
 function sqlString(string) {
-  return '"'.concat(string.replace(/"/g, '""'), '"');
+  return "\"".concat(string.replace(/"/g, "\"\""), "\"");
 }
 
 /**
@@ -80,13 +80,13 @@ function sqlEncodeValueByColumnType(value, type) {
 
   /** @see ctx.struct.columns.zapier.row_lookup */
   switch (type) {
-    case 'text':
-    case 'date':
-    case 'url':
-    case 'email':
-    case 'auto-number':
+    case "text":
+    case "date":
+    case "url":
+    case "email":
+    case "auto-number":
       return buffer;
-    case 'number':
+    case "number":
       return isNaN(value) ? buffer : Number(value);
     default:
       // for all types not eligible for row_lookup we log a message and use standard quoting as a fall-back
@@ -104,7 +104,7 @@ class SqlError extends Error {
    */
   constructor(message) {
     super(message);
-    this.name = 'SqlError';
+    this.name = "SqlError";
   }
 }
 
@@ -154,7 +154,7 @@ class ZapSql {
     const access = await zb.dtableCtx;
 
     const response = await z.request({
-      method: 'POST',
+      method: "POST",
       url: `${access.server_address}/dtable-db/api/v1/query/${access.dtable_uuid}/`,
       headers: {Authorization: `Token ${access.access_token}`},
       body: {
@@ -194,7 +194,7 @@ class SqlResult {
    * @return {string}
    */
   get error_message() {
-    return this.result?.error_message || '';
+    return this.result?.error_message || "";
   }
 
   /**

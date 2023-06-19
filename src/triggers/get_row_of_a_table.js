@@ -1,5 +1,5 @@
-const ctx = require('../ctx');
-const _ = require('lodash');
+const ctx = require("../ctx");
+const _ = require("lodash");
 
 /**
  * perform
@@ -24,23 +24,23 @@ const perform = async (z, bundle) => {
     const transformedObj = await ctx.mapColumnKeysRow(tableMetadata.columns, o);
     return {
       id: transformedObj.row_id,
-      name: transformedObj['column:0000'],
+      name: transformedObj["column:0000"],
     };
   }));
 };
 
 module.exports = {
-  key: 'get_row_of_a_table',
-  noun: 'Row',
+  key: "get_row_of_a_table",
+  noun: "Row",
   display: {
-    label: 'Hidden: Get row of a table',
-    description: 'Internal trigger to get the rows of a table.',
+    label: "Hidden: Get row of a table",
+    description: "Internal trigger to get the rows of a table.",
     hidden: true,
     important: false,
   },
   operation: {
     perform,
-    sample: {id: 'table:0000:row:xYz...', name: 'Name1'},
-    outputFields: [{key: 'id'}, {key: 'name'}],
+    sample: {id: "table:0000:row:xYz...", name: "Name1"},
+    outputFields: [{key: "id"}, {key: "name"}],
   },
 };

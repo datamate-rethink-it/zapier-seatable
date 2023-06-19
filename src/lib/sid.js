@@ -13,12 +13,12 @@ const SID_CONST = {
    * @typedef {('table'|'view'|'row'|'column')} SidName
    */
   NAMES: {
-    TABLE: 'table', // table-id, "_id", 0000 is default
-    VIEW: 'view', // view-id, "_id", 0000 is default
-    ROW: 'row', // row-id, "_id", no default
-    COLUMN: 'column', // column-key, "key", 0000 is default
+    TABLE: "table", // table-id, "_id", 0000 is default
+    VIEW: "view", // view-id, "_id", 0000 is default
+    ROW: "row", // row-id, "_id", no default
+    COLUMN: "column", // column-key, "key", 0000 is default
   },
-  DELIM: ':',
+  DELIM: ":",
 };
 
 /**
@@ -34,7 +34,7 @@ function deepFreeze(object) {
   for (const name of propNames) {
     const value = object[name];
 
-    if ((value && typeof value === 'object') || typeof value === 'function') {
+    if ((value && typeof value === "object") || typeof value === "function") {
       deepFreeze(value);
     }
   }
@@ -90,9 +90,9 @@ class SidObj {
    * @return {string} sid
    */
   toString() {
-    let buffer = '';
+    let buffer = "";
     for (const [key, value] of Object.entries(this)) {
-      buffer = buffer.concat(buffer ? ':' : '', key, ':', value);
+      buffer = buffer.concat(buffer ? ":" : "", key, ":", value);
     }
     return buffer;
   }
@@ -137,19 +137,19 @@ function sidParse(sid, ...fallback) {
   if (sid instanceof SidObj) {
     sid = String(sid);
   }
-  const isString = (typeof sid === 'string' || sid instanceof String);
+  const isString = (typeof sid === "string" || sid instanceof String);
   if (!isString) {
     return fallback.length ? fallback[0] : {};
   }
 
-  const idAny = '[a-zA-Z0-9_-]{4,}';
+  const idAny = "[a-zA-Z0-9_-]{4,}";
   const id = (name) => `${name}:(?<${name}>${idAny})`;
   for (const token of [
-    `${id('table')}`,
-    `${id('column')}`,
-    `${id('table')}:${id('view')}`,
-    `${id('table')}:${id('row')}`,
-    `${id('table')}:${id('column')}`,
+    `${id("table")}`,
+    `${id("column")}`,
+    `${id("table")}:${id("view")}`,
+    `${id("table")}:${id("row")}`,
+    `${id("table")}:${id("column")}`,
   ]) {
     result = result || sid.match(new RegExp( `^${token}$` ));
   }

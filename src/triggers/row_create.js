@@ -1,6 +1,6 @@
-const ctx = require('../ctx');
-const _ = require('lodash');
-const {ResponseThrottleInfo} = require('../lib');
+const ctx = require("../ctx");
+const _ = require("lodash");
+const {ResponseThrottleInfo} = require("../lib");
 
 /**
  * perform
@@ -61,31 +61,31 @@ const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   return [
-    {key: 'row_id', label: 'Original ID'},
-    {key: 'row_mtime', label: 'Last Modified'},
+    {key: "row_id", label: "Original ID"},
+    {key: "row_mtime", label: "Last Modified"},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
   ];
 };
 
 
 module.exports = {
-  key: 'row_create',
-  noun: 'Row',
+  key: "row_create",
+  noun: "Row",
   display: {
-    label: 'New Row',
-    description: 'Triggers when a new row is available.',
+    label: "New Row",
+    description: "Triggers when a new row is available.",
     important: true,
   },
   operation: {
     perform,
     inputFields: [ctx.tableFields, ctx.fileNoAuthLinksField],
     sample: {
-      'id': 'N33qMZ-JQTuUlx_DiF__lQ',
-      'row_id': 'N33qMZ-JQTuUlx_DiF__lQ',
-      'row_mtime': '2021-12-02T01:23:45.678+00:00',
-      'column:0000': 'Contents of the first field; a text-field',
+      "id": "N33qMZ-JQTuUlx_DiF__lQ",
+      "row_id": "N33qMZ-JQTuUlx_DiF__lQ",
+      "row_mtime": "2021-12-02T01:23:45.678+00:00",
+      "column:0000": "Contents of the first field; a text-field",
     },
-    outputFields: [outputFields,],
+    outputFields: [outputFields],
   },
 };
 
