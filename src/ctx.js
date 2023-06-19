@@ -1297,9 +1297,6 @@ const tableNameId = async (z, bundle, context) => {
   }
 };
 
-/**
- * value = real email adress.
- */
 const getCollaborator = async (z, bundle, value) => {
   const collaboratorEmail = value;
   const collaborator = await z.request({
@@ -1366,6 +1363,17 @@ const linkRecord = async (z, bundle, key, col) => {
     other_table_id: col.data.other_table_id,
     other_table_row_id: bundle.inputData?.[key],
   };
+
+  // link_id is always correct. table_row_id is always the row id of the source, and other_table_row_id is always the target
+  // but sometimes the table_row_id and other_table_row_id are mixed and have to be switched...
+  // "table:" + bodyData.table_id === bundle.inputData?.["table_name"]. Wenn nicht, dann welchseln
+  if ( `table:${bodyData.table_id}` != bundle.inputData?.["table_name"] ) {
+    const tmpId = bodyData.table_id;
+    bodyData.table_id = bodyData.other_table_id;
+    bodyData.other_table_id = tmpId;
+    z.console.log("DEBUG linkRecord switch tables", tmpId);
+  }
+
   // enhance with table names from table ids.
   _.map(TablesData, (o) => {
     if (bodyData.table_id === o._id) {
@@ -1375,6 +1383,7 @@ const linkRecord = async (z, bundle, key, col) => {
       bodyData.other_table_name = o.name;
     }
   });
+
   z.console.log("DEBUG linkTwoRecord bodyData", bodyData);
   return await linkRequest(z, bundle, bodyData);
 };

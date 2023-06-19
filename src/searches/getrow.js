@@ -84,41 +84,13 @@ const searchColumn = async (z, bundle) => {
 
 /**
  * Dynamic Input Field for the Search Value
- *
- * The input is yet un-typed, Zapier offers the following 'type' string values:
- *
- * 'string', 'text', 'integer', 'number', 'boolean', 'datetime', 'file', 'password', 'copy'
- *
- * The first implementation of the find operates with string inputs (un-typed or string-typed) and it is looking
- * good so far.
- *
- * SeaTable supports "date-string" for column types 'date', 'ctime' and 'mtime'. If the format is compatible
- * date-time specific inputs can be done, however with free-text input it might be that SeaTable also supports
- * relative formats which Zapier for what I know does not support. (STZ-0016)
- *
- * @param {ZObject} z
- * @param {Bundle} bundle
- * @return {Promise<{helpText: string, label: string, altersDynamicFields: boolean, key: string, required: boolean}>}
  */
-const searchValue = async (z, bundle) => {
-  // const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-  // const colSid = ctx.sidParse(bundle.inputData.search_column);
-  // const col = _.find(tableMetadata.columns, ["key", colSid.column]);
-  const r = {
-    key: "search_value",
-    required: true,
-    label: "Search term",
-    helpText: "What to look for? *Hint:* no fuzzy search or wildcard support.",
-    altersDynamicFields: true,
-  };
-  /* no dynamic description text.
-  if (col !== undefined) {
-    r.helpText = `The unique value to search for in ${
-      ctx.struct.columns.types[col.type] || `[${col.type}]`
-    } field named "${col.name}".`;
-  }
-  */
-  return r;
+const searchValue = {
+  key: "search_value",
+  required: true,
+  label: "Search term",
+  helpText: "What to look for? *Hint:* no fuzzy search or wildcard support.",
+  altersDynamicFields: true,
 };
 
 const searchWildcards = {
@@ -134,7 +106,6 @@ const searchWildcards = {
 
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-
   return [
     {key: "row_id", label: "ID"},
     {key: "row_mtime", label: "Last Modified"},
