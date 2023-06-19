@@ -974,6 +974,9 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
         continue;
       }
 
+      // MISSING: HANDLING OF MULTIPLE IMAGES! Split ...
+      // anders als bei files. dort habe ich schon zwei objekte. BEi images habe ich alles in einem 
+
       // Image
       if ('image' === c.type) {
         const o = v; // getImageData expects o ?!?
@@ -1319,85 +1322,41 @@ const getCollaboratorData = async (z, bundle, value) => {
   return collData;
 };
 
-const linkRecord = async (z, bundle, value) => {
+// diese pauschale suche funktioniert nicht, weil er dann die erstbeste findet!
+// diese funktion erzeugt die bodyData für den tatsächlichen request.
+// 
+
+const linkRecord = async (z, bundle, key, col) => {
+
+  // get metadata
   const metadata = await acquireMetadata(z, bundle);
   const data = metadata.tables;
-  const columns = data[0].columns;
   const TablesData = _.map(data, (o) => {
     return {_id: o._id, name: o.name};
   });
-  const res = _.map(
-      _.filter(columns, (o) => {
-        return o.type === 'link';
-      }),
-      (o) => {
-        const result = o.data;
-        const linkData = {
-          table_id: result.table_id,
-          other_table_id: result.other_table_id,
-          link_id: result.link_id,
-        };
-        const data = {
-          table_name: '',
-          other_table_name: '',
-          link_id: linkData.link_id,
-          table_row_id: bundle.inputData.table_row,
-          other_table_row_id: bundle.inputData[value],
-        };
-        const finalRes = _.map(TablesData, (o) => {
-          if (linkData.table_id === o._id) {
-            data.table_name = o.name;
-          }
-          if (linkData.other_table_id === o._id) {
-            data.other_table_name = o.name;
-          }
-        });
-        return data;
-      },
-  );
-  const bodyData = res[0];
-  return await linkRequest(z, bundle, bodyData);
-};
-const linkCreateRecord = async (z, bundle, value, id) => {
-  const metadata = await acquireMetadata(z, bundle);
-  const data = metadata.tables;
-  const columns = data[0].columns;
-  const TablesData = _.map(data, (o) => {
-    return {_id: o._id, name: o.name};
+
+  // prepare bodyData for api request
+  const bodyData = {
+    link_id: col.data.link_id,
+    table_row_id: bundle.inputData?.['table_row'],
+    table_id: col.data.table_id,
+    other_table_id: col.data.other_table_id,
+    other_table_row_id: bundle.inputData?.[key],
+  }
+  // enhance with table names from table ids.
+  const finalRes = _.map(TablesData, (o) => {
+    if (bodyData.table_id === o._id) {
+      bodyData.table_name = o.name;
+    }
+    if (bodyData.other_table_id === o._id) {
+      bodyData.other_table_name = o.name;
+    }
   });
-  const res = _.map(
-      _.filter(columns, (o) => {
-        return o.type === 'link';
-      }),
-      (o) => {
-        const result = o.data;
-        const linkData = {
-          table_id: result.table_id,
-          other_table_id: result.other_table_id,
-          link_id: result.link_id,
-        };
-        const data = {
-          table_name: '',
-          other_table_name: '',
-          link_id: linkData.link_id,
-          table_row_id: id,
-          other_table_row_id: value,
-        };
-        const finalRes = _.map(TablesData, (o) => {
-          if (linkData.table_id === o._id) {
-            data.table_name = o.name;
-          }
-          if (linkData.other_table_id === o._id) {
-            data.other_table_name = o.name;
-          }
-        });
-        return data;
-      },
-  );
-  const bodyData = res[0];
+  z.console.log("DEBUG linkTwoRecord bodyData", bodyData);
   return await linkRequest(z, bundle, bodyData);
 };
 
+// funktioniert mit dem richtigen input
 const linkRequest = async (z, bundle, bodyData) => {
   const linkTwoRecord = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/links/`,
@@ -1419,6 +1378,7 @@ const linkRequest = async (z, bundle, bodyData) => {
 };
 
 // from [https://stage.seatable.io/workspace/224/asset/c392d08d-5b00-4456-9217-2afb89e07a0c/images/2023-06/zapier-build.png] to an object with name, type, size and url
+// enhances the image data with more information.
 // 
 const getImageData = (value) => {
   const Images = value;
@@ -1440,6 +1400,57 @@ const getCollAndImage = async (z, bundle, value) => {
   });
   return newArray;
 };
+
+
+/**
+ * get table columns as bundled
+ *
+ * take view into account if available & valid
+ *
+ * if table or view metadata is not available for table_name / table_view (alt: default view)
+ * the columns parameter falls through.
+ *@
+ * @param {Array<DTableColumn>} columns
+ * @param {Bundle} bundle
+ * @return {Array<DTableColumn>}
+ */
+ const getBundledViewColumns = (columns, bundle) => {
+  const viewIsInvalid = (
+    bundle.inputData.table_name &&
+      bundle.inputData.table_view &&
+      !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`)
+  );
+  const tid = sidParse(bundle.inputData.table_name).table;
+  /** @type DTableTable */
+  const table = _.find(bundle.dtable.metadata.tables, ['_id', tid]);
+  if (undefined === table) {
+    return columns;
+  }
+  const vid = viewIsInvalid ? '0000' : sidParse(bundle.inputData.table_view).view;
+  /** @type DTableView */
+  const view = _.find(table.views, ['_id', vid]);
+  if (undefined === view || undefined === view.hidden_columns || !_.isArray(view.hidden_columns)) {
+    return columns;
+  }
+  return _.filter(columns, (col) => !view.hidden_columns.includes(col.key));
+};
+
+/**
+ * get table columns for update
+ *
+ * @param {Array<DTableColumn>} columns
+ * @param {Bundle} bundle
+ * @return {Array<DTableColumn>}
+ */
+const getUpdateColumns = (columns, bundle) => {
+  return _.filter(getBundledViewColumns(columns, bundle), (col) => {
+    return !struct.columns.zapier.hide_write.includes(col.type);
+  });
+};
+
+
+
+
 module.exports = {
   acquireServerInfo,
   acquireDtableAppAccess,
@@ -1450,6 +1461,8 @@ module.exports = {
   tableNameId,
   getCollaborator,
   getCollaboratorData,
+  getUpdateColumns,
+  getBundledViewColumns,
   getImageData,
   getCollAndImage,
   mapColumnKeys,
@@ -1460,7 +1473,7 @@ module.exports = {
   downloadLink,
   downloadImageLink,
   linkRecord,
-  linkCreateRecord,
+  //linkCreateRecord,
   linkRequest,
   sidParse,
   struct,

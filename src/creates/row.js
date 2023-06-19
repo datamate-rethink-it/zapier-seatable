@@ -1,12 +1,17 @@
 const ctx = require('../ctx');
+const {sidParse} = require('../lib/sid');
 const _ = require('lodash');
-
 const {ZapBundle} = require('../ctx/ZapBundle');
 
 /**
  * perform
  *
  * creates (appends) a new row in table
+ * input data is like column:8hzP: ABC, this has to be transformed to Adress: ABC and then saved to map.
+ * 
+ * WAS NICHT GEHT: FILE + IMAGE HANDLING + LINKS !!!!!!!!!
+ * 
+ * 
  *
  * @param {ZObject} z
  * @param {Bundle} bundle
@@ -17,13 +22,13 @@ const perform = async (z, bundle) => {
 
   const map = {};
   const inputData = bundle.inputData;
-  let tester;
 
-  // Enhance the columns: collaboratos and image
+  z.console.log('Debug inputData', inputData);
+
+  // Enhance the columns: collaborators + links
   for (const {key, name, type} of tableMetadata.columns) {
     if (type === 'collaborator') {
       const value =[inputData && inputData[`column:${key}`]];
-
       if (value) {
         map[name] = await ctx.getCollaborator(z, bundle, value[0]);
         continue;
@@ -31,24 +36,10 @@ const perform = async (z, bundle) => {
         continue;
       }
     }
-    if (type === 'image') {
-      const value =inputData && inputData[`column:${key}`];
-      if (value) {
-        const newValue =value.split(',');
-        if (newValue.length > 1) {
-          map[name] = [...newValue];
-          continue;
-        }
-        map[name] = [inputData && inputData[`column:${key}`]];
-        continue;
-      } else {
-        continue;
-      }
-    }
-
     map[name] = inputData && inputData[`column:${key}`];
   }
 
+  // API-Request to create a new row! Files and links are added later.
   /** @type {DTableCreateRowResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/rows/`,
@@ -59,53 +50,68 @@ const perform = async (z, bundle) => {
       row: map,
     },
   });
-  //const data = response.data._id;
-
+ 
   const {data: {_id: rowId}} = response;
-
   const zb = new ZapBundle(z, bundle);
   const fileUploader = zb.fileUploader();
 
-  for (const {key, name, type} of tableMetadata.columns) {
+  // add table row to bundle, for adding links
+  bundle.inputData.table_row = rowId;
 
-    if (['file', 'image'].includes(type) && map?.[name]) {
-      const columnAssetData = await fileUploader.uploadUrlAssetPromise(map[name], type);
+/* row existiert, jetzt wird erweitert mit links und images/files */
 
-      const {data} = await zb.request({
-        url: `/dtable-server/api/v1/dtables/{{dtable_uuid}}/rows/`,
-        method: rowId ? 'PUT' : 'POST',
-        body: {
-          table_name: tableMetadata.name,
-          row: {[name]: [columnAssetData]},
-          row_id: rowId,
-        },
-      });
 
-      if (data?.success !== true) {
-        throw new z.errors.HaltedError(`Failed to update uploaded ${type} ${name} column.`);
-      }
 
-      response.data[key] = [columnAssetData];
-    }
 
-    // link column
-    if (type === 'link') {
-      const value = inputData && inputData[`column:${key}`];
+  // file + image upload + links
+  //const fileUploader = zb.fileUploader();
+
+
+  //for (const {key, name, type} of tableMetadata.columns) {
+  for (const col of ctx.getUpdateColumns(tableMetadata.columns, bundle)) {
+    const key = `column:${col.key}`;
+    const value = bundle.inputData?.[key];
+
+    if (col.type === 'link') {
       if (value) {
-        await ctx.linkCreateRecord(z, bundle, value, data);
+        await ctx.linkRecord(z, bundle, key, col);
         continue;
       }
     }
-  }
-  return ctx.mapCreateRowKeys(z, bundle, response.data);
+    if (!['file', 'image'].includes(col.type)) {
+      continue;
+    }
 
-  // return {data : inputData && inputData[`column:3aM5`]};
+    const current = [];
+    const columnAssetData = await fileUploader.uploadUrlAssetPromise(z, value, col.type);
+    current.push(columnAssetData);
+    map[col.name] = current;
+  }
+  
+  // make the update of the row!
+  const body = {
+    table_name: tableMetadata.name,
+    row: map,
+    row_id: rowId,
+  };
+
+  /** @type {ZapierZRequestResponse} */
+  const update_response = await z.request({
+    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/rows`,
+    method: 'PUT',
+    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
+    body,
+  });
+  
+  // generate output for zapier.
+  return ctx.mapCreateRowKeys(z, bundle, response.data);
 };
 
 /**
  * @param {ZObject} z
  * @param {Bundle} bundle
  * @return {Promise<{label: *, type: *, key: string, required: boolean, help_text: string}[]>}
+ * Generate all the input fields, that can be selected!!!
  */
 const inputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
@@ -117,7 +123,6 @@ const inputFields = async (z, bundle) => {
         return {
           key: `column:${o.key}`,
           label: o.name,
-          //type: ['file', 'image'].includes(o.type) ? 'file' : o.type,
           type: ctx.struct.columns.input_field_types[o.type],
           required: false,
           help_text: `${ctx.struct.columns.help_text[o.type] || `[${o.type}]`} field, optional.`,
@@ -125,6 +130,7 @@ const inputFields = async (z, bundle) => {
       });
 };
 
+/* old, wrong
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
@@ -133,6 +139,20 @@ const outputFields = async (z, bundle) => {
       _.map(tableMetadata.columns, (o) => ({key: `column:${o.key}`, label: o.name})),
   );
 };
+*/
+
+/* new: taken from triggers */
+const outputFields = async (z, bundle) => {
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
+
+  return [
+    {key: 'row_id', label: 'Original ID'},
+    {key: 'row_mtime', label: 'Last Modified'},
+    ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
+  ];
+};
+
+
 
 // noinspection SpellCheckingInspection
 const sample = {'column:0000': 'I am new Row2445', 'row_id': 'AdTy5Y8-TW6MVHPXTyOeTw'};

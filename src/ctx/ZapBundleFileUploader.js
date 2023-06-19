@@ -60,8 +60,13 @@ class ZapBundleFileUploader {
    *
    * @return {Promise<UploadLink>}
    */
-  async getUploadLink() {
-    return (await this.#zb.request("/api/v2.1/dtable/app-upload-link/")).data;
+  async getUploadLink(z) {
+    const resp = await z.request({
+      url: `${this.#zb.bundle.authData.server}/api/v2.1/dtable/app-upload-link/`,
+      method: 'GET',
+      headers: {Authorization: `Token ${this.#zb.bundle.authData.api_token}`},
+    });
+    return resp.data;
   }
 
   /**
@@ -222,17 +227,24 @@ class ZapBundleFileUploader {
    * @param {UploadAssetType} uploadAssetType
    * @return {Promise<DTableAssetAny>}
    */
-  async uploadUrlAssetPromise(uploadUrl, uploadAssetType) {
+  async uploadUrlAssetPromise(z, uploadUrl, uploadAssetType) {
     const fileFallback = /* isFilenameAuthoritative */ Boolean(false);
     const fileOverwrite = Boolean(false);
 
+    
+    // try to get a filename from the url
+    // in case of hydrated file it delivers: Unnamed attachment
     const uploadFilename = this.getUploadFilenameFromUrl(uploadUrl);
+    z.console.log("DEBUG uploadfilename", uploadFilename);
 
-    // upload the file
-    const uploadLink = await this.getUploadLink();
+    // get upload link
+    const uploadLink = await this.getUploadLink(z);
+    z.console.log("DEBUG uploadLink", uploadLink)
+
     const uploadResult = await this.postUploadToLinkFromUrl(
         uploadUrl, uploadFilename, fileFallback, uploadLink, uploadAssetType, fileOverwrite,
     );
+    z.console.log("DEBUG uploadResult", uploadResult);
 
     return await this.getAssetData(uploadLink, uploadResult, uploadAssetType);
   }

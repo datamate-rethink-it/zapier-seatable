@@ -16,8 +16,8 @@ const key = 'file_create';
  */
 const perform = async (z, bundle) => {
   const zb = new ZapBundle(z, bundle);
-  const logTag = `[${zb}] triggers.${key}`;
-
+  
+  // const logTag = `[${zb}] triggers.${key}`;
   // z.console.time(logTag); 
   // do I need this? delivers an output like:
   // [ 43747] zap: 903.472ms app(224/c392d08d-5b00-4456-9217-2afb89e07a0c) 4.0.7 enterprise edition (https://stage.seatable.io)
@@ -131,6 +131,7 @@ const perform = async (z, bundle) => {
   }
 
 
+  // ?? warum mache ich hier einen request, wenn ich den gar nicht returne??
   const assetDownloadLink = async (url) => {
     // 'https://cloud.seatable.io/workspace/4881/asset/98d18404-03fc-4f4a-9d6d-6527441aea25/files/2021-04/magazine2.jpg'
     const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(url)?.[1];

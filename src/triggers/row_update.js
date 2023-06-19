@@ -29,6 +29,7 @@ const perform = async (z, bundle) => {
   });
 
   let rows = response.data.rows;
+  z.console.log("DEBUG rows", rows);
 
   const meta = bundle.meta;
 
@@ -104,7 +105,7 @@ const outputFields = async (z, bundle) => {
     {key: 'row_mtime', label: 'Last Modified'},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
   ];
-  z.console.log("Debug outputFields", oF);
+  //z.console.log("DEBUG outputFields", oF);
   return oF;
 };
 
