@@ -1281,13 +1281,25 @@ const tableNameId = async (z, bundle, context) => {
   );
   tableName = tb[0];
   // const query = colType==="Text"?`${colName} = "${bundle.inputData.search_value}"`:`${colName} = ${bundle.inputData.search_value}`;
-  const f = {
-    sql: `SELECT * FROM ${tableName} WHERE ${colName} = "${bundle.inputData.search_value}" LIMIT 10`,
-    convert_keys: true,
-  };
-  return f;
+
+  if (bundle.inputData.search_wildcards) {
+    z.console.log("DEBUG search_wildcards on", bundle.inputData.search_wildcards);
+    return {
+      sql: `SELECT * FROM ${tableName} WHERE ${colName} LIKE "%${bundle.inputData.search_value}%" LIMIT 10`,
+      convert_keys: true,
+    };
+  } else {
+    z.console.log("DEBUG search_wildcards off", bundle.inputData.search_wildcards);
+    return {
+      sql: `SELECT * FROM ${tableName} WHERE ${colName} = "${bundle.inputData.search_value}" LIMIT 10`,
+      convert_keys: true,
+    };
+  }
 };
 
+/**
+ * value = real email adress.
+ */
 const getCollaborator = async (z, bundle, value) => {
   const collaboratorEmail = value;
   const collaborator = await z.request({

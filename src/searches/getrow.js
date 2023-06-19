@@ -17,12 +17,10 @@ const perform = async (z, bundle) => {
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-db/api/v1/query/${dtableCtx.dtable_uuid}/`,
     method: "POST",
-
     headers: {
       "Authorization": `Token ${bundle.dtable.access_token}`,
       "Content-Type": "application/json",
     },
-    // params: ctx.requestParamsSid(bundle.inputData.table_name),
     allowGetBody: true,
     body: await ctx.tableNameId(z, bundle, "search"),
   });
@@ -122,6 +120,18 @@ const searchValue = async (z, bundle) => {
   */
   return r;
 };
+
+const searchWildcards = {
+  key: "search_wildcards",
+  required: false,
+  default: "False",
+  type: "boolean",
+  label: "Activate wildcards",
+  helpText:
+    "**False:** The search only results perfect matches. **True:** Finds a row even if the search value is part of a string.",
+  altersDynamicFields: false,
+};
+
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
@@ -137,7 +147,6 @@ module.exports = {
   // https://github.com/zapier/zapier-platform/blob/main/packages/schema/docs/build/schema.md#searchschema
   key: "getrow",
   noun: "row",
-
   display: {
     label: "Find Row",
     description: "Finds a row using SQL Query search syntax. ", // Optionally, create a ${noun}, if none are found
@@ -161,6 +170,7 @@ module.exports = {
       },
       searchColumn,
       searchValue,
+      searchWildcards,
       ctx.fileNoAuthLinksField,
     ],
 
