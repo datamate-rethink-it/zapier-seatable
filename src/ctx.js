@@ -312,9 +312,9 @@ const fileNoAuthLinksField = {
   required: false,
   default: "False",
   type: "boolean",
-  label: "Provide access to images and files",
+  label: "Provide access to images, files and digital signatures",
   helpText:
-    "**False:** You get only *internal links* to your files and images that require an authentication and therefore can not be used in your Zapier actions. Still you get access to the metadata of your files. **True:** You get access to your files and images. SeaTable also creates public download links (valid for a few hours). This requires additional API calls, so the [limits](https://api.seatable.io/reference/limits) may be exhausted earlier.",
+    "**False:** You get only *internal links* to your files, images and signatures that require an authentication and therefore can not be used in your Zapier actions. Still you get access to the metadata of your files. **True:** You get access to your files, images and signatures. SeaTable also creates public download links (valid for a few hours). This requires additional API calls, so the [limits](https://api.seatable.io/reference/limits) may be exhausted earlier.",
   altersDynamicFields: false,
 };
 
@@ -871,6 +871,8 @@ function requestParamsSid(sid) {
  * return object.
  *
  * doppeltes return ????
+ * input file/image: https://stage.seatable.io/workspace/224/asset/c392d08d-5b00-4456-9217-2afb89e07a0c/files/2023-06/problem.png
+ * input digi-signa: /digital-signs/2023-06/a5adebe279e04415a28b2c7e256e9e8d%40auth.local-1686908335767.png
  *
  * @param {ZObject} z
  * @param {Bundle} bundle
@@ -878,6 +880,8 @@ function requestParamsSid(sid) {
  * @return {object} distinguished column-key mapped row
  */
 const downloadLink = async (z, bundle, URL) => {
+
+  // extract file path from URL input
   const dataFile = [];
   for (const file of URL) {
     const fileUrl = file.url;
@@ -889,12 +893,13 @@ const downloadLink = async (z, bundle, URL) => {
       return dataFile;
       // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
     }
-    const collaborator = await z.request({
+
+    const downloadLinks = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: "GET",
       headers: {Authorization: `Token ${bundle.authData.api_token}`},
     });
-    const data = collaborator.json;
+    const data = downloadLinks.json;
     if (!data.download_link) {
       throw new z.errors.Error(
           `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`,
@@ -907,6 +912,29 @@ const downloadLink = async (z, bundle, URL) => {
     return hydratedUrl;
   }
   return dataFile;
+};
+
+const downloadSignLink = async (z, bundle, URL) => {
+  const urlPath = URL.sign_image_url;
+  if (!urlPath) {
+    return "error";
+  }
+  const downloadLinks = await z.request({
+    url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
+    method: "GET",
+    headers: {Authorization: `Token ${bundle.authData.api_token}`},
+  });
+  const data = downloadLinks.json;
+  if (!data.download_link) {
+    throw new z.errors.Error(
+        `Failed to obtain asset download link for path '${urlPath}'`,
+    );
+  }
+  const downloadedUrl = data.download_link;
+  const hydratedUrl = z.dehydrateFile(stashFile, {
+    downloadUrl: downloadedUrl,
+  });
+  return hydratedUrl;
 };
 
 
@@ -964,15 +992,27 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
       const v = row[c.name];
 
       // Collaborator
-      if (regex.test(v[0])) {
+      if ("collaborator" === c.type && regex.test(v[0])) {
         r[`column:${c.key}`] = await getCollaboratorData(z, bundle, v);
         continue;
       }
 
-      // Creator + Modifier   // hier doppelte Abfrage der User-Liste -> vermeiden!
-      if (regex.test(v)) {
-        r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
+      // Digital-signature
+      if ("digital-sign" === c.type && regex.test(v['username'])) {
+        const collaboratorInfo = await getCollaboratorData(z, bundle, [v['username']]);
+        r[`column:${c.key}`] = { ...v, ...collaboratorInfo[0] };
+        if (bundle.inputData.feature_non_authorized_asset_downloads) { // get public access
+          r[`column:${c.key}`].asset = await downloadSignLink(z, bundle, v);
+        }
         continue;
+      }
+
+      // Creator + Modifier   // hier doppelte Abfrage der User-Liste -> vermeiden!
+      if ("last-modifier" === c.type || "creator" === c.type){
+        if (regex.test(v)) {
+          r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
+          continue;
+        }
       }
 
       // Files
@@ -1139,6 +1179,9 @@ const outputFieldsRows = function* (columns, bundle) {
       yield {key: `${f.key}__sign_time`, label: `${col.name}: Username`};
       yield {key: `${f.key}__sign_image_url`, label: `${col.name}: Signature image URL`};
       yield {key: `${f.key}__username`, label: `${col.name}: Username`};
+      yield {key: `${f.key}__email`, label: `${col.name}: Email`};
+      yield {key: `${f.key}__name`, label: `${col.name}: Signed by`};
+      yield {key: `${f.key}__asset`, label: `${col.name}: Signature (image)`};
       continue;
     }
 
@@ -1283,13 +1326,13 @@ const tableNameId = async (z, bundle, context) => {
   // const query = colType==="Text"?`${colName} = "${bundle.inputData.search_value}"`:`${colName} = ${bundle.inputData.search_value}`;
 
   if (bundle.inputData.search_wildcards) {
-    z.console.log("DEBUG search_wildcards on", bundle.inputData.search_wildcards);
+    // z.console.log("DEBUG search_wildcards on", bundle.inputData.search_wildcards);
     return {
       sql: `SELECT * FROM ${tableName} WHERE ${colName} LIKE "%${bundle.inputData.search_value}%" LIMIT 10`,
       convert_keys: true,
     };
   } else {
-    z.console.log("DEBUG search_wildcards off", bundle.inputData.search_wildcards);
+    // z.console.log("DEBUG search_wildcards off", bundle.inputData.search_wildcards);
     return {
       sql: `SELECT * FROM ${tableName} WHERE ${colName} = "${bundle.inputData.search_value}" LIMIT 10`,
       convert_keys: true,
@@ -1328,10 +1371,7 @@ const getCollaboratorData = async (z, bundle, value) => {
       _.filter(collaboratorData, (o) => {
         const regex = /^\w{32}@auth\.local$/;
         for (let i = 0; i < collaboratorUsers.length; i++) {
-          if (
-            o.email === collaboratorUsers[i] &&
-          regex.test(collaboratorUsers[i])
-          ) {
+          if ( o.email === collaboratorUsers[i] && regex.test(collaboratorUsers[i]) ) {
             return o.email === collaboratorUsers[i];
           }
         }
@@ -1371,7 +1411,7 @@ const linkRecord = async (z, bundle, key, col) => {
     const tmpId = bodyData.table_id;
     bodyData.table_id = bodyData.other_table_id;
     bodyData.other_table_id = tmpId;
-    z.console.log("DEBUG linkRecord switch tables", tmpId);
+    // z.console.log("DEBUG linkRecord switch tables", tmpId);
   }
 
   // enhance with table names from table ids.
@@ -1384,7 +1424,7 @@ const linkRecord = async (z, bundle, key, col) => {
     }
   });
 
-  z.console.log("DEBUG linkTwoRecord bodyData", bodyData);
+  // z.console.log("DEBUG linkTwoRecord bodyData", bodyData);
   return await linkRequest(z, bundle, bodyData);
 };
 

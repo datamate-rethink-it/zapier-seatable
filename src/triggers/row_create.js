@@ -47,6 +47,7 @@ const perform = async (z, bundle) => {
   }));
   // rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
   // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
+  // z.console.log("DEBUG rows for row_create", rows);
 
   return rows;
 };
