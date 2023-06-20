@@ -133,12 +133,12 @@ const perform = async (z, bundle) => {
     'link to time': [ 'Pd_pHLM8SgiEcnFW5I7HLA', 'aX6jOUCyRsm0d-KPMK8L-g' ]
   }
   */
-    z.console.log("DEBUG value", value);
+    // z.console.log("DEBUG value", value);
     /*
     DEBUG value https://zapier.com/engine/hydrate/8024503/.eJw9zkEOgyAQBdC7zFqFWrWWXU9iKE7RFIHCENMY717amG7_n7w_GyhnCS0N9PYIAm5QwGwjSatwmEcQDT_1XXfpC1ApkltSxPArel43LT8XIJVyKQtHeKrbHD5mNONg5fJFA74SRsr0c5VBRxAbpGByMxH5KBiLKEneDVazY6svj6dY8sbJMbI6s4xf_2elcdpV3upMLkiTy9OgkWDfPzdLRV0:1qBCAM:8NiiL33CeTI9I4h3iAQCX7wR54M/
     */
 
-    z.console.log("DEBUG col", col);
+    // z.console.log("DEBUG col", col);
     /*
     DEBUG col {
       key: '0994',

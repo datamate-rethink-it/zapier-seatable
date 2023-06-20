@@ -238,16 +238,16 @@ class ZapBundleFileUploader {
     // try to get a filename from the url
     // in case of hydrated file it delivers: Unnamed attachment
     const uploadFilename = this.getUploadFilenameFromUrl(uploadUrl);
-    z.console.log("DEBUG uploadfilename", uploadFilename);
+    // z.console.log("DEBUG uploadfilename", uploadFilename);
 
     // get upload link
     const uploadLink = await this.getUploadLink(z);
-    z.console.log("DEBUG uploadLink", uploadLink);
+    // z.console.log("DEBUG uploadLink", uploadLink);
 
     const uploadResult = await this.postUploadToLinkFromUrl(
         uploadUrl, uploadFilename, fileFallback, uploadLink, uploadAssetType, fileOverwrite,
     );
-    z.console.log("DEBUG uploadResult", uploadResult);
+    // z.console.log("DEBUG uploadResult", uploadResult);
 
     return await this.getAssetData(uploadLink, uploadResult, uploadAssetType);
   }

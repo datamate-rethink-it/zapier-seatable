@@ -15,7 +15,7 @@ const perform = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
 
   const logTag = `[${bundle.__zTS}] triggers.row_create`;
-  z.console.time(logTag);
+  // z.console.time(logTag);
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -28,7 +28,7 @@ const perform = async (z, bundle) => {
 
   const meta = bundle.meta;
 
-  z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`);
+  // z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`);
   if (0 === rows.length) {
     return rows;
   }

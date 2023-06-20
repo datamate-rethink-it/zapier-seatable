@@ -55,4 +55,4 @@ was ich geändert habe:
 - hier noch was rausziehen? https://unpkg.com/browse/zapier-platform-cli@14.0.0/package.json 
   - smoke-tests?
 - neuer Spaltentyp
-
+- node_modules/.bin/eslint src/ --fix

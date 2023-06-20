@@ -23,7 +23,7 @@ const perform = async (z, bundle) => {
   const map = {};
   const inputData = bundle.inputData;
 
-  z.console.log("Debug inputData", inputData);
+  // z.console.log("Debug inputData", inputData);
 
   // Enhance the columns: collaborators + links
   for (const {key, name, type} of tableMetadata.columns) {

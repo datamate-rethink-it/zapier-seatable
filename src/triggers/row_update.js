@@ -19,7 +19,7 @@ const perform = async (z, bundle) => {
   // const zb = new ZapBundle(z, bundle);
   //
   const logTag = `[${bundle.__zTS}] triggers.row_update`;
-  z.console.time(logTag);
+  // z.console.time(logTag);
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -29,11 +29,11 @@ const perform = async (z, bundle) => {
   });
 
   let rows = response.data.rows;
-  z.console.log("DEBUG rows", rows);
+  // z.console.log("DEBUG rows", rows);
 
   const meta = bundle.meta;
 
-  z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`);
+  // z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`);
   if (0 === rows.length) {
     return rows;
   }
@@ -85,10 +85,10 @@ const perform = async (z, bundle) => {
     rows = _.filter(rows, (o) => {
       return Date.parse(o.row_mtime) >= floorEpochMilliseconds;
     });
-    z.console.timeLog(logTag, `filtered rows length: ${rows.length} (offset=${unfilteredLength - rows.length} minutes=${mTimeFilterMinutes})`);
+    // z.console.timeLog(logTag, `filtered rows length: ${rows.length} (offset=${unfilteredLength - rows.length} minutes=${mTimeFilterMinutes})`);
   }
 
-  z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
+  // z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
   return rows;
 };
 
