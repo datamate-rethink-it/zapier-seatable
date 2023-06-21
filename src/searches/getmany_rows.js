@@ -13,11 +13,11 @@ const _ = require("lodash");
 
 const performSearch = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
+
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-db/api/v1/query/${dtableCtx.dtable_uuid}/`,
     method: "POST",
-
     headers: {
       "Authorization": `Token ${bundle.dtable.access_token}`,
       "Content-Type": "application/json",
@@ -25,18 +25,38 @@ const performSearch = async (z, bundle) => {
     allowGetBody: true,
     body: await ctx.tableNameId(z, bundle, "search"),
   });
-  // const RowData = response.json["results"]; anscheinend nicht gebraucht.
-  const newRowData = await ctx.getCollAndImage(z, bundle, response.json.results);
-  if (newRowData.length > 0) {
-    return [{Data: response.json.results}];
+  const RowData = response.json["results"];
+
+  // so muss das am Ende aussehen...
+  // return [{Data: [{id:"adsfafd", name: "adfadf"},{id:"234", name: "234"}]}];
+
+  let rows = [];
+  if (RowData.length > 0) {
+    for (let i = 0; i < RowData.length; i++) {
+      const f = RowData[i];
+      delete f._archived;
+      delete f._locked_by;
+      delete f._locked;
+      rows.push(f);
+    }
   } else if (
-    newRowData.length === 0 &&
+    RowData.length === 0 &&
     bundle.inputDataRaw._zap_search_success_on_miss
   ) {
     return [];
   } else {
-    throw new z.errors.Error("Failed to Find a Row in Seatable");
+    throw new z.errors.Error("Failed to find a row in SeaTable");
   }
+
+  // transform the result and enhance
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
+  rows = await Promise.all(_.map(rows, async (o) => {
+    const transformedObj = await ctx.mapColumnKeysAndEnhanceOutput(z, bundle, tableMetadata.columns, o);
+    transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;
+    return transformedObj;
+  }));
+
+  return [{Data: rows}];
 };
 
 const searchColumn = async (z, bundle) => {

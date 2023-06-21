@@ -2,6 +2,14 @@
 
 `sea-table`
 
+
+## Debug
+
+  // so kann man gut debuggen
+  // z.console.log("DEBUG rows", rows);
+  // throw new Error(`error ${JSON.stringify(row)}`);
+
+
 ## Actions
 
 * ***Triggers:***

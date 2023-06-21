@@ -13,6 +13,7 @@ const _ = require("lodash");
 
 const perform = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
+
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-db/api/v1/query/${dtableCtx.dtable_uuid}/`,
@@ -28,26 +29,25 @@ const perform = async (z, bundle) => {
 
   // row was found ...
   if (RowData.length > 0) {
-    const f = response.json["results"][0];
-
-    // enhance collaborators and images
-    const RowMetadata = response.json["metadata"];
-    z.console.log("DEBUG RowMetadata", RowMetadata);
-    for (const {key, type} of RowMetadata) {
-      if (type === "collaborator" && f[key]) {
-        f["name"] = await ctx.getCollaboratorData(z, bundle, f[key]);
-      }
-      if (type === "image" && f[key]) {
-        f["name"] = ctx.getImageData(f[key]);
-      }
-    }
+    const f = RowData[0];
 
     // clean up unnecessary stuff
     delete f._archived;
     delete f._locked_by;
     delete f._locked;
 
-    return [f];
+    let rows = [];
+    rows.push(f);
+
+    // transform the result and enhance
+    const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
+    rows = await Promise.all(_.map(rows, async (o) => {
+      const transformedObj = await ctx.mapColumnKeysAndEnhanceOutput(z, bundle, tableMetadata.columns, o);
+      transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;
+      return transformedObj;
+    }));
+
+    return rows;
   } else if (
     RowData.length === 0 ||
     bundle.inputDataRaw._zap_search_success_on_miss
@@ -158,11 +158,6 @@ module.exports = {
     // For a more complete example of using dynamic fields see
     // https://github.com/zapier/zapier-platform/tree/main/packages/cli#customdynamic-fields
     // Alternatively, a static field definition can be provided, to specify labels for the fields
-    outputFields: [
-      outputFields,
-      // these are placeholders to match the example `perform` above
-      // {key: 'id', label: 'Person ID'},
-      // {key: 'name', label: 'Person Name'}
-    ],
+    outputFields: [outputFields],
   },
 };

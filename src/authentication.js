@@ -27,7 +27,7 @@ const connectionLabel = (z, bundle) => {
   const address = bundle.authData.server.replace(/^https:\/\//, "").replace(/\/+$/, "");
   // const {serverInfo, dtable} = bundle.inputData;
   // const editionAbbreviated = serverInfo.edition.replace("enterprise edition", "EE");
-  return `| ${address} | ${dtable?.dtable_name} | ${dtable?.app_name}`;
+  return `${address} | ${dtable?.dtable_name} | ${dtable?.app_name}`;
 };
 
 module.exports = {

@@ -582,9 +582,11 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
       }
 
       // Collaborator
-      if ("collaborator" === c.type && regex.test(v[0])) {
-        r[`column:${c.key}`] = await getCollaboratorData(z, bundle, v);
-        continue;
+      if ("collaborator" === c.type && c.data && v) {
+        if (regex.test(v[0])) {
+          r[`column:${c.key}`] = await getCollaboratorData(z, bundle, v);
+          continue;
+        }
       }
 
       // Creator + Modifier   // hier doppelte Abfrage der User-Liste -> vermeiden!
@@ -628,15 +630,18 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
       }
 
       // Digital-signature (can only be one)
-      if ("digital-sign" === c.type && regex.test(v["username"])) {
-        const collaboratorInfo = await getCollaboratorData(z, bundle, [v["username"]]);
-        r[`column:${c.key}`] = {...v, ...collaboratorInfo[0]};
-        if (bundle.inputData.feature_non_authorized_asset_downloads) {
-          const pubFile = await getDownloadLinkFromPath(z, bundle, v["sign_image_url"]);
-          r[`column:${c.key}`].publicUrl = pubFile.publicUrl;
-          r[`column:${c.key}`].asset = pubFile.hydratedUrl;
+      if ("digital-sign" === c.type && c.data) {
+        // throw new Error(`error ${JSON.stringify(c)}`);
+        if (regex.test(v["username"])) {
+          const collaboratorInfo = await getCollaboratorData(z, bundle, [v["username"]]);
+          r[`column:${c.key}`] = {...v, ...collaboratorInfo[0]};
+          if (bundle.inputData.feature_non_authorized_asset_downloads) {
+            const pubFile = await getDownloadLinkFromPath(z, bundle, v["sign_image_url"]);
+            r[`column:${c.key}`].publicUrl = pubFile.publicUrl;
+            r[`column:${c.key}`].asset = pubFile.hydratedUrl;
+          }
+          continue;
         }
-        continue;
       }
 
       // all other columns
@@ -941,17 +946,39 @@ const getCollaborator = async (z, bundle, value) => {
 };
 */
 
-// expects an array as input [xxx@auth.local]
-const getCollaboratorData = async (z, bundle, value) => {
-  // z.console.log("DEBUG collaborator", value);
-  const collaboratorUsers = value;
-  const collaborator = await z.request({
-    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
+
+/**
+ * Helper function to get collaborators only once.
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ */
+const acquireCollaborators = async (z, bundle) => {
+  /** @type {DTable} */
+  const dtableCtx = await module.exports.acquireDtableAppAccess(z, bundle);
+  if (undefined !== dtableCtx.collaborators) {
+    // z.console.log("DEBUG collaborators aus bundle", dtableCtx.collaborators);
+    return dtableCtx.collaborators;
+  }
+
+  const response = await z.request({
+    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/related-users/`,
     method: "GET",
-    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
+    headers: {
+      "Authorization": `Token ${dtableCtx.access_token}`,
+    },
   });
-  const collaboratorData = collaborator.json.user_list;
-  z.console.log("DEBUG collaboratorData", collaboratorData);
+  // z.console.log("DEBUG collaborators per api", response.data);
+  bundle.dtable.collaborators = response.data;
+  return response.data;
+};
+
+
+// input: array with usernames [xxx@auth.local, xyz@auth.local]
+// output: array with enhanced objects [{username: ..., ...}, {username: ..., ...}]
+const getCollaboratorData = async (z, bundle, value) => {
+  const collaborators = await acquireCollaborators(z, bundle);
+  const collaboratorUsers = value;
+  const collaboratorData = collaborators.user_list;
   const collData = _.map(
       _.filter(collaboratorData, (o) => {
         const regex = /^\w{32}@auth\.local$/;
@@ -1044,6 +1071,7 @@ const getImageData = (value) => {
   return imageData;
 };
 
+/*
 const getCollAndImage = async (z, bundle, value) => {
   const Data = value;
   const newArray = _.map(Data, async (o) => {
@@ -1053,6 +1081,7 @@ const getCollAndImage = async (z, bundle, value) => {
   });
   return newArray;
 };
+*/
 
 /**
  * get table columns as bundled
@@ -1117,6 +1146,7 @@ const getImageFilenameFromUrl = (url, fallback = "Unnamed attachment") => {
 module.exports = {
   acquireServerInfo,
   acquireDtableAppAccess,
+  acquireCollaborators,
   acquireMetadata,
   acquireTableMetadata,
   // filter,
@@ -1126,7 +1156,7 @@ module.exports = {
   getUpdateColumns,
   getBundledViewColumns,
   getImageData,
-  getCollAndImage,
+  // getCollAndImage,
   mapColumnKeysAndEnhanceOutput,
   mapColumnKeysRow,
   mapCreateRowKeys,
