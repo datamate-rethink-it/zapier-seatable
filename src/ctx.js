@@ -920,6 +920,7 @@ const tableNameId = async (z, bundle, context) => {
   }
 };
 
+/*
 const getCollaborator = async (z, bundle, value) => {
   const collaboratorEmail = value;
   const collaborator = await z.request({
@@ -938,8 +939,9 @@ const getCollaborator = async (z, bundle, value) => {
   );
   return collData;
 };
+*/
 
-// doppelt zum vorherigen??
+// expects an array as input [xxx@auth.local]
 const getCollaboratorData = async (z, bundle, value) => {
   // z.console.log("DEBUG collaborator", value);
   const collaboratorUsers = value;
@@ -949,6 +951,7 @@ const getCollaboratorData = async (z, bundle, value) => {
     headers: {Authorization: `Token ${bundle.dtable.access_token}`},
   });
   const collaboratorData = collaborator.json.user_list;
+  z.console.log("DEBUG collaboratorData", collaboratorData);
   const collData = _.map(
       _.filter(collaboratorData, (o) => {
         const regex = /^\w{32}@auth\.local$/;
@@ -1118,7 +1121,7 @@ module.exports = {
   acquireTableMetadata,
   // filter,
   tableNameId,
-  getCollaborator,
+  // getCollaborator,
   getCollaboratorData,
   getUpdateColumns,
   getBundledViewColumns,

@@ -127,14 +127,17 @@ const perform = async (z, bundle) => {
        * }
        */
       const pubFile = await ctx.getDownloadLinkFromPath(z, bundle, row[fileColumnKey].sign_image_url);
+      const collaboratorInfo = await ctx.getCollaboratorData(z, bundle, [row[fileColumnKey].username]);
+      z.console.log("DEBUG collaboratorInfo", collaboratorInfo);
       const resultItem = {
         id: `${row._id}-${row[fileColumnKey].sign_image_url}`,
         type: "signature",
-        name: "digital signature",
+        name: `Signature of ${collaboratorInfo[0].name}`,
         size: 0,
         url: row[fileColumnKey].sign_image_url,
         publicUrl: pubFile.publicUrl,
         asset: pubFile.hydratedUrl,
+        signed_by_email: collaboratorInfo[0].email,
         metadata: {
           column_reference: `table:${tableMetadata._id}:row:${row._id}:column:${columnMetadata.key}`,
           column_key: columnMetadata.key,
