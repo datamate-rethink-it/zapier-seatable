@@ -9,7 +9,8 @@
 const _CONST = require("./const");
 const {stashFile} = require("./hydrators");
 const _ = require("lodash");
-const {ResponseThrottleInfo} = require("./lib");
+// const {ResponseThrottleInfo} = require("./lib");
+// const {format} = require("./lib");
 const {sidParse} = require("./lib/sid");
 
 /**
@@ -100,7 +101,7 @@ const struct = {
       "button": "",
       "digital-sign": "",
     },
-    assets: ["file", "image"],
+    assets: ["file", "image", "digital-sign"],
     filter: {
       // column types that can not be filtered:
       not: ["file", "image", "long-text", "url"],
@@ -183,6 +184,8 @@ function zapInit(z, bundle) {
 }
 
 /**
+ * !! ALWAYS USE acquireServerInfo instead of serverInfo to avoid multiple requests !!
+ *
  * @param {ZObject} z
  * @param {Bundle} bundle
  * @return {Promise<{}>}
@@ -209,11 +212,8 @@ async function serverInfo(z, bundle) {
     }
   });
   if (!~properties.indexOf("version") || !~properties.indexOf("edition")) {
-    throw new Error(
-        _CONST.STRINGS["seatable.error.no-server-info"](bundle.authData.server),
-    );
+    throw new Error(`Failed to connect to SeaTable server at "${bundle.authData.server}". Please check the server address.`);
   }
-
   return (bundle.serverInfo = serverInfo);
 }
 
@@ -233,6 +233,9 @@ const acquireServerInfo = (z, bundle) => {
 };
 
 /**
+ * authenticates with app-access-token and adds "dtable" to bundle with elements app_name, access_token, dtable_uuid, dtable_server, dtable_socket, dtable_db, workspace_id and dtable_name
+ * !! ALWAYS USE acquireDtableAppAccess instead of appAccessToken to avoid multiple requests !!
+ *
  * @param {ZObject} z
  * @param {Bundle} bundle
  * @return {Promise<DTable>}
@@ -246,34 +249,32 @@ async function appAccessToken(z, bundle) {
     headers: {Authorization: `Token ${bundle.authData.api_token}`},
     endPointPath: "/api/v2.1/dtable/app-access-token/",
   });
-
   const dtable = {server_address: bundle.authData.server};
   const properties = (response.data && Object.keys(response.data)) || [];
   for (const property of properties) {
     dtable[property] = response.data[property];
   }
+  /*
   const serverInfo = bundle.serverInfo;
   z.console.timeLog(
       bundle.__zLogTag,
       `app(${dtable.workspace_id}/${dtable.dtable_uuid}) ${serverInfo.version} ${serverInfo.edition} (${bundle.authData.server})`,
-  );
+  );*/
   if (
     !~properties.indexOf("dtable_uuid") ||
     !~properties.indexOf("access_token")
   ) {
-    throw new Error(
-        _CONST.STRINGS["seatable.error.app-access-token"](bundle.authData.server),
-    );
+    throw new Error(`Failed to get app-access on SeaTable server at ${bundle.authData.server}. Try to re-authenticate with a new API-Token.`);
   }
   bundle.dtable = dtable;
-
+  // z.console.log("DEBUG dtable in ctx.js", dtable);
   return bundle.dtable;
 }
 
+
 /**
  * bind dtable in bundle
- *
- * does authentication via appAccessToken()
+ * authenticates with app-access-token and adds "dtable" to bundle with elements app_name, access_token, dtable_uuid, dtable_server, dtable_socket, dtable_db, workspace_id and dtable_name
  *
  * @param {ZObject} z
  * @param {Bundle} bundle
@@ -285,25 +286,11 @@ const acquireDtableAppAccess = (z, bundle) => {
     Promise.resolve(bundle.dtable);
 };
 
+/*
 const featureLinkColumnsData = {
   enabled: true, // whether data of linked columns are fetched (2.1.0: true)
   childLimit: 1, // number of children (linked rows) per source row.column that are resolved (2.1.0: 1)
   resolveLimit: 10, // number of total resolves that are done
-};
-
-/**
- * @param {Array<DTableColumn|DTableColumnTLink>} columns
- * @return {Array<DTableColumn|DTableColumnTLink>}
- */
-/*
-const fileColumns = (columns) =>
-  columns.filter((s) => struct.columns.assets.indexOf(s.type) + 1);
-// const noAuthColumnKey = (key) => `column:${key}-(no-auth-dl)`;
-// const noAuthColumnLabel = (name) => `${name} (Download w/o Authorization)`;
-const noAuthFilePathFromUrl = (buffer) => {
-  // 'https://cloud.seatable.io/workspace/4881/asset/98d18404-03fc-4f4a-9d6d-6527441aea25/files/2021-04/magazine2.jpg'
-  const probe = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(buffer);
-  return probe && probe[1];
 };
 */
 
@@ -316,303 +303,6 @@ const fileNoAuthLinksField = {
   helpText:
     "**False:** You get only *internal links* to your files, images and signatures that require an authentication and therefore can not be used in your Zapier actions. Still you get access to the metadata of your files. **True:** You get access to your files, images and signatures. SeaTable also creates public download links (valid for a few hours). This requires additional API calls, so the [limits](https://api.seatable.io/reference/limits) may be exhausted earlier.",
   altersDynamicFields: false,
-};
-
-
-/**
- * add non-authorized asset links into the result
- * BRAUCHE ICH DAS ÜBERHAUPT NOCH???
- *
- * images and files, original data type (string or object) is kept, ads a new, suffixed entry.
- *
- * @param {ZObject} z
- * @param {Bundle} bundle
- * @param {Array<DTableColumn|DTableColumnTLink>} columns
- * @param {Array<{object}>} rows
- */
-/*
-const acquireFileNoAuthLinks = async (z, bundle, columns, rows) => {
-  if (!bundle.inputData[_CONST.FEATURE_NO_AUTH_ASSET_LINKS]) {
-    return rows;
-  }
-
-  const logTag = `[${bundle.__zTS}] acquireFileNoAuthLinks`;
-  z.console.time(logTag);
-
-  const dtableCtx = bundle.dtable;
-  const fileUrlStats = {urls: [], errors: []};
-  const fileUrl = async (buffer) => {
-    fileUrlStats.urls.push(buffer);
-    const urlPath = noAuthFilePathFromUrl(buffer);
-    if (!urlPath) {
-      throw new z.errors.Error(`Failed to extract path from url: "${buffer}"`);
-    }
-    /** @type {ZapierZRequestResponse} */
-/* let response;
-    let exception;
-    const url = `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`;
-    try {
-      response = await z.request({
-        url,
-        headers: {Authorization: `Token ${bundle.authData.api_token}`},
-        skipThrowForStatus: true,
-      });
-    } catch (e) {
-      exception = e;
-    }
-    if (!_.isObject(response && response.data)) {
-      if (_.isObject(exception) && exception.name === 'ThrottledError') {
-        throw exception;
-      }
-      fileUrlStats.errors.push([
-        buffer,
-        urlPath,
-        url,
-        response,
-        exception && exception.message,
-      ]);
-      return null;
-    }
-    return response.data.download_link || null;
-  };
-  rows = await Promise.all(
-      rows.map(async (row) => {
-        for (const column of fileColumns(columns)) {
-          const field = `column:${column.key}`;
-          const noAuthField = noAuthColumnKey(column.key);
-          const values = row && row[field];
-          if (!values) continue;
-          if (!Array.isArray(values)) continue;
-          if (!values.length) continue;
-          if (fileUrlStats.errors.length > 0) {
-          // skip further urls on error
-            z.console.timeLog(logTag, `skipping on previous error`);
-            row[noAuthField] = null;
-            continue;
-          }
-          row[noAuthField] = await Promise.all(
-              values.map(async (value) => {
-                if (
-                  typeof value === 'object' &&
-              value !== null &&
-              value.type === 'file' &&
-              value.url
-                ) {
-                  const copy = {...value};
-                  copy.url = await fileUrl(value.url);
-                  return copy;
-                } else if (typeof value === 'string' && value) {
-                  return await fileUrl(value);
-                }
-                return value;
-              }),
-          );
-        }
-        return row;
-      }),
-  );
-  z.console.timeLog(
-      logTag,
-      `urls: ${fileUrlStats.urls.length} (errors: ${fileUrlStats.errors.length})`,
-  );
-  if (fileUrlStats.errors.length > 0) {
-    z.console.timeLog(logTag, 'errors:', fileUrlStats.errors);
-  }
-  return rows;
-};
-*/
-
-/**
- * replace column.type link references with row-data in rows (noch in entstehung.)
- *
- * @param {ZObject} z
- * @param {Bundle} bundle
- */
-/*
-const acquireLinkColumnsDataNEU = async (z, bundle, rowIds) => {
-  const dtableCtx = bundle.dtable;
-
-  // ich muss durch die rows nicht loopen...
-  for (let i = 0, l = rowIds.length; i < l; i++) {
-    const rowId = rowIds[i];
-
-    // wo kriege ich die metadata her? übergeben??
-
-    /** @type {ZapierZRequestResponse} */
-/*
-    const response = await z.request({
-      url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${rowId}/`,
-      headers: {Authorization: `Token ${dtableCtx.access_token}`},
-      params: {table_id: linkTableMetadata._id},
-    });
-    if (!_.isObject(response.data)) {
-      throw new z.errors.Error(
-          `Failed to retrieve table:${linkTableMetadata._id}:row:${rowId}`,
-      );
-    }
-
-    /* const childRow = mapColumnKeys(
-        _.filter(linkTableMetadata.columns, (c) => c.type !== 'link'),
-        response.data,
-    );*/
-
-// irgendwie die response loopen und zurückgeben!
-/*
-    return {name: filename, size: 0, type: "image", url: o};
-  }
-};
-*/
-
-/*
-    // handle each link field (if any)
-
-    // ich muss auch nicht die columns loopen...
-    for (const o of columns) {
-      const linkTableMetadata = columnLinkTableMetadata(o, bundle);
-      if (undefined === linkTableMetadata) {
-        continue;
-      }
-      const childIds = row[`column:${o.key}`];
-      if (!Array.isArray(childIds)) {
-        continue;
-      }
-      childIds.length = Math.min(
-          featureLinkColumnsData.childLimit,
-          childIds.length,
-      );
-
-      const children = [];
-      for (const childId of childIds) {
-        const linkTableCache = linkCache(linkTableMetadata._id);
-        const probe = linkTableCache.get(childId);
-        if (probe) {
-          children.push(probe);
-          continue;
-        }
-
-        const response = await z.request({
-          url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${childId}/`,
-          headers: {Authorization: `Token ${dtableCtx.access_token}`},
-          params: {table_id: linkTableMetadata._id},
-        });
-        if (!_.isObject(response.data)) {
-          throw new z.errors.Error(
-              `Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`,
-          );
-        }
-        const childRow = mapColumnKeys(
-            _.filter(linkTableMetadata.columns, (c) => c.type !== 'link'),
-            response.data,
-        );
-
-        linkTableCache.set(childId, childRow);
-        children.push(childRow);
-      }
-
-      if (children.length) {
-        rows[i][`column:${o.key}`] = children;
-      } else {
-        delete rows[i][`column:${o.key}`]; // remove parent key as it has no children
-      }
-    }
-  }
-  return row
-  */
-
-
-/**
- * replace column.type link references with row-data in rows
- *
- * for the first reference-id if any
- *
- * @param {ZObject} z
- * @param {Bundle} bundle
- * @param {Array<DTableColumn|DTableColumnTLink>} columns
- * @param {Array<{object}>} rows
- */
-const acquireLinkColumnsData = async (z, bundle, columns, rows) => {
-  const dtableCtx = bundle.dtable;
-
-  if (0 === rows.length) {
-    return rows;
-  }
-
-  const logTag = `[${bundle.__zTS}] acquireLinkColumnsData`;
-  z.console.time(logTag);
-
-  let totalRequestCount = 0;
-
-  const linkMap = new Map();
-  const mapMap = (m) => (a) => m.get(a) || m.set(a, new Map()).get(a);
-  const linkCache = mapMap(linkMap);
-
-  for (let i = 0, l = rows.length; i < l; i++) {
-    const row = rows[i];
-    // handle each link field (if any)
-    for (const o of columns) {
-      const linkTableMetadata = columnLinkTableMetadata(o, bundle);
-      if (undefined === linkTableMetadata) {
-        continue;
-      }
-      const childIds = row[`column:${o.key}`];
-      if (!Array.isArray(childIds)) {
-        continue;
-      }
-      childIds.length = Math.min(
-          featureLinkColumnsData.childLimit,
-          childIds.length,
-      );
-
-      const children = [];
-      for (const childId of childIds) {
-        const linkTableCache = linkCache(linkTableMetadata._id);
-        const probe = linkTableCache.get(childId);
-        if (probe) {
-          children.push(probe);
-          continue;
-        }
-
-        totalRequestCount++;
-        /** @type {ZapierZRequestResponse} */
-        const response = await z.request({
-          url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/${childId}/`,
-          headers: {Authorization: `Token ${dtableCtx.access_token}`},
-          params: {table_id: linkTableMetadata._id},
-        });
-        if (!_.isObject(response.data)) {
-          throw new z.errors.Error(
-              `Failed to retrieve table:${linkTableMetadata._id}:row:${childId}`,
-          );
-        }
-        const childRow = mapColumnKeys(
-            _.filter(linkTableMetadata.columns, (c) => c.type !== "link"),
-            response.data,
-        );
-        z.console.timeLog(
-            logTag,
-            `child row(${new ResponseThrottleInfo(response)}): ${
-              linkTableMetadata._id
-            }:row:${childId} (request=${totalRequestCount})`,
-        );
-        linkTableCache.set(childId, childRow);
-        children.push(childRow);
-      }
-
-      if (children.length) {
-        rows[i][`column:${o.key}`] = children;
-      } else {
-        delete rows[i][`column:${o.key}`]; // remove parent key as it has no children
-      }
-    }
-  }
-
-  totalRequestCount &&
-    z.console.timeLog(
-        logTag,
-        `requests=${totalRequestCount} rows=${rows.length}`,
-    );
-
-  return rows;
 };
 
 /**
@@ -694,6 +384,7 @@ const acquireTableMetadata = async (z, bundle) => {
  * @param {Bundle} bundle
  * @return {DTableTable}
  */
+/*
 function bundleTableMeta(bundle) {
   if (!bundle.dtable) {
     throw new Error("internal error: dtable not bundled");
@@ -704,81 +395,7 @@ function bundleTableMeta(bundle) {
   }
   return tableFromMetadata(dtableCtx.metadata, bundle.inputData.table_name);
 }
-
-/**
- * row filter
- *
- * dtable metadata to row filter in z, bundle context
- *
- * @param {ZObject} z
- * @param {Bundle} bundle
- * @param {string} context label for logging
- * @return {Promise<{filter_predicate: string, filter_term: string, column_name: null, filter_term_modifier: string}>}
- */
-const filter = async (z, bundle, context) => {
-  const f = {
-    column_name: null,
-    filter_predicate: "contains",
-    filter_term: bundle.inputData.search_value,
-    filter_term_modifier: "",
-  };
-  const tableMetadata = await acquireTableMetadata(z, bundle);
-  const sid = sidParse(bundle.inputData.search_column);
-  const col = _.find(tableMetadata.columns, ["key", sid.column]);
-  if (undefined === col) {
-    z.console.log(
-        `[${bundle.__zTS}] filter[${context}]: search column not found:`,
-        bundle.inputData.search_column,
-        sid,
-        tableMetadata.columns,
-    );
-    return f;
-  }
-  if (struct.columns.filter.not.includes(col.type)) {
-    z.console.log(
-        `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
-        col.type,
-    );
-    throw new z.errors.Error(
-        `Search in ${
-          struct.columns.types[col.type] || `[${col.type}]`
-        } field named "${
-          col.name
-        }" is not supported, please choose a different column.`,
-    );
-  }
-  f.column_name = col.name;
-  switch (col.type) {
-    case "text":
-    case "formula":
-      break;
-    case "number":
-      f.filter_predicate = "equal";
-      break;
-    case "auto-number":
-    case "checkbox":
-    case "single-select":
-    case "date":
-    case "ctime":
-    case "mtime":
-      f.filter_predicate = "is";
-      break;
-    case "multi-select":
-      f.filter_predicate = "has_any_of";
-      f.filter_term = [f.filter_term];
-      break;
-    case "creator":
-    case "last-modifier":
-      f.filter_term = [f.filter_term];
-      break;
-    default:
-      z.console.log(
-          `[${bundle.__zTS}] filter[${context}]: unknown column type (fall-through):`,
-          col.type,
-      );
-  }
-  return f;
-};
+*/
 
 /**
  * map table id or name onto metadata
@@ -863,133 +480,106 @@ function requestParamsSid(sid) {
 }
 
 /**
- * create an object w/ column key properties (column:<key> + row_id / row_mtime)
- * based on columns if column.name-ed property exists in row
- *
- * this is useful to obtain a row result guarded by the bound metadata and
- * also allows to control the columns (apart from _id and _mtime) in the
- * return object.
- *
- * doppeltes return ????
- * input file/image: https://stage.seatable.io/workspace/224/asset/c392d08d-5b00-4456-9217-2afb89e07a0c/files/2023-06/problem.png
- * input digi-signa: /digital-signs/2023-06/a5adebe279e04415a28b2c7e256e9e8d%40auth.local-1686908335767.png
+ * generate temporary public link and hydrate file
+ * requires internal link as input (possible for files, images and digital signatures)
  *
  * @param {ZObject} z
  * @param {Bundle} bundle
- * @param {object} URL
- * @return {object} distinguished column-key mapped row
+ * @param {string} url
+ * @return {object}
  */
-const downloadLink = async (z, bundle, URL) => {
+const getDownloadLinkFromPath = async (z, bundle, url) => {
+  let urlPath = url;
+  let seaTableAsset = false;
 
-  // extract file path from URL input
-  const dataFile = [];
-  for (const file of URL) {
-    const fileUrl = file.url;
-    const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
-        fileUrl,
-    )?.[1];
-    if (!urlPath) {
-      dataFile.push(fileUrl);
-      return dataFile;
-      // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
-    }
+  /**
+   * input is like:
+   * a) file (intern): https://stage.seatable.io/workspace/24/asset/c392d08d-.../files/2023-06/tests.docx
+   * b) image (intern): https://stage.seatable.io/workspace/24/asset/c392d08d-.../images/2023-06/problem.png
+   * c) digi-sign (intern): /digital-signs/2023-06/a5adebe279e04415a28b2c7e256e9e8d%40auth.local-1686908335767.png
+   * d) image (public available): https://seatable.io/wp-content/uploads/2021/09/seatable-logo.png
+   *
+   * a+b => extract path, get public link, hydrate
+   * c   => get public link, hydrate
+   * d   => hydrate
+   */
 
-    const downloadLinks = await z.request({
+  if (/\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.test(url)) {
+    urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(url)?.[1];
+    seaTableAsset = true;
+  }
+  if (/\/digital-signs\/[0-9a-f-]+(\/.*)/.test(url)) {
+    urlPath = url;
+    seaTableAsset = true;
+  }
+
+  // z.console.log("seaTableAsset", seaTableAsset);
+  // z.console.log("urlPath", urlPath);
+
+  // get public download link (temporary) - if needed
+  if (seaTableAsset) {
+    const downloadLink = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: "GET",
       headers: {Authorization: `Token ${bundle.authData.api_token}`},
     });
-    const data = downloadLinks.json;
+    const data = downloadLink.json;
+    // z.console.log("DEBUG: downloadLink.json", data);
     if (!data.download_link) {
-      throw new z.errors.Error(
-          `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`,
-      );
+      throw new z.errors.Error(`Failed to obtain asset download link for path '${urlPath}' of url '${url}'`);
     }
-    const downloadedUrl = data.download_link;
-    const hydratedUrl = z.dehydrateFile(stashFile, {
-      downloadUrl: downloadedUrl,
-    });
-    return hydratedUrl;
+    publicUrl = data.download_link;
+  } else {
+    publicUrl = urlPath;
   }
-  return dataFile;
-};
 
-const downloadSignLink = async (z, bundle, URL) => {
-  const urlPath = URL.sign_image_url;
-  if (!urlPath) {
-    return "error";
-  }
-  const downloadLinks = await z.request({
-    url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
-    method: "GET",
-    headers: {Authorization: `Token ${bundle.authData.api_token}`},
-  });
-  const data = downloadLinks.json;
-  if (!data.download_link) {
-    throw new z.errors.Error(
-        `Failed to obtain asset download link for path '${urlPath}'`,
-    );
-  }
-  const downloadedUrl = data.download_link;
+  // return hydrated file and download link
+  // const publicUrl = data.download_link;
   const hydratedUrl = z.dehydrateFile(stashFile, {
-    downloadUrl: downloadedUrl,
+    downloadUrl: publicUrl,
   });
-  return hydratedUrl;
+  return {publicUrl, hydratedUrl};
 };
 
 
-const downloadImageLink = async (z, bundle, URL) => {
-  const dataFile = [];
-  for (const file of URL) {
-    const fileUrl = file;
-    const urlPath = /\/workspace\/\d+\/asset\/[0-9a-f-]+(\/.*)/.exec(
-        fileUrl,
-    )?.[1];
-    if (!urlPath) {
-      dataFile.push(fileUrl);
-      return dataFile;
-      // throw new z.errors.Error(`Failed to extract path from url '${fileUrl}'`);
-    }
-    const collaborator = await z.request({
-      url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
-      method: "GET",
-      headers: {Authorization: `Token ${bundle.authData.api_token}`},
-    });
-    const data = collaborator.json;
-    if (!data.download_link) {
-      throw new z.errors.Error(
-          `Failed to obtain asset download link for path '${urlPath}' of url '${fileUrl}'`,
-      );
-    }
-    const downloadedUrl = data.download_link;
-    const hydratedUrl = z.dehydrateFile(stashFile, {
-      downloadUrl: downloadedUrl,
-    });
-    return hydratedUrl;
-  }
-  return dataFile;
-};
+/**
+ * Transforms the result of api call to get rows into the correct output format.
+ *
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @param {Object} columns
+ * @param {??} row
+ * @returns
+ */
 
-const mapColumnKeys = async (z, bundle, columns, row) => {
+const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
 
   // step 1: implicit row properties
   // (_id becomes row_id, _mtime becomes row_mtime)
-  const implicit = ["_id", "_mtime"];
+  const implicit = ["_id", "_mtime", "_ctime"];
   for (const p of implicit) {
     if (hop(row, p)) {
       r[`row${p}`] = row[p];
     }
   }
 
-  // step 2: column.name
-  // Name becomes column:8hzP
-  // _ctime becomes: column:_ctime
+  // step 2: walk all columns.
+  // replace column names with column:{column_key}
+  // enhance columns
+
+  // collaborator regex
+  const regex = /^\w{32}@auth\.local$/;
+
   for (const c of columns) {
     if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
-      const regex = /^\w{32}@auth\.local$/;
       const v = row[c.name];
+
+      // ignore _ctime and _mtime
+      if ("_ctime" === c.key || "_mtime" === c.key) {
+        continue;
+      }
 
       // Collaborator
       if ("collaborator" === c.type && regex.test(v[0])) {
@@ -997,54 +587,57 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
         continue;
       }
 
-      // Digital-signature
-      if ("digital-sign" === c.type && regex.test(v['username'])) {
-        const collaboratorInfo = await getCollaboratorData(z, bundle, [v['username']]);
-        r[`column:${c.key}`] = { ...v, ...collaboratorInfo[0] };
-        if (bundle.inputData.feature_non_authorized_asset_downloads) { // get public access
-          r[`column:${c.key}`].asset = await downloadSignLink(z, bundle, v);
-        }
-        continue;
-      }
-
       // Creator + Modifier   // hier doppelte Abfrage der User-Liste -> vermeiden!
-      if ("last-modifier" === c.type || "creator" === c.type){
+      if ("last-modifier" === c.type || "creator" === c.type) {
         if (regex.test(v)) {
           r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
           continue;
         }
       }
 
-      // Files
+      // Files (can contain multiple files)
       if ("file" === c.type) {
-        if (bundle.inputData.feature_non_authorized_asset_downloads) { // get public access
-          v[0].asset = await downloadLink(z, bundle, v);
+        // attach publicUrl and asset if requested.
+        if (bundle.inputData.feature_non_authorized_asset_downloads) {
+          for (const file of v) {
+            const pubFile = await getDownloadLinkFromPath(z, bundle, file.url);
+            // z.console.log("DEBUG pubFile", pubFile);
+            file.publicUrl = pubFile.publicUrl;
+            file.asset = pubFile.hydratedUrl;
+          }
         }
         r[`column:${c.key}`] = v;
         continue;
       }
 
-      // MISSING: HANDLING OF MULTIPLE IMAGES! Split ...
-      // anders als bei files. dort habe ich schon zwei objekte. BEi images habe ich alles in einem
-
-      // Image
+      // Image (can contain multiple images)
       if ("image" === c.type) {
-        // const o = v; // getImageData expects o ?!?
-        xx = getImageData(v);
-        if (bundle.inputData.feature_non_authorized_asset_downloads) { // get public access
-          xx[0].asset = await downloadImageLink(z, bundle, v);
+        // enhance the image output in general
+        const vv = getImageData(v);
+
+        // attach publicUrl and asset if requested.
+        if (bundle.inputData.feature_non_authorized_asset_downloads) {
+          for (const file of vv) {
+            const pubFile = await getDownloadLinkFromPath(z, bundle, file.url);
+            file.publicUrl = pubFile.publicUrl;
+            file.asset = pubFile.hydratedUrl;
+          }
         }
-        r[`column:${c.key}`] = xx;
+        r[`column:${c.key}`] = vv;
         continue;
       }
 
-      // get values from links
-      /* if ('link' === c.type) {
-        z.console.log("das ist link spalte", v);
-        r[`column:${c.key}`] = row[c.name];
-        //r[`column:${c.key}`] = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
+      // Digital-signature (can only be one)
+      if ("digital-sign" === c.type && regex.test(v["username"])) {
+        const collaboratorInfo = await getCollaboratorData(z, bundle, [v["username"]]);
+        r[`column:${c.key}`] = {...v, ...collaboratorInfo[0]};
+        if (bundle.inputData.feature_non_authorized_asset_downloads) {
+          const pubFile = await getDownloadLinkFromPath(z, bundle, v["sign_image_url"]);
+          r[`column:${c.key}`].publicUrl = pubFile.publicUrl;
+          r[`column:${c.key}`].asset = pubFile.hydratedUrl;
+        }
         continue;
-      }*/
+      }
 
       // all other columns
       r[`column:${c.key}`] = row[c.name];
@@ -1053,11 +646,15 @@ const mapColumnKeys = async (z, bundle, columns, row) => {
   return r;
 };
 
+
+// ?? kommt von get_row_of_a_table.js ?? warum brauche ich das??
+// ??
+
 const mapColumnKeysRow = async (columns, row) => {
   const r = {};
   const hop = (a, b) => Object.prototype.hasOwnProperty.call(a, b);
   // step 1: implicit row properties
-  const implicit = ["_id", "_mtime"];
+  const implicit = ["_id", "_mtime", "_ctime"];
   for (const p of implicit) {
     if (hop(row, p)) {
       r[`row${p}`] = row[p];
@@ -1113,6 +710,7 @@ const mapCreateRowKeys = async (z, bundle, row) => {
  * @param {Bundle} bundle
  * @return {DTableTable}?
  */
+/*
 const columnLinkTableMetadata = (col, bundle) => {
   if (
     col.type !== "link" ||
@@ -1128,6 +726,7 @@ const columnLinkTableMetadata = (col, bundle) => {
       col.data.other_table_id;
   return _.find(bundle.dtable.metadata.tables, ["_id", linkTableId]);
 };
+*/
 
 /**
  * standard output fields based on the bundled table meta-data
@@ -1152,6 +751,7 @@ const outputFieldsRows = function* (columns, bundle) {
         {key: `${f.key}[]email`, label: `${col.name}: Email`},
       ];
       f.children = children;
+      // here no continue;
     }
 
     if ( col.type === "button") {
@@ -1169,43 +769,23 @@ const outputFieldsRows = function* (columns, bundle) {
         {key: `${f.key}[]name`, label: `${col.name}: File name`},
         {key: `${f.key}[]size`, label: `${col.name}: File size`},
         {key: `${f.key}[]type`, label: `${col.name}: File type`},
-        {key: `${f.key}[]url`, label: `${col.name}: File URL`},
-        {key: `${f.key}[]asset`, label: `${col.name}: File (temp. available)`},
+        {key: `${f.key}[]url`, label: `${col.name}: File URL (requires Auth.)`},
+        {key: `${f.key}[]publicUrl`, label: `${col.name}: File URL (temp. available)`},
+        {key: `${f.key}[]asset`, label: `${col.name}: File Asset`},
       ];
       f.children = children;
     }
 
     if ( col.type === "digital-sign" ) {
       yield {key: `${f.key}__sign_time`, label: `${col.name}: Username`};
-      yield {key: `${f.key}__sign_image_url`, label: `${col.name}: Signature image URL`};
+      yield {key: `${f.key}__sign_image_url`, label: `${col.name}: Signature image URL (requires Auth.)`};
+      yield {key: `${f.key}__publicUrl`, label: `${col.name}: Signature image URL (temp. available.)`};
       yield {key: `${f.key}__username`, label: `${col.name}: Username`};
       yield {key: `${f.key}__email`, label: `${col.name}: Email`};
       yield {key: `${f.key}__name`, label: `${col.name}: Signed by`};
       yield {key: `${f.key}__asset`, label: `${col.name}: Signature (image)`};
       continue;
     }
-
-    // unten durch das hier ersetzen...
-    if ( col.type === "link") {
-    }
-
-    // link field handling
-    /*
-    const linkTableMetadata = columnLinkTableMetadata(col, bundle);
-    if (undefined !== linkTableMetadata) {
-      const children = [
-        {key: `${f.key}[]row_id`, label: `${col.name}: ID`},
-        {key: `${f.key}[]row_mtime`, label: `${col.name}: Last Modified`,},
-      ];
-      for (const c of linkTableMetadata.columns) {
-        if (c.type === 'link') continue;
-        children.push({
-          key: `${f.key}[]column:${c.key}`,
-          label: `${col.name}: ${c.name}`,
-        });
-      }
-      f.children = children;
-    }*/
 
     yield f;
   }
@@ -1230,7 +810,7 @@ const tableView = async (z, bundle) => {
     required: false,
     type: "string",
     label: "View",
-    helpText: "You can optionally pick a view of the table.",
+    helpText: "",
     altersDynamicFields: true,
   };
   // input choices
@@ -1269,7 +849,7 @@ const tableFields = async (z, bundle) => {
       key: "table_name",
       required: true,
       label: "Table",
-      helpText: "Pick a SeaTable table for your new row trigger.",
+      helpText: "*Note:* This trigger checks only the first 1000 rows. If your table has more rows, please select a view and make sure that this view has either less than 1000 rows or that the newest entries are sorted to the top.",
       type: "string",
       dynamic: "get_tables_of_a_base.id.name",
       altersDynamicFields: true,
@@ -1359,7 +939,9 @@ const getCollaborator = async (z, bundle, value) => {
   return collData;
 };
 
+// doppelt zum vorherigen??
 const getCollaboratorData = async (z, bundle, value) => {
+  // z.console.log("DEBUG collaborator", value);
   const collaboratorUsers = value;
   const collaborator = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
@@ -1382,10 +964,6 @@ const getCollaboratorData = async (z, bundle, value) => {
   );
   return collData;
 };
-
-// diese pauschale suche funktioniert nicht, weil er dann die erstbeste findet!
-// diese funktion erzeugt die bodyData für den tatsächlichen request.
-//
 
 const linkRecord = async (z, bundle, key, col) => {
   // get metadata
@@ -1519,13 +1097,26 @@ const getUpdateColumns = (columns, bundle) => {
 };
 
 
+// fallback image file name
+const getImageFilenameFromUrl = (url, fallback = "Unnamed attachment") => {
+  const lastPart = url.split("/")?.pop();
+  if (!lastPart || "string" !== typeof lastPart) {
+    return fallback;
+  }
+  const uploadFilename = decodeURIComponent(lastPart);
+  if (!uploadFilename || "string" !== typeof uploadFilename) {
+    return fallback;
+  }
+  return /^.+\.[a-zA-Z0-9]{3,4}$/.test(uploadFilename) ? uploadFilename : fallback;
+};
+
+
 module.exports = {
   acquireServerInfo,
   acquireDtableAppAccess,
-  acquireLinkColumnsData,
   acquireMetadata,
   acquireTableMetadata,
-  filter,
+  // filter,
   tableNameId,
   getCollaborator,
   getCollaboratorData,
@@ -1533,15 +1124,15 @@ module.exports = {
   getBundledViewColumns,
   getImageData,
   getCollAndImage,
-  mapColumnKeys,
+  mapColumnKeysAndEnhanceOutput,
   mapColumnKeysRow,
   mapCreateRowKeys,
   requestParamsSid,
   requestParamsBundle,
-  downloadLink,
-  downloadImageLink,
+  getDownloadLinkFromPath,
+  // getDownloadImageLink,
+  // downloadSignLink,
   linkRecord,
-  // linkCreateRecord,
   linkRequest,
   sidParse,
   struct,
@@ -1549,6 +1140,7 @@ module.exports = {
   tableView,
   // standard
   outputFieldsRows,
+  getImageFilenameFromUrl,
   // noAuthLinks
   FEATURE_NO_AUTH_ASSET_LINKS: _CONST.FEATURE_NO_AUTH_ASSET_LINKS,
   // acquireFileNoAuthLinks,

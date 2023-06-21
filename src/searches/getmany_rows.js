@@ -130,12 +130,14 @@ module.exports = {
   },
 
   sample: {
-    id: 1,
-    name: "Test",
+    "id": "N33qMZ-JQTuUlx_DiF__lQ",
+    "row_id": "N33qMZ-JQTuUlx_DiF__lQ",
+    "name": "Test",
   },
 
   outputFields: [
     {key: "id", label: "ID"},
+    {key: "row_id", label: "Row ID"},
     {key: "name", label: "Name"},
   ],
 };

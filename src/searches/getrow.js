@@ -32,12 +32,13 @@ const perform = async (z, bundle) => {
 
     // enhance collaborators and images
     const RowMetadata = response.json["metadata"];
-    for (const {name, type} of RowMetadata) {
-      if (type === "collaborator") {
-        f[name] = await ctx.getCollaboratorData(z, bundle, f[name]);
+    z.console.log("DEBUG RowMetadata", RowMetadata);
+    for (const {key, type} of RowMetadata) {
+      if (type === "collaborator" && f[key]) {
+        f["name"] = await ctx.getCollaboratorData(z, bundle, f[key]);
       }
-      if (type === "image") {
-        f[name] = ctx.getImageData(f[name]);
+      if (type === "image" && f[key]) {
+        f["name"] = ctx.getImageData(f[key]);
       }
     }
 
@@ -149,7 +150,7 @@ module.exports = {
     // from the API, Zapier will fallback to this hard-coded sample. It should reflect the data structure of
     // returned records, and have obvious placeholder values that we can show to any user.
     sample: {
-      id: 1,
+      id: "adf1",
       name: "Test",
     },
 

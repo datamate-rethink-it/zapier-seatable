@@ -1,8 +1,21 @@
-// const ctx = require("./ctx"); brauche ich anscheinend nicht.
+const ctx = require("./ctx");
+
+/**
+ * Get serverInformation and validate the access-token...
+ * (only necessary for initial authentication)
+ *
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {Promise<{serverInfo: {access_token: string, workspace_id: number, app_name: string, dtable_server: string, metadata: DTableMetadataTables, dtable_name: string, dtable_socket: string, dtable_uuid: string, server_address: string}, dtable: Object}>}
+ */
+const test = async (z, bundle) => {
+  const serverInfo = await ctx.acquireServerInfo(z, bundle);
+  const accessToken = await ctx.acquireDtableAppAccess(z, bundle);
+  return {serverInfo, dtable: accessToken};
+};
 
 /**
  * describe the connection
- *
  * SeaTable server name, version and variant in use for the zap.
  *
  * @param {ZObject} z
@@ -12,17 +25,14 @@
 const connectionLabel = (z, bundle) => {
   // remove https:// in front (but keep the non-secure to show)
   const address = bundle.authData.server.replace(/^https:\/\//, "").replace(/\/+$/, "");
-  const {serverInfo, dtable} = bundle.inputData;
-  const editionAbbreviated = serverInfo.edition.replace("enterprise edition", "EE");
-
-  return `${address} (${serverInfo.version} ${editionAbbreviated}) ${dtable?.dtable_name} (${dtable?.app_name})`;
+  // const {serverInfo, dtable} = bundle.inputData;
+  // const editionAbbreviated = serverInfo.edition.replace("enterprise edition", "EE");
+  return `| ${address} | ${dtable?.dtable_name} | ${dtable?.app_name}`;
 };
 
 module.exports = {
   type: "custom",
-  test: {
-    require: "src/authenticationFunctionRequire.js",
-  },
+  test,
   fields: [
     {
       computed: false,

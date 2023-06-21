@@ -1,8 +1,6 @@
-const _CONST = require("../const");
 const ctx = require("../ctx");
-const {ResponseThrottleInfo} = require("../lib");
-// const {ZapBundle} = require("../ctx/ZapBundle");
 const _ = require("lodash");
+// const {ResponseThrottleInfo} = require("../lib");
 
 /**
  * perform
@@ -14,14 +12,17 @@ const _ = require("lodash");
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
+  // add dtable to bundle
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
-  //
+
   // const zb = new ZapBundle(z, bundle);
-  //
-  const logTag = `[${bundle.__zTS}] triggers.row_update`;
+  // const logTag = `[${bundle.__zTS}] triggers.row_update`;
   // z.console.time(logTag);
 
-  /** @type {ZapierZRequestResponse} */
+  /**
+   * get rows or the table (max 1.000 rows)
+   * @type {ZapierZRequestResponse}
+   * */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/`,
     headers: {Authorization: `Token ${dtableCtx.access_token}`},
@@ -29,8 +30,6 @@ const perform = async (z, bundle) => {
   });
 
   let rows = response.data.rows;
-  // z.console.log("DEBUG rows", rows);
-
   const meta = bundle.meta;
 
   // z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`);
@@ -38,40 +37,29 @@ const perform = async (z, bundle) => {
     return rows;
   }
 
+  // limit payload size
+  // https://platform.zapier.com/docs/constraints#payload-size-triggers
   rows = _.orderBy(rows, ["_mtime"], ["desc"]);
   if (meta && meta.isLoadingSample) {
     rows.splice(meta.limit || 3);
   }
 
+  // transform the results and enhance the return values
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-
-  // z.console.log("VOR mapColumnKeys", rows);
-
-  /**
-   * OUTPUT TRANSFORMATION (mapColumnKeys)
-   *
-   * - enrich the output: Collaborators, Images/Files, Links
-   * - rewrite the keys from like "Name:" to "column:8hzP:"
-   * - different behaviour depending of fileNoAuthLinksField (true|false)
-   *
-   */
-
   rows = await Promise.all(_.map(rows, async (o) => {
-    const transformedObj = await ctx.mapColumnKeys(z, bundle, tableMetadata.columns, o);
+    const transformedObj = await ctx.mapColumnKeysAndEnhanceOutput(z, bundle, tableMetadata.columns, o);
     transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;
     return transformedObj;
   }));
 
-  // z.console.log("NACH mapColumnKeys", rows);
-
-  // test neu zum aufbauen der links?? -> alles über linked columns
-  // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
-  // z.console.log("LINKS mapColumnKeys", rows);
-
   // this is only relevant for row_update.js
+  // läuft soweit ich das sehen kann, nie.
+  // kann wahrscheinlich weg.
+  /*
   const unfilteredLength = rows.length;
   const featureMTime = _CONST.FEATURE[_CONST.FEATURE_MTIME_FILTER] || undefined;
   if (featureMTime && featureMTime.enabled) {
+    z.console.log("row update mttime filter", featureMTime.enabled)
     if (bundle._testFeature && bundle._testFeature[_CONST.FEATURE_MTIME_FILTER]) {
       if (bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].captureRowsBeforeFilter) {
         bundle._testFeature[_CONST.FEATURE_MTIME_FILTER].capturedRows = rows;
@@ -87,8 +75,8 @@ const perform = async (z, bundle) => {
     });
     // z.console.timeLog(logTag, `filtered rows length: ${rows.length} (offset=${unfilteredLength - rows.length} minutes=${mTimeFilterMinutes})`);
   }
+  */
 
-  // z.console.timeLog(logTag, `rows length: ${rows && rows.length}`);
   return rows;
 };
 

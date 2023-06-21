@@ -1,5 +1,4 @@
 const ctx = require("../ctx");
-// const {sidParse} = require("../lib/sid"); brauche ich anscheinend nicht
 const _ = require("lodash");
 const {ZapBundle} = require("../ctx/ZapBundle");
 
@@ -8,10 +7,6 @@ const {ZapBundle} = require("../ctx/ZapBundle");
  *
  * creates (appends) a new row in table
  * input data is like column:8hzP: ABC, this has to be transformed to Adress: ABC and then saved to map.
- *
- * WAS NICHT GEHT: FILE + IMAGE HANDLING + LINKS !!!!!!!!!
- *
- *
  *
  * @param {ZObject} z
  * @param {Bundle} bundle
@@ -25,7 +20,7 @@ const perform = async (z, bundle) => {
 
   // z.console.log("Debug inputData", inputData);
 
-  // Enhance the columns: collaborators + links
+  // Enhance the columns: collaborators
   for (const {key, name, type} of tableMetadata.columns) {
     if (type === "collaborator") {
       const value =[inputData && inputData[`column:${key}`]];
@@ -60,10 +55,8 @@ const perform = async (z, bundle) => {
 
   /* row existiert, jetzt wird erweitert mit links und images/files */
 
-
   // file + image upload + links
   // const fileUploader = zb.fileUploader();
-
 
   // for (const {key, name, type} of tableMetadata.columns) {
   for (const col of ctx.getUpdateColumns(tableMetadata.columns, bundle)) {
@@ -94,6 +87,7 @@ const perform = async (z, bundle) => {
     row_id: rowId,
   };
 
+  // update the column
   /** @type {ZapierZRequestResponse} */
   await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/rows`,

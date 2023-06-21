@@ -1,6 +1,6 @@
 const ctx = require("../ctx");
 const _ = require("lodash");
-const {ResponseThrottleInfo} = require("../lib");
+// const {ResponseThrottleInfo} = require("../lib");
 
 /**
  * perform
@@ -12,20 +12,26 @@ const {ResponseThrottleInfo} = require("../lib");
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
+  // add dtable to bundle
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
 
-  const logTag = `[${bundle.__zTS}] triggers.row_create`;
+  // const logTag = `[${bundle.__zTS}] triggers.row_create`;
   // z.console.time(logTag);
 
-  /** @type {ZapierZRequestResponse} */
+  /**
+   * get rows of the table
+   * @type {ZapierZRequestResponse}
+   * */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/`,
     headers: {Authorization: `Token ${dtableCtx.access_token}`},
     params: ctx.requestParamsBundle(bundle),
   });
 
-  let rows = response.data.rows;
+  // z.console.log("row_create params", ctx.requestParamsBundle(bundle));
+  // z.console.log("row result", response.data.rows.length);
 
+  let rows = response.data.rows;
   const meta = bundle.meta;
 
   // z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`);
@@ -33,20 +39,20 @@ const perform = async (z, bundle) => {
     return rows;
   }
 
+  // limit payload size
+  // https://platform.zapier.com/docs/constraints#payload-size-triggers
   rows.reverse();
   if (meta && meta.isLoadingSample) {
     rows.splice(meta.limit || 3);
   }
 
+  // transform the results and enhance the return values
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-
   rows = await Promise.all(_.map(rows, async (o) => {
-    const transformedObj = await ctx.mapColumnKeys(z, bundle, tableMetadata.columns, o);
+    const transformedObj = await ctx.mapColumnKeysAndEnhanceOutput(z, bundle, tableMetadata.columns, o);
     transformedObj.id = `${transformedObj.row_id}`;
     return transformedObj;
   }));
-  // rows = await ctx.acquireFileNoAuthLinks(z, bundle, tableMetadata.columns, rows);
-  // rows = await ctx.acquireLinkColumnsData(z, bundle, tableMetadata.columns, rows);
   // z.console.log("DEBUG rows for row_create", rows);
 
   return rows;
@@ -60,7 +66,6 @@ const perform = async (z, bundle) => {
  */
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
-
   return [
     {key: "row_id", label: "Original ID"},
     {key: "row_mtime", label: "Last Modified"},

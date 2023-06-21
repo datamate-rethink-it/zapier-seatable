@@ -47,8 +47,9 @@ const handleForbiddenBaseAccess = (response, z) => {
   }
 
   z.console.log(`handleForbiddenBaseAccess(${response.request.method} ${response.request.url} ${response.status})`);
-  throw new z.errors.ExpiredAuthError(_CONST.STRINGS["seatable.error.base-forbidden"]);
+  throw new z.errors.ExpiredAuthError("Your API Key is invalid. Please reconnect your account.");
 };
+
 
 /**
  * handleDeletedBaseAccess
@@ -73,9 +74,8 @@ const handleDeletedBaseAccess = (response, z) => {
   ) {
     return response;
   }
-
-  z.console.log(`handleDeletedBaseAccess(${response.request.method} ${response.request.url} ${response.status})`);
-  throw new z.errors.ExpiredAuthError(_CONST.STRINGS["seatable.error.base-deleted"](JSON.stringify(reRes[2])));
+  // z.console.log(`handleDeletedBaseAccess(${response.request.method} ${response.request.url} ${response.status})`);
+  throw new z.errors.ExpiredAuthError(`The SeaTable base ${JSON.stringify(reRes[2])} has been deleted. If deletion was unindented, restore the base from trash. If the base has moved, provide a new API-Token and reconnect the Zap.`);
 };
 
 const handleHTTPError = (response, z) => {

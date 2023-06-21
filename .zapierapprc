@@ -1,5 +1,4 @@
 {
   "id": 111331,
-  "key": "SeaTable",
-  "includeInBuild": ["src/authenticationFunctionRequire.js", "src/ctx/ZapBundleFileUploader.js"]
+  "key": "SeaTable"
 }
