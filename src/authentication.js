@@ -26,8 +26,10 @@ const connectionLabel = (z, bundle) => {
   // remove https:// in front (but keep the non-secure to show)
   const address = bundle.authData.server.replace(/^https:\/\//, "").replace(/\/+$/, "");
   // const {serverInfo, dtable} = bundle.inputData;
+  // const dtable = bundle.inputData;
+  z.console.log("DEBUG bundle in auth", bundle);
   // const editionAbbreviated = serverInfo.edition.replace("enterprise edition", "EE");
-  return `${address} | ${dtable?.dtable_name} | ${dtable?.app_name}`;
+  return `${address} (${bundle.inputData.dtable.dtable_name})`; // optional: ${dtable?.app_name}
 };
 
 module.exports = {

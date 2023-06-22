@@ -50,7 +50,6 @@ const handleForbiddenBaseAccess = (response, z) => {
   throw new z.errors.ExpiredAuthError("Your API Key is invalid. Please reconnect your account.");
 };
 
-
 /**
  * handleDeletedBaseAccess
  *
@@ -89,11 +88,24 @@ const handleHTTPError = (response, z) => {
   if (response.status < 400) {
     return response;
   }
-  if (response.status === 401) {
+  if (response.status === 400) { // bad request
+    // link-column: wrong row_id
+    if (response.data.error_type && response.data.error_type === "row_not_exist") {
+      throw new z.errors.Error("A link could not be created: one of your row ids to create a link must be wrong.", "InvalidData", 400);
+    }
+    // fallback: something went wrong
+    throw new z.errors.Error(`Something went wrong. Please check your input data. This error message might help you: ${response.data}`, "InvalidData", 400);
+  }
+  if (response.status === 401) { // unauthorized
     throw new z.errors.RefreshAuthError();
   }
-  if (response.status === 403) {
-    throw new Error(_CONST.STRINGS["http.error.status403"]);
+  if (response.status === 403) { // forbidden
+    // No permission with this api-key (e.g. read-only)
+    if (response.data.error_msg && response.data.error_msg === "You don't have permission to perform this operation on this base.") {
+      throw new z.errors.Error("This Zap is not allowed to talk to SeaTable. Your API-Token might be read-only?", "Forbidden", 403);
+    }
+    // fallback: not allowed
+    throw new z.errors.Error(`You are not allowed to do this. Please check your API-Token and re-authenticate. This error message might help you: ${response.data}`, "Forbidden", 403);
   }
   if (response.status === 429) {
     /* @link https://zapier.github.io/zapier-platform/#handling-throttled-requests */

@@ -82,7 +82,7 @@ const struct = {
       "date": "Zapier tries to interpret any date or time you provide. Input like \"today\" or a timestamp are allowed.",
       "single-select": "Single select column only accepts existing options.",
       "image": "Add a picture or a public reachable URL. Only png, jpg, jpeg or gif are allowed.",
-      "file": "Add a file, a public reachable URL or any string (Zapier will turn text into a .txt file and upload it)",
+      "file": "Add a file, a public reachable URL or any string (Zapier will turn text into a .txt file and upload it).",
       "multiple-select": "Add one or multiple existings option. Separat the options from each other by a space.",
       "collaborator": "Please enter the email adress of a user. The name or the @auth.local user id will not work.",
       "url": "",
@@ -925,27 +925,6 @@ const tableNameId = async (z, bundle, context) => {
   }
 };
 
-/*
-const getCollaborator = async (z, bundle, value) => {
-  const collaboratorEmail = value;
-  const collaborator = await z.request({
-    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
-    method: "GET",
-    headers: {Authorization: `Token ${bundle.dtable.access_token}`},
-  });
-  const collaboratorData = collaborator.json.user_list;
-  const collData = _.map(
-      _.filter(collaboratorData, (o) => {
-        return o.contact_email === collaboratorEmail;
-      }),
-      (o) => {
-        return o.email;
-      },
-  );
-  return collData;
-};
-*/
-
 
 /**
  * Helper function to get collaborators only once.
@@ -970,6 +949,23 @@ const acquireCollaborators = async (z, bundle) => {
   // z.console.log("DEBUG collaborators per api", response.data);
   bundle.dtable.collaborators = response.data;
   return response.data;
+};
+
+// input ist cdb@seatable.io
+// output ist xxx@auth.local
+const getCollaborator = async (z, bundle, value) => {
+  const collaborators = await acquireCollaborators(z, bundle);
+  const collaboratorEmail = value;
+  const collaboratorData = collaborators.user_list;
+  const collData = _.map(
+      _.filter(collaboratorData, (o) => {
+        return o.contact_email === collaboratorEmail;
+      }),
+      (o) => {
+        return o.email;
+      },
+  );
+  return collData;
 };
 
 
@@ -1151,7 +1147,7 @@ module.exports = {
   acquireTableMetadata,
   // filter,
   tableNameId,
-  // getCollaborator,
+  getCollaborator,
   getCollaboratorData,
   getUpdateColumns,
   getBundledViewColumns,

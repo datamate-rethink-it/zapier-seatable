@@ -30,8 +30,7 @@ const perform = async (z, bundle) => {
 
     if (col.type === "collaborator") {
       if (value) {
-        // hier habe ich ausgetauscht mit getCollaborator
-        map[col.name] = await ctx.getCollaboratorData(z, bundle, value);
+        map[col.name] = await ctx.getCollaborator(z, bundle, value);
         continue;
       } else {
         continue;
