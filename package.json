@@ -1,6 +1,6 @@
 {
   "name": "seatable",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "description": "SeaTable is a web based table-database hybrid. SeaTable is a flexible tool for your team, complete overview and better collaboration. SeaTable is the building block for your ideas.",
   "main": "index.js",
   "scripts": {
