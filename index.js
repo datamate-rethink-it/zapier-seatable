@@ -12,6 +12,7 @@ const getViewsOfATableOfAView = require("./src/triggers/get_views_of_a_table_of_
 /* Create */
 const createRow = require("./src/creates/row");
 const createRowUpdate = require("./src/creates/row_update");
+const createApiRequest = require("./src/creates/api_request");
 /* Search */
 const getmanyRowsResource = require("./src/searches/getmany_rows");
 const findGetrow = require("./src/searches/getrow");
@@ -90,11 +91,20 @@ const handleHTTPError = (response, z) => {
   }
   if (response.status === 400) { // bad request
     // link-column: wrong row_id
-    if (response.data.error_type && response.data.error_type === "row_not_exist") {
-      throw new z.errors.Error("A link could not be created: one of your row ids to create a link must be wrong.", "InvalidData", 400);
+    if (typeof response.data.error_type !== "undefined"){
+      if (response.data.error_type === "row_not_exist") {
+        throw new z.errors.Error("A link could not be created: one of your row ids to create a link must be wrong.", "InvalidData", 400);
+      }
+    } 
+    let error_message = response.data;
+    if (typeof response.data.error_msg !== "undefined") {
+      error_message = response.data.error_msg
+    }
+    else if (typeof response.data.error_message !== "undefined") {
+      error_message = response.data.error_message;
     }
     // fallback: something went wrong
-    throw new z.errors.Error(`Something went wrong. Please check your input data. This error message might help you: ${response.data}`, "InvalidData", 400);
+    throw new z.errors.Error(`Something went wrong. Please check your input data. This error message might help you: ${error_message}`, "InvalidData", 400);
   }
   if (response.status === 401) { // unauthorized
     throw new z.errors.RefreshAuthError();
@@ -106,6 +116,9 @@ const handleHTTPError = (response, z) => {
     }
     // fallback: not allowed
     throw new z.errors.Error(`You are not allowed to do this. Please check your API-Token and re-authenticate. This error message might help you: ${response.data}`, "Forbidden", 403);
+  }
+  if (response.status === 404) { // not found
+    throw new z.errors.Error("404 Not found. Please check if the target URL and HTTP Method is correct.", "Not found", 404);
   }
   if (response.status === 429) {
     /* @link https://zapier.github.io/zapier-platform/#handling-throttled-requests */
@@ -165,6 +178,7 @@ module.exports = {
   creates: {
     [createRow.key]: createRow,
     [createRowUpdate.key]: createRowUpdate,
+    [createApiRequest.key]: createApiRequest,
   },
 
   searches: {
