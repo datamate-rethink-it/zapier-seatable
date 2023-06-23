@@ -223,7 +223,7 @@ module.exports = {
         key: "table_row",
         required: true,
         label: "Row",
-        helpText: "Select row to update (by default column).",
+        helpText: "Select provide the id of the row you want to update. You can not enter the value of the row. In this case add a search step to get the id of the row.",
         type: "string",
         dynamic: "get_row_of_a_table.id.name",
         search: "getrow.id",
