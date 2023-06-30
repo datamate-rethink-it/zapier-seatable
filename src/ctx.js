@@ -132,56 +132,6 @@ const struct = {
   },
 };
 
-/**
- * zap initializer hook for bundle in ctx
- *
- * @param {ZObject} z
- * @param {Bundle} bundle
- * @return {string} bundle rolling transaction id
- */
-function zapInitHookBundle(z, bundle) {
-  if (bundle.__zTS) {
-    return bundle.__zTS;
-  }
-
-  /**
-   * bundle init start time
-   *
-   * @type {number} of milliseconds since 1 January 1970 00:00:00 UTC
-   */
-  bundle.__zT = new Date().valueOf();
-
-  /**
-   * bundle rolling transaction id
-   *
-   * @type {string} 6-character width flake of the bundle transaction
-   */
-  bundle.__zTS = "".concat(String(bundle.__zT % 1000000)).padStart(6, " ");
-
-  /**
-   * bundle zap log-tag
-   *
-   * @type {string} zap log-tag "[<z-ts>] zap", always 12 characters
-   */
-  bundle.__zLogTag = `[${bundle.__zTS}] zap`;
-  // z.console.time(bundle.__zLogTag);
-
-  return bundle.__zTS;
-}
-
-/**
- * zap initializer in ctx
- *
- * @param {ZObject} z
- * @param {Bundle} bundle
- * @return {string}
- */
-function zapInit(z, bundle) {
-  // remove trailing slash (common user input error)
-  bundle.authData.server = bundle.authData.server.replace(/\/+$/, "");
-
-  return zapInitHookBundle(z, bundle);
-}
 
 /**
  * !! ALWAYS USE acquireServerInfo instead of serverInfo to avoid multiple requests !!
@@ -191,8 +141,6 @@ function zapInit(z, bundle) {
  * @return {Promise<{}>}
  */
 async function serverInfo(z, bundle) {
-  zapInit(z, bundle);
-
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/server-info/`,
@@ -254,12 +202,6 @@ async function appAccessToken(z, bundle) {
   for (const property of properties) {
     dtable[property] = response.data[property];
   }
-  /*
-  const serverInfo = bundle.serverInfo;
-  z.console.timeLog(
-      bundle.__zLogTag,
-      `app(${dtable.workspace_id}/${dtable.dtable_uuid}) ${serverInfo.version} ${serverInfo.edition} (${bundle.authData.server})`,
-  );*/
   if (
     !~properties.indexOf("dtable_uuid") ||
     !~properties.indexOf("access_token")
@@ -267,7 +209,10 @@ async function appAccessToken(z, bundle) {
     throw new Error(`Failed to get app-access on SeaTable server at ${bundle.authData.server}. Try to re-authenticate with a new API-Token.`);
   }
   bundle.dtable = dtable;
-  // z.console.log("DEBUG dtable in ctx.js", dtable);
+
+  // ... remove trailing slash
+  bundle.authData.server = bundle.authData.server.replace(/\/+$/, "");
+
   return bundle.dtable;
 }
 
@@ -353,6 +298,9 @@ const acquireMetadata = async (z, bundle) => {
  * @return {Promise<DTableTable>}
  */
 const acquireTableMetadata = async (z, bundle) => {
+  if (undefined !== bundle.dtable.tableMetadata) {
+    return bundle.dtable.tableMetadata;
+  }
   const metadata = await acquireMetadata(z, bundle);
   if (!bundle?.inputData?.table_name) {
     return {
@@ -368,10 +316,12 @@ const acquireTableMetadata = async (z, bundle) => {
   );
   if (!tableMetadata) {
     z.console.log(
-        `[${bundle.__zTS}] internal: acquireTableMetadata: missing table metadata columns on input-data:`,
+        "internal: acquireTableMetadata: missing table metadata columns on input-data:",
         bundle.inputData,
     );
   }
+  // z.console.log("acquireTableMetadata", tableMetadata);
+  bundle.dtable.tableMetadata = tableMetadata;
   return tableMetadata;
 };
 
@@ -576,6 +526,11 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
     if (undefined !== c.key && undefined !== c.name && hop(row, c.name)) {
       const v = row[c.name];
 
+      // prepopulation does not need to be enhanced...
+      if (bundle.meta.isPopulatingDedupe) {
+        continue;
+      }
+
       // ignore _ctime and _mtime
       if ("_ctime" === c.key || "_mtime" === c.key) {
         continue;
@@ -589,7 +544,7 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
         }
       }
 
-      // Creator + Modifier   // hier doppelte Abfrage der User-Liste -> vermeiden!
+      // Creator + Modifier
       if ("last-modifier" === c.type || "creator" === c.type) {
         if (regex.test(v)) {
           r[`column:${c.key}`] = await getCollaboratorData(z, bundle, [v]);
@@ -606,6 +561,10 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
             // z.console.log("DEBUG pubFile", pubFile);
             file.publicUrl = pubFile.publicUrl;
             file.asset = pubFile.hydratedUrl;
+          }
+        } else {
+          for (const file of v) {
+            file.url = "No access";
           }
         }
         r[`column:${c.key}`] = v;
@@ -624,14 +583,17 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
             file.publicUrl = pubFile.publicUrl;
             file.asset = pubFile.hydratedUrl;
           }
+        } else {
+          for (const file of vv) {
+            file.url = "No access";
+          }
         }
         r[`column:${c.key}`] = vv;
         continue;
       }
 
       // Digital-signature (can only be one)
-      if ("digital-sign" === c.type && c.data) {
-        // throw new Error(`error ${JSON.stringify(c)}`);
+      if ("digital-sign" === c.type) {
         if (regex.test(v["username"])) {
           const collaboratorInfo = await getCollaboratorData(z, bundle, [v["username"]]);
           r[`column:${c.key}`] = {...v, ...collaboratorInfo[0]};
@@ -639,6 +601,8 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
             const pubFile = await getDownloadLinkFromPath(z, bundle, v["sign_image_url"]);
             r[`column:${c.key}`].publicUrl = pubFile.publicUrl;
             r[`column:${c.key}`].asset = pubFile.hydratedUrl;
+          } else {
+            r[`column:${c.key}`].sign_image_url = "No access";
           }
           continue;
         }
@@ -650,10 +614,6 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
   }
   return r;
 };
-
-
-// ?? kommt von get_row_of_a_table.js ?? warum brauche ich das??
-// ??
 
 const mapColumnKeysRow = async (columns, row) => {
   const r = {};
@@ -749,6 +709,10 @@ const outputFieldsRows = function* (columns, bundle) {
     const f = {key: `column:${col.key}`, label: col.name};
     // generates normal label list...
 
+    // if ( col.type === "creator" || col.type === "ctime" || col.type === "last_modifier" || col.type == "mtime" ){
+    //   continue;
+    // }
+
     if ( col.type === "collaborator") {
       const children = [
         {key: `${f.key}[]name`, label: `${col.name}: Name`},
@@ -782,18 +746,25 @@ const outputFieldsRows = function* (columns, bundle) {
     }
 
     if ( col.type === "digital-sign" ) {
-      yield {key: `${f.key}__sign_time`, label: `${col.name}: Username`};
-      yield {key: `${f.key}__sign_image_url`, label: `${col.name}: Signature image URL (requires Auth.)`};
-      yield {key: `${f.key}__publicUrl`, label: `${col.name}: Signature image URL (temp. available.)`};
+      yield {key: `${f.key}__sign_time`, label: `${col.name}: Signature time`};
+      yield {key: `${f.key}__sign_image_url`, label: `${col.name}: Signature URL (requires Auth.)`};
+      yield {key: `${f.key}__publicUrl`, label: `${col.name}: Signature URL (temp. available.)`};
       yield {key: `${f.key}__username`, label: `${col.name}: Username`};
       yield {key: `${f.key}__email`, label: `${col.name}: Email`};
       yield {key: `${f.key}__name`, label: `${col.name}: Signed by`};
-      yield {key: `${f.key}__asset`, label: `${col.name}: Signature (image)`};
+      yield {key: `${f.key}__asset`, label: `${col.name}: Signature Asset`};
       continue;
     }
 
     yield f;
   }
+  /**
+   * diese müssen weg:
+   *   { key: 'column:_creator', label: 'Creator' },
+   *   { key: 'column:_ctime', label: 'Created time' },
+   *   { key: 'column:_last_modifier', label: 'Last modifier' },
+   *   { key: 'column:_mtime', label: 'Modified' },
+   **/
 };
 
 /**
@@ -876,7 +847,7 @@ const tableNameId = async (z, bundle, context) => {
   const col = _.find(tableMetadata.columns, ["key", sid.column]);
   if (undefined === col) {
     z.console.log(
-        `[${bundle.__zTS}] filter[${context}]: search column not found:`,
+        `filter[${context}]: search column not found:`,
         bundle.inputData.search_column,
         sid,
         tableMetadata.columns,
@@ -885,7 +856,7 @@ const tableNameId = async (z, bundle, context) => {
   }
   if (struct.columns.filter.not.includes(col.type)) {
     z.console.log(
-        `[${bundle.__zTS}] filter[${context}]: known unsupported column type (user will see an error with clear description):`,
+        `filter[${context}]: known unsupported column type (user will see an error with clear description):`,
         col.type,
     );
     throw new z.errors.Error(
@@ -925,31 +896,36 @@ const tableNameId = async (z, bundle, context) => {
   }
 };
 
-
 /**
- * Helper function to get collaborators only once.
+ *
  * @param {ZObject} z
  * @param {Bundle} bundle
+ * @return {Array}
  */
-const acquireCollaborators = async (z, bundle) => {
-  /** @type {DTable} */
-  const dtableCtx = await module.exports.acquireDtableAppAccess(z, bundle);
-  if (undefined !== dtableCtx.collaborators) {
-    // z.console.log("DEBUG collaborators aus bundle", dtableCtx.collaborators);
-    return dtableCtx.collaborators;
-  }
-
+async function getCollaborators(z, bundle) {
   const response = await z.request({
-    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/related-users/`,
+    url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
     method: "GET",
     headers: {
-      "Authorization": `Token ${dtableCtx.access_token}`,
+      "Authorization": `Token ${bundle.dtable.access_token}`,
     },
   });
-  // z.console.log("DEBUG collaborators per api", response.data);
-  bundle.dtable.collaborators = response.data;
-  return response.data;
+  return (bundle.dtable.collaborators = response.data.user_list);
+}
+
+/**
+ * bind collaborators in bundle
+ *
+ * @param {ZObject} z
+ * @param {Bundle} bundle
+ * @return {Promise<DTable>}
+ */
+const acquireCollaborators = (z, bundle) => {
+  return isEmpty(bundle.dtable.collaborators) ?
+    getCollaborators(z, bundle) :
+    Promise.resolve(bundle.dtable.collaborators);
 };
+
 
 // input ist cdb@seatable.io
 // output ist xxx@auth.local
@@ -972,9 +948,9 @@ const getCollaborator = async (z, bundle, value) => {
 // input: array with usernames [xxx@auth.local, xyz@auth.local]
 // output: array with enhanced objects [{username: ..., ...}, {username: ..., ...}]
 const getCollaboratorData = async (z, bundle, value) => {
-  const collaborators = await acquireCollaborators(z, bundle);
+  // const collaborators = await acquireCollaborators(z, bundle);
   const collaboratorUsers = value;
-  const collaboratorData = collaborators.user_list;
+  const collaboratorData = bundle.dtable.collaborators;
   const collData = _.map(
       _.filter(collaboratorData, (o) => {
         const regex = /^\w{32}@auth\.local$/;
@@ -988,6 +964,7 @@ const getCollaboratorData = async (z, bundle, value) => {
         return {username: o.email, email: o.contact_email, name: o.name};
       },
   );
+  // z.console.log("collData", collData);
   return collData;
 };
 
@@ -1127,6 +1104,7 @@ const getUpdateColumns = (columns, bundle) => {
 
 // fallback image file name
 const getImageFilenameFromUrl = (url, fallback = "Unnamed attachment") => {
+  z.console.log("getImageFilenameFromUrl", url);
   const lastPart = url.split("/")?.pop();
   if (!lastPart || "string" !== typeof lastPart) {
     return fallback;

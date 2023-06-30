@@ -140,7 +140,8 @@ const outputFields = async (z, bundle) => {
 
   return [
     {key: "row_id", label: "Original ID"},
-    {key: "row_mtime", label: "Last Modified"},
+    {key: "row_mtime", label: "Last modification time"},
+    {key: "row_ctime", label: "Creation time"},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
   ];
 };

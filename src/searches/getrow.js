@@ -109,8 +109,9 @@ const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   return [
     {key: "row_id", label: "ID"},
-    {key: "row_mtime", label: "Last Modified"},
-    {key: "_zap_search_was_found_status", label: "Success?"}, // no idea, why this is not working.
+    {key: "row_mtime", label: "Last modification time"},
+    {key: "row_ctime", label: "Creation time"},
+    {key: "_zap_search_was_found_status", label: "Success?"},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
   ];
 };

@@ -21,13 +21,6 @@ const featureHttpAlwaysLogging = {
   enabled: false,
 };
 
-/* HTTP Middleware */
-const handleBundleRequest = (request, z, bundle) => {
-  if (bundle.__zTS) {
-    request.__zTS = bundle.__zTS;
-  }
-  return request;
-};
 
 /**
  * handleForbiddenBaseAccess
@@ -83,7 +76,7 @@ const handleHTTPError = (response, z) => {
     return response;
   }
   if (featureHttpAlwaysLogging.enabled && response.status !== 429) {
-    z && z.console.log(`[${response.request?.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}])`);
+    z && z.console.log(`handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}])`);
   }
 
   if (response.status < 400) {
@@ -91,20 +84,19 @@ const handleHTTPError = (response, z) => {
   }
   if (response.status === 400) { // bad request
     // link-column: wrong row_id
-    if (typeof response.data.error_type !== "undefined"){
+    if (typeof response.data.error_type !== "undefined") {
       if (response.data.error_type === "row_not_exist") {
         throw new z.errors.Error("A link could not be created: one of your row ids to create a link must be wrong.", "InvalidData", 400);
       }
-    } 
-    let error_message = response.data;
-    if (typeof response.data.error_msg !== "undefined") {
-      error_message = response.data.error_msg
     }
-    else if (typeof response.data.error_message !== "undefined") {
-      error_message = response.data.error_message;
+    let errorMessage = response.data;
+    if (typeof response.data.error_msg !== "undefined") {
+      errorMessage = response.data.error_msg;
+    } else if (typeof response.data.error_message !== "undefined") {
+      errorMessage = response.data.error_message;
     }
     // fallback: something went wrong
-    throw new z.errors.Error(`Something went wrong. Please check your input data. This error message might help you: ${error_message}`, "InvalidData", 400);
+    throw new z.errors.Error(`Something went wrong. Please check your input data. This error message might help you: ${errorMessage}`, "InvalidData", 400);
   }
   if (response.status === 401) { // unauthorized
     throw new z.errors.RefreshAuthError();
@@ -124,7 +116,7 @@ const handleHTTPError = (response, z) => {
     /* @link https://zapier.github.io/zapier-platform/#handling-throttled-requests */
     const parsed = parseInt(response.getHeader("retry-after"), 10);
     const retryAfter = (Number.isSafeInteger(parsed) && parsed > 0) ? parsed : 67;
-    z.console.log(`[${response.request.__zTS}] handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}]) (retryAfter=${retryAfter})`);
+    z.console.log(`handleHTTPError(${response.status} ${response.request.method} ${response.request.url} [${new ResponseThrottleInfo(response)}]) (retryAfter=${retryAfter})`);
     throw new z.errors.ThrottledError(_CONST.STRINGS["http.error.status429"], retryAfter);
   }
 
@@ -163,7 +155,7 @@ module.exports = {
     headers: {Accept: "application/json"},
   },
 
-  beforeRequest: [handleBundleRequest],
+  beforeRequest: [],
   afterResponse: [handleForbiddenBaseAccess, handleDeletedBaseAccess, handleHTTPError, handleUndefinedJson],
 
   triggers: {

@@ -12,11 +12,10 @@ const _ = require("lodash");
  * @return {Promise<Array<{object}>|Array<{object}>|number|SQLResultSetRowList|HTMLCollectionOf<HTMLTableRowElement>|string>}
  */
 const perform = async (z, bundle) => {
-  // add dtable to bundle
+  // add bundle.dtable, bundle.dtable.tableMetadata and bundle.dtable.collaborators
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
-
-  // const logTag = `[${bundle.__zTS}] triggers.row_create`;
-  // z.console.time(logTag);
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
+  collaborators = await ctx.acquireCollaborators(z, bundle);
 
   /**
    * get rows of the table
@@ -28,13 +27,7 @@ const perform = async (z, bundle) => {
     params: ctx.requestParamsBundle(bundle),
   });
 
-  // z.console.log("row_create params", ctx.requestParamsBundle(bundle));
-  // z.console.log("row result", response.data.rows.length);
-
   let rows = response.data.rows;
-  const meta = bundle.meta;
-
-  // z.console.timeLog(logTag, `rows(${new ResponseThrottleInfo(response)}) length=${rows.length} meta: limit=${meta && meta.limit} isLoadingSample=${meta && meta.isLoadingSample}`);
   if (0 === rows.length) {
     return rows;
   }
@@ -42,18 +35,16 @@ const perform = async (z, bundle) => {
   // limit payload size
   // https://platform.zapier.com/docs/constraints#payload-size-triggers
   rows.reverse();
-  if (meta && meta.isLoadingSample) {
-    rows.splice(meta.limit || 3);
+  if (bundle.meta && bundle.meta.isLoadingSample) {
+    rows.splice(bundle.meta.limit || 3);
   }
 
   // transform the results and enhance the return values
-  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   rows = await Promise.all(_.map(rows, async (o) => {
     const transformedObj = await ctx.mapColumnKeysAndEnhanceOutput(z, bundle, tableMetadata.columns, o);
     transformedObj.id = `${transformedObj.row_id}`;
     return transformedObj;
   }));
-  // z.console.log("DEBUG rows for row_create", rows);
 
   return rows;
 };
@@ -68,7 +59,8 @@ const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   return [
     {key: "row_id", label: "Original ID"},
-    {key: "row_mtime", label: "Last Modified"},
+    {key: "row_mtime", label: "Last modification time"},
+    {key: "row_ctime", label: "Creation time"},
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
   ];
 };
@@ -79,7 +71,7 @@ module.exports = {
   noun: "Row",
   display: {
     label: "New Row",
-    description: "Triggers when a new row is available.",
+    description: "Triggers once when a new row is found.",
     important: true,
   },
   operation: {

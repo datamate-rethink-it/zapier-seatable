@@ -1,6 +1,9 @@
 # cache files/trees
 *.cache*
 
+# internal stuff
+*.internal
+
 # environment variables file
 /.env*
 !/.env*.dist
@@ -13,3 +16,4 @@ node_modules/
 
 # increments
 *.increment*
+

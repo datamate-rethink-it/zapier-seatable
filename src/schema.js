@@ -201,13 +201,6 @@
  */
 
 /**
- * @typedef {Object} SeaTableZapierBundle
- * @property {number} __zT zap init start time, number of milliseconds since 1 January 1970 00:00:00 UTC {@see zapInitHookBundle()} ctx.js
- * @property {string} __zTS zap rolling transaction id, 6-character width flake of the bundle transaction
- * @property {string} __zLogTag zap log-tag log-tag "[<z-ts>] zap", always 12 characters
- */
-
-/**
  * {@see HttpRequestOptions}
  *
  * @typedef {Object} SeaTableZapierRequestOptions

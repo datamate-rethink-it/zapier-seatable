@@ -27,7 +27,7 @@ const connectionLabel = (z, bundle) => {
   const address = bundle.authData.server.replace(/^https:\/\//, "").replace(/\/+$/, "");
   // const {serverInfo, dtable} = bundle.inputData;
   // const dtable = bundle.inputData;
-  z.console.log("DEBUG bundle in auth", bundle);
+  // z.console.log("DEBUG bundle in auth", bundle);
   // const editionAbbreviated = serverInfo.edition.replace("enterprise edition", "EE");
   return `${address} (${bundle.inputData.dtable.dtable_name})`; // optional: ${dtable?.app_name}
 };
@@ -51,7 +51,7 @@ module.exports = {
       required: true,
       label: "API-Token (of a Base)",
       type: "string",
-      helpText: "Create an [API-Token](https://seatable.io/docs/integrationen/zapier-integration/) for one of your bases inside SeaTable.",
+      helpText: "Create an [API-Token](https://seatable.io/docs/integrationen/zapier-api-tokens-sign-in/) for one of your bases inside SeaTable.",
     },
   ],
   connectionLabel,

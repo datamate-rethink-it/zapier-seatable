@@ -57,7 +57,6 @@ describe("Trigger - row_create", () => {
   it("triggers.row_create should get an array", async () => {
     // test against dtable server
     delete bundle.serverInfo;
-    delete bundle.__zTS;
     delete bundle.dtable;
     const results = await appTester(App.triggers.row_create.operation.perform, bundle);
     results.should.be.an.Array();

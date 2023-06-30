@@ -59,13 +59,6 @@ class ZapBundle {
   }
 
   /**
-   * @return {string|*}
-   */
-  toString() {
-    return this.bundle.__zTS;
-  }
-
-  /**
    * @return {Promise<DTable>}
    */
   get dtable() {
@@ -173,7 +166,6 @@ class ZapBundle {
    * @return {Promise<{string}>}
    */
   async consoleLogTag(tag) {
-    // zb.toString() requires the bundle .__zTs first.
     await this.ctx.acquireServerInfo(this.z, this.bundle);
 
     const logTag = `[${this}] ${tag}`;
