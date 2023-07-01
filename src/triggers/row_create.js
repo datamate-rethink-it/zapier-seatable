@@ -32,9 +32,13 @@ const perform = async (z, bundle) => {
     return rows;
   }
 
+  // determine _ctime and _mtime column name. _ctime and _mtime change if these columns are set.
+  const ctime = _.find(tableMetadata.columns, ["type", "ctime"]);
+
   // limit payload size
   // https://platform.zapier.com/docs/constraints#payload-size-triggers
-  rows.reverse();
+  // rows.reverse();
+  rows = _.orderBy(rows, [ctime.name], ["desc"]);
   if (bundle.meta && bundle.meta.isLoadingSample) {
     rows.splice(bundle.meta.limit || 3);
   }

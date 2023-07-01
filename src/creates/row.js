@@ -13,6 +13,7 @@ const {ZapBundle} = require("../ctx/ZapBundle");
  * @return {Promise<Object.<string,string>>}
  */
 const perform = async (z, bundle) => {
+  dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
 
   const map = {};

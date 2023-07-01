@@ -101,9 +101,13 @@ const perform = async (z, bundle) => {
     return rows;
   }
 
+  // determine _ctime and _mtime column name. _ctime and _mtime change if these columns are set.
+  const mtime = _.find(tableMetadata.columns, ["type", "mtime"]);
+
   // limit payload size
   // https://platform.zapier.com/docs/constraints#payload-size-triggers
-  rows = _.orderBy(rows, ["_mtime"], ["desc"]);
+  // rows.reverse();
+  rows = _.orderBy(rows, [mtime.name], ["desc"]);
   if (bundle.meta && bundle.meta.isLoadingSample) {
     rows.splice(bundle.meta.limit || 3);
   }

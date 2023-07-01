@@ -1,6 +1,7 @@
 ## 3.0.9
 
-* (Fix) List of collaborators requested only once.
+* (Fix) List of collaborators requested only once
+* (Fix) Dealing with custom column name for _ctime and _mtime
 
 ## 3.0.8
 

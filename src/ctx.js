@@ -263,6 +263,7 @@ const fileNoAuthLinksField = {
 const acquireMetadata = async (z, bundle) => {
   /** @type {DTable} */
   const dtableCtx = await module.exports.acquireDtableAppAccess(z, bundle);
+  // z.console.log("acquireMetadata", dtableCtx.metadata);
   if (undefined !== dtableCtx.metadata) {
     return dtableCtx.metadata;
   }
@@ -298,8 +299,10 @@ const acquireMetadata = async (z, bundle) => {
  * @return {Promise<DTableTable>}
  */
 const acquireTableMetadata = async (z, bundle) => {
-  if (undefined !== bundle.dtable.tableMetadata) {
-    return bundle.dtable.tableMetadata;
+  if (typeof bundle.dtable !== "undefined") {
+    if (typeof bundle.dtable.tableMetadata !== "undefined") {
+      return bundle.dtable.tableMetadata;
+    }
   }
   const metadata = await acquireMetadata(z, bundle);
   if (!bundle?.inputData?.table_name) {
@@ -1104,7 +1107,7 @@ const getUpdateColumns = (columns, bundle) => {
 
 // fallback image file name
 const getImageFilenameFromUrl = (url, fallback = "Unnamed attachment") => {
-  z.console.log("getImageFilenameFromUrl", url);
+  // z.console.log("getImageFilenameFromUrl", url);
   const lastPart = url.split("/")?.pop();
   if (!lastPart || "string" !== typeof lastPart) {
     return fallback;
