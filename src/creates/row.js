@@ -15,11 +15,10 @@ const {ZapBundle} = require("../ctx/ZapBundle");
 const perform = async (z, bundle) => {
   dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
+  collaborators = await ctx.acquireCollaborators(z, bundle);
 
   const map = {};
   const inputData = bundle.inputData;
-
-  // z.console.log("Debug inputData", inputData);
 
   // Enhance the columns: collaborators
   for (const {key, name, type} of tableMetadata.columns) {
@@ -54,10 +53,6 @@ const perform = async (z, bundle) => {
   // add table row to bundle, for adding links
   bundle.inputData.table_row = rowId;
 
-  /* row existiert, jetzt wird erweitert mit links und images/files */
-
-  // file + image upload + links
-  // const fileUploader = zb.fileUploader();
 
   // for (const {key, name, type} of tableMetadata.columns) {
   for (const col of ctx.getUpdateColumns(tableMetadata.columns, bundle)) {

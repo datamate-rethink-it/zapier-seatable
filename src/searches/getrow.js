@@ -13,6 +13,8 @@ const _ = require("lodash");
 
 const perform = async (z, bundle) => {
   const dtableCtx = await ctx.acquireDtableAppAccess(z, bundle);
+  const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
+  collaborators = await ctx.acquireCollaborators(z, bundle);
 
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
@@ -40,7 +42,6 @@ const perform = async (z, bundle) => {
     rows.push(f);
 
     // transform the result and enhance
-    const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
     rows = await Promise.all(_.map(rows, async (o) => {
       const transformedObj = await ctx.mapColumnKeysAndEnhanceOutput(z, bundle, tableMetadata.columns, o);
       transformedObj.id = `${transformedObj.row_id}-${transformedObj.row_mtime}`;

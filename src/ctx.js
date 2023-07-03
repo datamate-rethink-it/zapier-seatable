@@ -556,17 +556,18 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
       }
 
       // Files (can contain multiple files)
-      if ("file" === c.type) {
+      if ("file" === c.type && v) {
         // attach publicUrl and asset if requested.
         if (bundle.inputData.feature_non_authorized_asset_downloads) {
           for (const file of v) {
             const pubFile = await getDownloadLinkFromPath(z, bundle, file.url);
-            // z.console.log("DEBUG pubFile", pubFile);
+            file.type = "file";
             file.publicUrl = pubFile.publicUrl;
             file.asset = pubFile.hydratedUrl;
           }
         } else {
           for (const file of v) {
+            file.type = "file";
             file.url = "No access";
           }
         }
@@ -575,7 +576,7 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
       }
 
       // Image (can contain multiple images)
-      if ("image" === c.type) {
+      if ("image" === c.type && v) {
         // enhance the image output in general
         const vv = getImageData(v);
 
@@ -583,11 +584,13 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
         if (bundle.inputData.feature_non_authorized_asset_downloads) {
           for (const file of vv) {
             const pubFile = await getDownloadLinkFromPath(z, bundle, file.url);
+            file.type = "image";
             file.publicUrl = pubFile.publicUrl;
             file.asset = pubFile.hydratedUrl;
           }
         } else {
           for (const file of vv) {
+            file.type = "image";
             file.url = "No access";
           }
         }
@@ -602,9 +605,11 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
           r[`column:${c.key}`] = {...v, ...collaboratorInfo[0]};
           if (bundle.inputData.feature_non_authorized_asset_downloads) {
             const pubFile = await getDownloadLinkFromPath(z, bundle, v["sign_image_url"]);
+            r[`column:${c.key}`].type = "signature";
             r[`column:${c.key}`].publicUrl = pubFile.publicUrl;
             r[`column:${c.key}`].asset = pubFile.hydratedUrl;
           } else {
+            r[`column:${c.key}`].type = "signature";
             r[`column:${c.key}`].sign_image_url = "No access";
           }
           continue;
@@ -753,6 +758,7 @@ const outputFieldsRows = function* (columns, bundle) {
       yield {key: `${f.key}__sign_image_url`, label: `${col.name}: Signature URL (requires Auth.)`};
       yield {key: `${f.key}__publicUrl`, label: `${col.name}: Signature URL (temp. available.)`};
       yield {key: `${f.key}__username`, label: `${col.name}: Username`};
+      yield {key: `${f.key}__type`, label: `${col.name}: Type`};
       yield {key: `${f.key}__email`, label: `${col.name}: Email`};
       yield {key: `${f.key}__name`, label: `${col.name}: Signed by`};
       yield {key: `${f.key}__asset`, label: `${col.name}: Signature Asset`};
@@ -933,17 +939,16 @@ const acquireCollaborators = (z, bundle) => {
 // input ist cdb@seatable.io
 // output ist xxx@auth.local
 const getCollaborator = async (z, bundle, value) => {
-  const collaborators = await acquireCollaborators(z, bundle);
-  const collaboratorEmail = value;
-  const collaboratorData = collaborators.user_list;
+  const collaboratorData = bundle.dtable.collaborators;
   const collData = _.map(
       _.filter(collaboratorData, (o) => {
-        return o.contact_email === collaboratorEmail;
+        return o.contact_email === value;
       }),
       (o) => {
         return o.email;
       },
   );
+  z.console.log("collData", collData);
   return collData;
 };
 
@@ -1107,7 +1112,6 @@ const getUpdateColumns = (columns, bundle) => {
 
 // fallback image file name
 const getImageFilenameFromUrl = (url, fallback = "Unnamed attachment") => {
-  // z.console.log("getImageFilenameFromUrl", url);
   const lastPart = url.split("/")?.pop();
   if (!lastPart || "string" !== typeof lastPart) {
     return fallback;
