@@ -1,3 +1,7 @@
+## 3.0.10
+
+* (Bug) Error finding new or updated columns, if _ctime or _mtime columns are not set in a base
+ 
 ## 3.0.9
 
 * (Fix) List of collaborators requested only once

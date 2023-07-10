@@ -101,13 +101,17 @@ const perform = async (z, bundle) => {
     return rows;
   }
 
-  // determine _ctime and _mtime column name. _ctime and _mtime change if these columns are set.
+  // usually the columns have the name _ctime and _mtime. But if these columns are set, they have different names.
+  let mtime_column_name = "_mtime"; 
   const mtime = _.find(tableMetadata.columns, ["type", "mtime"]);
+  if (undefined !== mtime) {
+    mtime_column_name = mtime.name; 
+  }
 
   // limit payload size
   // https://platform.zapier.com/docs/constraints#payload-size-triggers
   // rows.reverse();
-  rows = _.orderBy(rows, [mtime.name], ["desc"]);
+  rows = _.orderBy(rows, [mtime_column_name], ["desc"]);
   if (bundle.meta && bundle.meta.isLoadingSample) {
     rows.splice(bundle.meta.limit || 3);
   }
