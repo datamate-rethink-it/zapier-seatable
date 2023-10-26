@@ -7,11 +7,11 @@
 // const {ZapBundle} = require('./ctx/ZapBundle');
 
 const _CONST = require("./const");
-const {stashFile} = require("./hydrators");
+const { stashFile } = require("./hydrators");
 const _ = require("lodash");
 // const {ResponseThrottleInfo} = require("./lib");
 // const {format} = require("./lib");
-const {sidParse} = require("./lib/sid");
+const { sidParse } = require("./lib/sid");
 
 /**
  * context bound dtable struct
@@ -21,84 +21,89 @@ const {sidParse} = require("./lib/sid");
 const struct = {
   columns: {
     types: {
-      "text": "Text",
+      text: "Text",
       "long-text": "Long text",
-      "number": "Number",
-      "checkbox": "Checkbox",
-      "date": "Date",
+      number: "Number",
+      checkbox: "Checkbox",
+      date: "Date",
       "single-select": "Single select",
-      "image": "Image",
-      "file": "File",
+      image: "Image",
+      file: "File",
       "multiple-select": "Multiple select",
-      "collaborator": "Collaborator",
-      "url": "URL",
-      "email": "Email",
-      "duration": "Duration",
-      "geolocation": "Geolocation",
-      "rate": "Rating",
-      "formula": "Formula",
+      collaborator: "Collaborator",
+      url: "URL",
+      email: "Email",
+      duration: "Duration",
+      geolocation: "Geolocation",
+      rate: "Rating",
+      formula: "Formula",
       "link-formula": "Link formula",
-      "link": "Link to other records",
+      link: "Link to other records",
       "auto-number": "Auto number",
-      "creator": "Creator",
-      "ctime": "Created time",
+      creator: "Creator",
+      ctime: "Created time",
       "last-modifier": "Last modifier",
-      "mtime": "Last modified time",
-      "button": "Button",
+      mtime: "Last modified time",
+      button: "Button",
       "digital-sign": "Signature",
     },
     input_field_types: {
-      "text": "string",
+      text: "string",
       "long-text": "text",
-      "number": "number",
-      "checkbox": "boolean",
-      "date": "datetime",
+      number: "number",
+      checkbox: "boolean",
+      date: "datetime",
       "single-select": "string",
-      "image": "file",
-      "file": "file",
+      image: "file",
+      file: "file",
       "multiple-select": "string",
-      "collaborator": "string",
-      "url": "string",
-      "email": "string",
-      "duration": "string",
-      "geolocation": "string",
-      "rate": "integer",
-      "formula": "string",
+      collaborator: "string",
+      url: "string",
+      email: "string",
+      duration: "string",
+      geolocation: "string",
+      rate: "integer",
+      formula: "string",
       "link-formula": "string",
-      "link": "string",
+      link: "string",
       "auto-number": "integer",
-      "creator": "string",
-      "ctime": "string",
+      creator: "string",
+      ctime: "string",
       "last-modifier": "string",
-      "mtime": "string",
-      "button": "string",
+      mtime: "string",
+      button: "string",
       "digital-sign": "file",
     },
     help_text: {
-      "text": "",
+      text: "",
       "long-text": "",
-      "number": "Enter any numeric value. Decimals must be separated from the integer with a period \".\"",
-      "checkbox": "Allowed values are *true* and *false*.",
-      "date": "Zapier tries to interpret any date or time you provide. Input like \"today\" or a timestamp are allowed.",
+      number:
+        'Enter any numeric value. Decimals must be separated from the integer with a period "."',
+      checkbox: "Allowed values are *true* and *false*.",
+      date: 'Zapier tries to interpret any date or time you provide. Input like "today" or a timestamp are allowed.',
       "single-select": "Single select column only accepts existing options.",
-      "image": "Add a picture or a public reachable URL. Only png, jpg, jpeg or gif are allowed.",
-      "file": "Add a file, a public reachable URL or any string (Zapier will turn text into a .txt file and upload it).",
-      "multiple-select": "Add one or multiple existings option. Separat the options from each other by a space.",
-      "collaborator": "Please enter the email adress of a user. The name or the @auth.local user id will not work.",
-      "url": "",
-      "email": "",
-      "duration": "Please enter your durations in seconds. (e.g. 9000 will be 2:30 hours)",
-      "geolocation": "",
-      "rate": "Rating column accepts whole number values.",
-      "formula": "",
+      image:
+        "Add a picture or a public reachable URL. Only png, jpg, jpeg or gif are allowed.",
+      file: "Add a file, a public reachable URL or any string (Zapier will turn text into a .txt file and upload it).",
+      "multiple-select":
+        "Add one or multiple existings option. Separat the options from each other by a space.",
+      collaborator:
+        "Please enter the email adress of a user. The name or the @auth.local user id will not work.",
+      url: "",
+      email: "",
+      duration:
+        "Please enter your durations in seconds. (e.g. 9000 will be 2:30 hours)",
+      geolocation: "",
+      rate: "Rating column accepts whole number values.",
+      formula: "",
       "link-formula": "",
-      "link": "Please enter the row id of the target row.",
+      link: "Please enter the row id of the target row.",
       "auto-number": "",
-      "creator": "",
-      "ctime": "",
+      creator: "",
+      ctime: "",
       "last-modifier": "",
-      "mtime": "",
-      "button": "",
+      mtime: "",
+      button: "",
       "digital-sign": "",
     },
     assets: ["file", "image", "digital-sign"],
@@ -120,7 +125,14 @@ const struct = {
         "digital-sign",
       ],
       // column types that zapier should not offer to search in (hidden):
-      hide_search: ["link", "formula", "button", "multiple-select", "checkbox", "digital-sign"],
+      hide_search: [
+        "link",
+        "formula",
+        "button",
+        "multiple-select",
+        "checkbox",
+        "digital-sign",
+      ],
       /**
        * column types that zapier offers for a row-lookup
        * @type {DTableColumnType[]}
@@ -131,7 +143,6 @@ const struct = {
     },
   },
 };
-
 
 /**
  * !! ALWAYS USE acquireServerInfo instead of serverInfo to avoid multiple requests !!
@@ -153,14 +164,16 @@ async function serverInfo(z, bundle) {
     server: `${bundle.authData.server}`,
   };
   const properties = (response.data && Object.keys(response.data)) || [];
-  properties.forEach(function(property) {
+  properties.forEach(function (property) {
     const value = response.data[property];
     if (typeof value === "string") {
       serverInfo[property] = value;
     }
   });
   if (!~properties.indexOf("version") || !~properties.indexOf("edition")) {
-    throw new Error(`Failed to connect to SeaTable server at "${bundle.authData.server}". Please check the server address.`);
+    throw new Error(
+      `Failed to connect to SeaTable server at "${bundle.authData.server}". Please check the server address.`
+    );
   }
   return (bundle.serverInfo = serverInfo);
 }
@@ -175,9 +188,9 @@ async function serverInfo(z, bundle) {
  * @return {Promise<DTable>}
  */
 const acquireServerInfo = (z, bundle) => {
-  return isEmpty(bundle.serverInfo) ?
-    serverInfo(z, bundle) :
-    Promise.resolve(bundle.serverInfo);
+  return isEmpty(bundle.serverInfo)
+    ? serverInfo(z, bundle)
+    : Promise.resolve(bundle.serverInfo);
 };
 
 /**
@@ -194,10 +207,10 @@ async function appAccessToken(z, bundle) {
   /** @type {ZapierZRequestResponse} */
   const response = await z.request({
     url: `${bundle.authData.server}/api/v2.1/dtable/app-access-token/`,
-    headers: {Authorization: `Token ${bundle.authData.api_token}`},
+    headers: { Authorization: `Token ${bundle.authData.api_token}` },
     endPointPath: "/api/v2.1/dtable/app-access-token/",
   });
-  const dtable = {server_address: bundle.authData.server};
+  const dtable = { server_address: bundle.authData.server };
   const properties = (response.data && Object.keys(response.data)) || [];
   for (const property of properties) {
     dtable[property] = response.data[property];
@@ -206,7 +219,9 @@ async function appAccessToken(z, bundle) {
     !~properties.indexOf("dtable_uuid") ||
     !~properties.indexOf("access_token")
   ) {
-    throw new Error(`Failed to get app-access on SeaTable server at ${bundle.authData.server}. Try to re-authenticate with a new API-Token.`);
+    throw new Error(
+      `Failed to get app-access on SeaTable server at ${bundle.authData.server}. Try to re-authenticate with a new API-Token.`
+    );
   }
   bundle.dtable = dtable;
 
@@ -215,7 +230,6 @@ async function appAccessToken(z, bundle) {
 
   return bundle.dtable;
 }
-
 
 /**
  * bind dtable in bundle
@@ -226,9 +240,9 @@ async function appAccessToken(z, bundle) {
  * @return {Promise<DTable>}
  */
 const acquireDtableAppAccess = (z, bundle) => {
-  return isEmpty(bundle.dtable) ?
-    appAccessToken(z, bundle) :
-    Promise.resolve(bundle.dtable);
+  return isEmpty(bundle.dtable)
+    ? appAccessToken(z, bundle)
+    : Promise.resolve(bundle.dtable);
 };
 
 /*
@@ -272,7 +286,7 @@ const acquireMetadata = async (z, bundle) => {
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/metadata/`,
     headers: {
-      "Authorization": `Token ${dtableCtx.access_token}`,
+      Authorization: `Token ${dtableCtx.access_token}`,
       "X-TABLE": bundle.inputData.table_name,
     },
   });
@@ -314,13 +328,13 @@ const acquireTableMetadata = async (z, bundle) => {
     };
   }
   const tableMetadata = tableFromMetadata(
-      metadata,
-      bundle.inputData.table_name,
+    metadata,
+    bundle.inputData.table_name
   );
   if (!tableMetadata) {
     z.console.log(
-        "internal: acquireTableMetadata: missing table metadata columns on input-data:",
-        bundle.inputData,
+      "internal: acquireTableMetadata: missing table metadata columns on input-data:",
+      bundle.inputData
     );
   }
   // z.console.log("acquireTableMetadata", tableMetadata);
@@ -474,12 +488,14 @@ const getDownloadLinkFromPath = async (z, bundle, url) => {
     const downloadLink = await z.request({
       url: `${bundle.authData.server}/api/v2.1/dtable/app-download-link/?path=${urlPath}`,
       method: "GET",
-      headers: {Authorization: `Token ${bundle.authData.api_token}`},
+      headers: { Authorization: `Token ${bundle.authData.api_token}` },
     });
     const data = downloadLink.json;
     // z.console.log("DEBUG: downloadLink.json", data);
     if (!data.download_link) {
-      throw new z.errors.Error(`Failed to obtain asset download link for path '${urlPath}' of url '${url}'`);
+      throw new z.errors.Error(
+        `Failed to obtain asset download link for path '${urlPath}' of url '${url}'`
+      );
     }
     publicUrl = data.download_link;
   } else {
@@ -491,9 +507,8 @@ const getDownloadLinkFromPath = async (z, bundle, url) => {
   const hydratedUrl = z.dehydrateFile(stashFile, {
     downloadUrl: publicUrl,
   });
-  return {publicUrl, hydratedUrl};
+  return { publicUrl, hydratedUrl };
 };
-
 
 /**
  * Transforms the result of api call to get rows into the correct output format.
@@ -601,10 +616,16 @@ const mapColumnKeysAndEnhanceOutput = async (z, bundle, columns, row) => {
       // Digital-signature (can only be one)
       if ("digital-sign" === c.type) {
         if (regex.test(v["username"])) {
-          const collaboratorInfo = await getCollaboratorData(z, bundle, [v["username"]]);
-          r[`column:${c.key}`] = {...v, ...collaboratorInfo[0]};
+          const collaboratorInfo = await getCollaboratorData(z, bundle, [
+            v["username"],
+          ]);
+          r[`column:${c.key}`] = { ...v, ...collaboratorInfo[0] };
           if (bundle.inputData.feature_non_authorized_asset_downloads) {
-            const pubFile = await getDownloadLinkFromPath(z, bundle, v["sign_image_url"]);
+            const pubFile = await getDownloadLinkFromPath(
+              z,
+              bundle,
+              v["sign_image_url"]
+            );
             r[`column:${c.key}`].type = "signature";
             r[`column:${c.key}`].publicUrl = pubFile.publicUrl;
             r[`column:${c.key}`].asset = pubFile.hydratedUrl;
@@ -714,54 +735,69 @@ const columnLinkTableMetadata = (col, bundle) => {
  */
 const outputFieldsRows = function* (columns, bundle) {
   for (const col of columns) {
-    const f = {key: `column:${col.key}`, label: col.name};
+    const f = { key: `column:${col.key}`, label: col.name };
     // generates normal label list...
 
     // if ( col.type === "creator" || col.type === "ctime" || col.type === "last_modifier" || col.type == "mtime" ){
     //   continue;
     // }
 
-    if ( col.type === "collaborator") {
+    if (col.type === "collaborator") {
       const children = [
-        {key: `${f.key}[]name`, label: `${col.name}: Name`},
-        {key: `${f.key}[]username`, label: `${col.name}: Username`},
-        {key: `${f.key}[]email`, label: `${col.name}: Email`},
+        { key: `${f.key}[]name`, label: `${col.name}: Name` },
+        { key: `${f.key}[]username`, label: `${col.name}: Username` },
+        { key: `${f.key}[]email`, label: `${col.name}: Email` },
       ];
       f.children = children;
       // here no continue;
     }
 
-    if ( col.type === "button") {
+    if (col.type === "button") {
       continue;
     }
 
-    if ( col.type === "geolocation") {
-      yield {key: `${f.key}__lat`, label: `${col.name}: Latitude`};
-      yield {key: `${f.key}__lng`, label: `${col.name}: Longitude`};
+    if (col.type === "geolocation") {
+      yield { key: `${f.key}__lat`, label: `${col.name}: Latitude` };
+      yield { key: `${f.key}__lng`, label: `${col.name}: Longitude` };
       continue;
     }
 
-    if ( col.type === "file" || col.type === "image" ) {
+    if (col.type === "file" || col.type === "image") {
       const children = [
-        {key: `${f.key}[]name`, label: `${col.name}: File name`},
-        {key: `${f.key}[]size`, label: `${col.name}: File size`},
-        {key: `${f.key}[]type`, label: `${col.name}: File type`},
-        {key: `${f.key}[]url`, label: `${col.name}: File URL (requires Auth.)`},
-        {key: `${f.key}[]publicUrl`, label: `${col.name}: File URL (temp. available)`},
-        {key: `${f.key}[]asset`, label: `${col.name}: File Asset`},
+        { key: `${f.key}[]name`, label: `${col.name}: File name` },
+        { key: `${f.key}[]size`, label: `${col.name}: File size` },
+        { key: `${f.key}[]type`, label: `${col.name}: File type` },
+        {
+          key: `${f.key}[]url`,
+          label: `${col.name}: File URL (requires Auth.)`,
+        },
+        {
+          key: `${f.key}[]publicUrl`,
+          label: `${col.name}: File URL (temp. available)`,
+        },
+        { key: `${f.key}[]asset`, label: `${col.name}: File Asset` },
       ];
       f.children = children;
     }
 
-    if ( col.type === "digital-sign" ) {
-      yield {key: `${f.key}__sign_time`, label: `${col.name}: Signature time`};
-      yield {key: `${f.key}__sign_image_url`, label: `${col.name}: Signature URL (requires Auth.)`};
-      yield {key: `${f.key}__publicUrl`, label: `${col.name}: Signature URL (temp. available.)`};
-      yield {key: `${f.key}__username`, label: `${col.name}: Username`};
-      yield {key: `${f.key}__type`, label: `${col.name}: Type`};
-      yield {key: `${f.key}__email`, label: `${col.name}: Email`};
-      yield {key: `${f.key}__name`, label: `${col.name}: Signed by`};
-      yield {key: `${f.key}__asset`, label: `${col.name}: Signature Asset`};
+    if (col.type === "digital-sign") {
+      yield {
+        key: `${f.key}__sign_time`,
+        label: `${col.name}: Signature time`,
+      };
+      yield {
+        key: `${f.key}__sign_image_url`,
+        label: `${col.name}: Signature URL (requires Auth.)`,
+      };
+      yield {
+        key: `${f.key}__publicUrl`,
+        label: `${col.name}: Signature URL (temp. available.)`,
+      };
+      yield { key: `${f.key}__username`, label: `${col.name}: Username` };
+      yield { key: `${f.key}__type`, label: `${col.name}: Type` };
+      yield { key: `${f.key}__email`, label: `${col.name}: Email` };
+      yield { key: `${f.key}__name`, label: `${col.name}: Signed by` };
+      yield { key: `${f.key}__asset`, label: `${col.name}: Signature Asset` };
       continue;
     }
 
@@ -801,7 +837,7 @@ const tableView = async (z, bundle) => {
   // input choices
   const choices = {};
   const tableMetadata = await acquireTableMetadata(z, bundle);
-  for ({_id, name} of tableMetadata.views) {
+  for ({ _id, name } of tableMetadata.views) {
     choices[`table:${tableMetadata._id}:view:${_id}`] = name;
   }
   def.choices = choices;
@@ -834,7 +870,8 @@ const tableFields = async (z, bundle) => {
       key: "table_name",
       required: true,
       label: "Table",
-      helpText: "*Note:* This trigger checks only the first 1000 rows. If your table has more rows, please select a view and make sure that this view has either less than 1000 rows or that the newest entries are sorted to the top.",
+      helpText:
+        "*Note:* This trigger checks only the first 1000 rows. If your table has more rows, please select a view and make sure that this view has either less than 1000 rows or that the newest entries are sorted to the top.",
       type: "string",
       dynamic: "get_tables_of_a_base.id.name",
       altersDynamicFields: true,
@@ -856,36 +893,36 @@ const tableNameId = async (z, bundle, context) => {
   const col = _.find(tableMetadata.columns, ["key", sid.column]);
   if (undefined === col) {
     z.console.log(
-        `filter[${context}]: search column not found:`,
-        bundle.inputData.search_column,
-        sid,
-        tableMetadata.columns,
+      `filter[${context}]: search column not found:`,
+      bundle.inputData.search_column,
+      sid,
+      tableMetadata.columns
     );
     return f;
   }
   if (struct.columns.filter.not.includes(col.type)) {
     z.console.log(
-        `filter[${context}]: known unsupported column type (user will see an error with clear description):`,
-        col.type,
+      `filter[${context}]: known unsupported column type (user will see an error with clear description):`,
+      col.type
     );
     throw new z.errors.Error(
-        `Search in ${
-          struct.columns.types[col.type] || `[${col.type}]`
-        } field named "${
-          col.name
-        }" is not supported, please choose a different column.`,
+      `Search in ${
+        struct.columns.types[col.type] || `[${col.type}]`
+      } field named "${
+        col.name
+      }" is not supported, please choose a different column.`
     );
   }
   // colType = col.type;
   colName = col.name;
   const tb = _.map(
-      _.filter(MetaData.tables, (table) => {
+    _.filter(MetaData.tables, (table) => {
       // console.log(table);
-        return table._id === tableIdOne;
-      }),
-      (tableObject) => {
-        return tableObject.name;
-      },
+      return table._id === tableIdOne;
+    }),
+    (tableObject) => {
+      return tableObject.name;
+    }
   );
   tableName = tb[0];
   // const query = colType==="Text"?`${colName} = "${bundle.inputData.search_value}"`:`${colName} = ${bundle.inputData.search_value}`;
@@ -893,13 +930,13 @@ const tableNameId = async (z, bundle, context) => {
   if (bundle.inputData.search_wildcards) {
     // z.console.log("DEBUG search_wildcards on", bundle.inputData.search_wildcards);
     return {
-      sql: `SELECT * FROM ${tableName} WHERE ${colName} LIKE "%${bundle.inputData.search_value}%" LIMIT 10`,
+      sql: `SELECT * FROM \`${tableName}\` WHERE \`${colName}\` LIKE "%${bundle.inputData.search_value}%" ORDER BY _mtime DESC LIMIT 10`,
       convert_keys: true,
     };
   } else {
     // z.console.log("DEBUG search_wildcards off", bundle.inputData.search_wildcards);
     return {
-      sql: `SELECT * FROM ${tableName} WHERE ${colName} = "${bundle.inputData.search_value}" LIMIT 10`,
+      sql: `SELECT * FROM \`${tableName}\` WHERE \`${colName}\` = "${bundle.inputData.search_value}" ORDER BY _mtime DESC LIMIT 10`,
       convert_keys: true,
     };
   }
@@ -916,7 +953,7 @@ async function getCollaborators(z, bundle) {
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/related-users/`,
     method: "GET",
     headers: {
-      "Authorization": `Token ${bundle.dtable.access_token}`,
+      Authorization: `Token ${bundle.dtable.access_token}`,
     },
   });
   return (bundle.dtable.collaborators = response.data.user_list);
@@ -930,28 +967,26 @@ async function getCollaborators(z, bundle) {
  * @return {Promise<DTable>}
  */
 const acquireCollaborators = (z, bundle) => {
-  return isEmpty(bundle.dtable.collaborators) ?
-    getCollaborators(z, bundle) :
-    Promise.resolve(bundle.dtable.collaborators);
+  return isEmpty(bundle.dtable.collaborators)
+    ? getCollaborators(z, bundle)
+    : Promise.resolve(bundle.dtable.collaborators);
 };
-
 
 // input ist cdb@seatable.io
 // output ist xxx@auth.local
 const getCollaborator = async (z, bundle, value) => {
   const collaboratorData = bundle.dtable.collaborators;
   const collData = _.map(
-      _.filter(collaboratorData, (o) => {
-        return o.contact_email === value;
-      }),
-      (o) => {
-        return o.email;
-      },
+    _.filter(collaboratorData, (o) => {
+      return o.contact_email === value;
+    }),
+    (o) => {
+      return o.email;
+    }
   );
   z.console.log("collData", collData);
   return collData;
 };
-
 
 // input: array with usernames [xxx@auth.local, xyz@auth.local]
 // output: array with enhanced objects [{username: ..., ...}, {username: ..., ...}]
@@ -960,17 +995,20 @@ const getCollaboratorData = async (z, bundle, value) => {
   const collaboratorUsers = value;
   const collaboratorData = bundle.dtable.collaborators;
   const collData = _.map(
-      _.filter(collaboratorData, (o) => {
-        const regex = /^\w{32}@auth\.local$/;
-        for (let i = 0; i < collaboratorUsers.length; i++) {
-          if ( o.email === collaboratorUsers[i] && regex.test(collaboratorUsers[i]) ) {
-            return o.email === collaboratorUsers[i];
-          }
+    _.filter(collaboratorData, (o) => {
+      const regex = /^\w{32}@auth\.local$/;
+      for (let i = 0; i < collaboratorUsers.length; i++) {
+        if (
+          o.email === collaboratorUsers[i] &&
+          regex.test(collaboratorUsers[i])
+        ) {
+          return o.email === collaboratorUsers[i];
         }
-      }),
-      (o) => {
-        return {username: o.email, email: o.contact_email, name: o.name};
-      },
+      }
+    }),
+    (o) => {
+      return { username: o.email, email: o.contact_email, name: o.name };
+    }
   );
   // z.console.log("collData", collData);
   return collData;
@@ -981,7 +1019,7 @@ const linkRecord = async (z, bundle, key, col) => {
   const metadata = await acquireMetadata(z, bundle);
   const data = metadata.tables;
   const TablesData = _.map(data, (o) => {
-    return {_id: o._id, name: o.name};
+    return { _id: o._id, name: o.name };
   });
 
   // prepare bodyData for api request
@@ -996,7 +1034,7 @@ const linkRecord = async (z, bundle, key, col) => {
   // link_id is always correct. table_row_id is always the row id of the source, and other_table_row_id is always the target
   // but sometimes the table_row_id and other_table_row_id are mixed and have to be switched...
   // "table:" + bodyData.table_id === bundle.inputData?.["table_name"]. Wenn nicht, dann welchseln
-  if ( `table:${bodyData.table_id}` != bundle.inputData?.["table_name"] ) {
+  if (`table:${bodyData.table_id}` != bundle.inputData?.["table_name"]) {
     const tmpId = bodyData.table_id;
     bodyData.table_id = bodyData.other_table_id;
     bodyData.other_table_id = tmpId;
@@ -1023,9 +1061,9 @@ const linkRequest = async (z, bundle, bodyData) => {
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${bundle.dtable.dtable_uuid}/links/`,
     method: "POST",
     headers: {
-      "accept": "application/json",
+      accept: "application/json",
       "content-type": "application/json",
-      "Authorization": `Token ${bundle.dtable.access_token}`,
+      Authorization: `Token ${bundle.dtable.access_token}`,
     },
     body: JSON.stringify({
       table_name: bodyData.table_name,
@@ -1047,7 +1085,7 @@ const getImageData = (value) => {
     const regex = /([^/]+)$/;
     const match = o.match(regex);
     const filename = match[1];
-    return {name: filename, size: 0, type: "image", url: o};
+    return { name: filename, size: 0, type: "image", url: o };
   });
   return imageData;
 };
@@ -1076,21 +1114,26 @@ const getCollAndImage = async (z, bundle, value) => {
  * @return {Array<DTableColumn>}
  */
 const getBundledViewColumns = (columns, bundle) => {
-  const viewIsInvalid = (
+  const viewIsInvalid =
     bundle.inputData.table_name &&
-      bundle.inputData.table_view &&
-      !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`)
-  );
+    bundle.inputData.table_view &&
+    !bundle.inputData.table_view.startsWith(`${bundle.inputData.table_name}:`);
   const tid = sidParse(bundle.inputData.table_name).table;
   /** @type DTableTable */
   const table = _.find(bundle.dtable.metadata.tables, ["_id", tid]);
   if (undefined === table) {
     return columns;
   }
-  const vid = viewIsInvalid ? "0000" : sidParse(bundle.inputData.table_view).view;
+  const vid = viewIsInvalid
+    ? "0000"
+    : sidParse(bundle.inputData.table_view).view;
   /** @type DTableView */
   const view = _.find(table.views, ["_id", vid]);
-  if (undefined === view || undefined === view.hidden_columns || !_.isArray(view.hidden_columns)) {
+  if (
+    undefined === view ||
+    undefined === view.hidden_columns ||
+    !_.isArray(view.hidden_columns)
+  ) {
     return columns;
   }
   return _.filter(columns, (col) => !view.hidden_columns.includes(col.key));
@@ -1109,7 +1152,6 @@ const getUpdateColumns = (columns, bundle) => {
   });
 };
 
-
 // fallback image file name
 const getImageFilenameFromUrl = (url, fallback = "Unnamed attachment") => {
   const lastPart = url.split("/")?.pop();
@@ -1120,9 +1162,10 @@ const getImageFilenameFromUrl = (url, fallback = "Unnamed attachment") => {
   if (!uploadFilename || "string" !== typeof uploadFilename) {
     return fallback;
   }
-  return /^.+\.[a-zA-Z0-9]{3,4}$/.test(uploadFilename) ? uploadFilename : fallback;
+  return /^.+\.[a-zA-Z0-9]{3,4}$/.test(uploadFilename)
+    ? uploadFilename
+    : fallback;
 };
-
 
 module.exports = {
   acquireServerInfo,

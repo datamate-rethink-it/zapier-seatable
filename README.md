@@ -1,6 +1,6 @@
 # SeaTable Zapier-Integration
 
-`sea-table`
+`seatable`
 
 
 ## Actions
