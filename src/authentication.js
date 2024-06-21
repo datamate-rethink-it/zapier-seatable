@@ -1,4 +1,4 @@
-const ctx = require("./ctx");
+const ctx = require('./ctx');
 
 /**
  * Get serverInformation and validate the access-token...
@@ -11,7 +11,7 @@ const ctx = require("./ctx");
 const test = async (z, bundle) => {
   const serverInfo = await ctx.acquireServerInfo(z, bundle);
   const accessToken = await ctx.acquireDtableAppAccess(z, bundle);
-  return {serverInfo, dtable: accessToken};
+  return { serverInfo, dtable: accessToken };
 };
 
 /**
@@ -24,7 +24,9 @@ const test = async (z, bundle) => {
  */
 const connectionLabel = (z, bundle) => {
   // remove https:// in front (but keep the non-secure to show)
-  const address = bundle.authData.server.replace(/^https:\/\//, "").replace(/\/+$/, "");
+  const address = bundle.authData.server
+    .replace(/^https:\/\//, '')
+    .replace(/\/+$/, '');
   // const {serverInfo, dtable} = bundle.inputData;
   // const dtable = bundle.inputData;
   // z.console.log("DEBUG bundle in auth", bundle);
@@ -33,25 +35,27 @@ const connectionLabel = (z, bundle) => {
 };
 
 module.exports = {
-  type: "custom",
+  type: 'custom',
   test,
   fields: [
     {
       computed: false,
-      key: "server",
+      key: 'server',
       required: true,
-      label: "Server",
-      type: "string",
-      default: "https://cloud.seatable.io",
-      helpText: "The public SAAS Server is [https://cloud.seatable.io](https://cloud.seatable.io). Only if you use your own on-premise SeaTable you have to add something else.",
+      label: 'Server',
+      type: 'string',
+      default: 'https://cloud.seatable.io',
+      helpText:
+        'The public SAAS Server is [https://cloud.seatable.io](https://cloud.seatable.io). Only if you use your own on-premise SeaTable you have to add something else.',
     },
     {
       computed: false,
-      key: "api_token",
+      key: 'api_token',
       required: true,
-      label: "API-Token (of a Base)",
-      type: "string",
-      helpText: "Create an [API-Token](https://seatable.io/docs/integrationen/zapier-api-tokens-sign-in/) for one of your bases inside SeaTable.",
+      label: 'API-Token (of a Base)',
+      type: 'string',
+      helpText:
+        'Create an [API-Token](https://seatable.io/docs/integrationen/zapier-api-tokens-sign-in/) for one of your bases inside SeaTable.',
     },
   ],
   connectionLabel,

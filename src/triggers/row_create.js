@@ -1,5 +1,5 @@
-const ctx = require("../ctx");
-const _ = require("lodash");
+const ctx = require('../ctx');
+const _ = require('lodash');
 // const {ResponseThrottleInfo} = require("../lib");
 
 /**
@@ -23,7 +23,7 @@ const perform = async (z, bundle) => {
    * */
   const response = await z.request({
     url: `${bundle.authData.server}/dtable-server/api/v1/dtables/${dtableCtx.dtable_uuid}/rows/`,
-    headers: {Authorization: `Token ${dtableCtx.access_token}`},
+    headers: { Authorization: `Token ${dtableCtx.access_token}` },
     params: ctx.requestParamsBundle(bundle),
   });
 
@@ -33,30 +33,36 @@ const perform = async (z, bundle) => {
   }
 
   // usually the columns have the name _ctime and _mtime. But if these columns are set, they have different names.
-  let ctime_column_name = "_ctime"; 
-  const ctime = _.find(tableMetadata.columns, ["type", "ctime"]);
+  let ctimeColumnName = '_ctime';
+  const ctime = _.find(tableMetadata.columns, ['type', 'ctime']);
   if (undefined !== ctime) {
-    ctime_column_name = ctime.name; 
+    ctimeColumnName = ctime.name;
   }
 
   // limit payload size
   // https://platform.zapier.com/docs/constraints#payload-size-triggers
   // rows.reverse();
-  rows = _.orderBy(rows, [ctime_column_name], ["desc"]);
+  rows = _.orderBy(rows, [ctimeColumnName], ['desc']);
   if (bundle.meta && bundle.meta.isLoadingSample) {
     rows.splice(bundle.meta.limit || 3);
   }
 
   // transform the results and enhance the return values
-  rows = await Promise.all(_.map(rows, async (o) => {
-    const transformedObj = await ctx.mapColumnKeysAndEnhanceOutput(z, bundle, tableMetadata.columns, o);
-    transformedObj.id = `${transformedObj.row_id}`;
-    return transformedObj;
-  }));
+  rows = await Promise.all(
+    _.map(rows, async (o) => {
+      const transformedObj = await ctx.mapColumnKeysAndEnhanceOutput(
+        z,
+        bundle,
+        tableMetadata.columns,
+        o
+      );
+      transformedObj.id = `${transformedObj.row_id}`;
+      return transformedObj;
+    })
+  );
 
   return rows;
 };
-
 
 /**
  * @param {ZObject} z
@@ -66,33 +72,29 @@ const perform = async (z, bundle) => {
 const outputFields = async (z, bundle) => {
   const tableMetadata = await ctx.acquireTableMetadata(z, bundle);
   return [
-    {key: "row_id", label: "Original ID"},
-    {key: "row_mtime", label: "Last modification time"},
-    {key: "row_ctime", label: "Creation time"},
+    { key: 'row_id', label: 'Original ID' },
+    { key: 'row_mtime', label: 'Last modification time' },
+    { key: 'row_ctime', label: 'Creation time' },
     ...ctx.outputFieldsRows(tableMetadata.columns, bundle),
   ];
 };
 
-
 module.exports = {
-  key: "row_create",
-  noun: "Row",
+  key: 'row_create',
+  noun: 'Row',
   display: {
-    label: "New Row",
-    description: "Triggers once when a new row is found.",
-    important: true,
+    label: 'New Row',
+    description: 'Triggers once when a new row is found.',
   },
   operation: {
     perform,
     inputFields: [ctx.tableFields, ctx.fileNoAuthLinksField],
     sample: {
-      "id": "N33qMZ-JQTuUlx_DiF__lQ",
-      "row_id": "N33qMZ-JQTuUlx_DiF__lQ",
-      "row_mtime": "2021-12-02T01:23:45.678+00:00",
-      "column:0000": "Contents of the first field; a text-field",
+      id: 'N33qMZ-JQTuUlx_DiF__lQ',
+      row_id: 'N33qMZ-JQTuUlx_DiF__lQ',
+      row_mtime: '2021-12-02T01:23:45.678+00:00',
+      'column:0000': 'Contents of the first field; a text-field',
     },
     outputFields: [outputFields],
   },
 };
-
-

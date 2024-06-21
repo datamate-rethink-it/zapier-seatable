@@ -1,3 +1,12 @@
+## 3.0.14
+
+- Updated zapier-platform-core
+- Add prettier and linting settings
+
+## 3.0.12
+
+- (Security Fix) Fixing SECVULN-96 as recommended by Zapier
+
 ## 3.0.11
 
 - (Fix) Search action fixed dealing with space in table or column names.

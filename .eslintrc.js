@@ -4,13 +4,12 @@ module.exports = {
     es2021: true,
     node: true,
   },
-  extends: "google",
+  extends: ['google', 'prettier'],
   parserOptions: {
-    ecmaVersion: "latest",
+    ecmaVersion: 'latest',
   },
   rules: {
-    "semi": ["error", "always"],
-    "quotes": ["error", "double"],
-    "max-len": "off",
+    semi: ['error', 'always'],
+    'max-len': 'off',
   },
 };

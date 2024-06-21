@@ -1,5 +1,5 @@
-const ctx = require("../ctx");
-const _ = require("lodash");
+const ctx = require('../ctx');
+const _ = require('lodash');
 
 /**
  * perform
@@ -20,17 +20,16 @@ const perform = async (z, bundle) => {
 };
 
 module.exports = {
-  key: "get_tables_of_a_base",
-  noun: "Table",
+  key: 'get_tables_of_a_base',
+  noun: 'Table',
   display: {
-    label: "Hidden: Get tables of a base",
-    description: "Internal trigger to get the tables of a base.",
+    label: 'Hidden: Get tables of a base',
+    description: 'Internal trigger to get the tables of a base.',
     hidden: true,
-    important: false,
   },
   operation: {
     perform,
-    sample: {id: "table:0000", name: "Table1"},
-    outputFields: [{key: "id"}, {key: "name"}],
+    sample: { id: 'table:0000', name: 'Table1' },
+    outputFields: [{ key: 'id' }, { key: 'name' }],
   },
 };

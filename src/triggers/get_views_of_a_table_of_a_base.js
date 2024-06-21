@@ -1,5 +1,5 @@
-const ctx = require("../ctx");
-const _ = require("lodash");
+const ctx = require('../ctx');
+const _ = require('lodash');
 
 /**
  * perform
@@ -23,17 +23,16 @@ const perform = async (z, bundle) => {
 };
 
 module.exports = {
-  key: "get_views_of_a_table_of_a_base",
-  noun: "Table View",
+  key: 'get_views_of_a_table_of_a_base',
+  noun: 'Table View',
   display: {
-    label: "Hidden: Get views of a table of a base",
-    description: "Internal trigger to get the views of a table of a base.",
+    label: 'Hidden: Get views of a table of a base',
+    description: 'Internal trigger to get the views of a table of a base.',
     hidden: true,
-    important: false,
   },
   operation: {
     perform,
-    sample: {id: "table:0000:view:0000", name: "Default View"},
-    outputFields: [{key: "id"}, {key: "name"}],
+    sample: { id: 'table:0000:view:0000', name: 'Default View' },
+    outputFields: [{ key: 'id' }, { key: 'name' }],
   },
 };
