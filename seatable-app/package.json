@@ -1,0 +1,17 @@
+{
+  "name": "seatable-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --testTimeout 10000"
+  },
+  "dependencies": {
+    "form-data": "^4.0.1",
+    "zapier-platform-core": "16.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.6.0"
+  },
+  "private": true
+}
