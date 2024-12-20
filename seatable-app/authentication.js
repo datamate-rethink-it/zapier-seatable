@@ -25,13 +25,13 @@ const handleBadResponses = (response, z, bundle) => {
 };
 
 const getBaseToken = async (z, bundle) => {
-  console.log("getBaseToken");
+  //console.log("getBaseToken");
   const response = await z.request({
     url: bundle.authData.serverUrl + "/api/v2.1/dtable/app-access-token/",
     method: "GET",
     body: {},
   });
-  console.log(response);
+  //console.log(response);
   return {
     baseToken: response.data.access_token,
   };
@@ -43,10 +43,10 @@ const includeApiToken = (request, z, bundle) => {
   //console.log("request", request);
   //console.log(request.url);
   if (request.url.includes("api/v2.1/dtable/")) {
-    console.log("use ApiToken", bundle.authData.apiToken);
+    //console.log("use ApiToken", bundle.authData.apiToken);
     request.headers.Authorization = "Bearer " + bundle.authData.apiToken;
   } else {
-    console.log("use BaseToken", bundle.authData.baseToken);
+    //console.log("use BaseToken", bundle.authData.baseToken);
     request.headers.Authorization = "Bearer " + bundle.authData.baseToken;
   }
   return request;
