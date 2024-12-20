@@ -1,0 +1,19 @@
+# cache files/trees
+*.cache*
+
+# internal stuff
+*.internal
+
+# environment variables file
+/.env*
+!/.env*.dist
+
+# Node.js dependency directory
+node_modules/
+
+# Build folder
+/build/*
+
+# increments
+*.increment*
+

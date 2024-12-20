@@ -1,0 +1,34 @@
+{
+  "name": "seatable",
+  "version": "3.0.14",
+  "description": "SeaTable is a web based table-database hybrid. SeaTable is a flexible tool for your team, complete overview and better collaboration. SeaTable is the building block for your ideas.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --recursive --exclude 'test/antar/*_*' -t 10000"
+  },
+  "engines": {
+    "node": ">=v16",
+    "npm": ">=9.1.0"
+  },
+  "dependencies": {
+    "form-data": "^4.0.0",
+    "lodash": "^4.17.20",
+    "uuid": "^9.0.0",
+    "zapier-platform-core": "15.8.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.42.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^16.0.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "mocha": "^9.2.2",
+    "node-html-parser": "^6.1.5",
+    "should": "^13.2.0"
+  },
+  "private": true,
+  "zapier": {
+    "convertedByCLIVersion": "10.1.2"
+  }
+}
