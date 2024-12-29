@@ -39,7 +39,7 @@ const perform = async (z, bundle) => {
   // Add 'id' field to each item in the response
   const rowsWithId = enrichedRows.map((row) => ({
     ...row,
-    id: row._id + "_" + row._mtime,
+    id: row._id,
   }));
 
   return rowsWithId;
@@ -79,13 +79,13 @@ const addDynamicOutputFields = async (z, bundle) => {
 };
 
 module.exports = {
-  key: "new_updated_row",
-  noun: "New_updated_row",
+  key: "new_row",
+  noun: "new_row",
 
   display: {
-    label: "New or Updated Row ",
+    label: "New Row ",
     description:
-      "Triggers when a new row is created or a row is updated. (max xxx rows are possible in this view - otherwise the trigger will not work)",
+      "Triggers when a new row is created. (max xxx rows are possible in this view - otherwise the trigger will not work)",
   },
 
   operation: {
