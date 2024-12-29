@@ -6,3 +6,24 @@ umwandeln der ausgabe von einzelnen spaltentypen (single-select, collaborator, e
 
 - collaborator umwandeln ist eine extra option (weil extra api call)
 - get files ist eine extra option (weil extra api call)
+
+allow download (hint: viele api requests...)
+
+## Final Triggers / Actions
+
+Triggers
+
+[x] New or Updated Row
+[x] New Row
+[ ] New Signature
+
+Actions
+
+[ ] Create Row
+[ ] Update Row
+[ ] API Request (Beta)
+
+Search
+
+[ ] Find Row
+[ ] Find Many Rows (With Line Item Support)
