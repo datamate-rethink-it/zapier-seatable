@@ -34,7 +34,15 @@ const perform = async (z, bundle) => {
   ));
 
   // DEBUG:
-  console.log(enrichedRows);
+  //console.log(enrichedRows);
+
+  // Process rows for download links
+  enrichedRows = await processRowsForDownloadLinks(
+    enrichedRows,
+    z,
+    bundle,
+    bundle.inputData.download
+  );
 
   // Add 'id' field to each item in the response
   const rowsWithId = enrichedRows.map((row) => ({
@@ -110,7 +118,7 @@ module.exports = {
       },
       {
         key: "collaborators",
-        label: "Include collaborator names?",
+        label: "Provide collaborator names and e-mail adresses?",
         type: "string",
         choices: [
           { label: "Yes", sample: "yes", value: "yes" },
@@ -122,10 +130,22 @@ module.exports = {
           "Choose whether to get the collaborator names and contact email adresses.",
       },
       {
+        key: "download",
+        label: "Provide access to images, files and digital signatures?",
+        type: "string",
+        choices: [
+          { label: "Yes", sample: "yes", value: "yes" },
+          { label: "No", sample: "no", value: "no" },
+        ],
+        default: "no",
+        required: true,
+        helpText: "Choose whether to download the asset columns.",
+      },
+      {
         key: "alert",
         type: "copy",
         helpText:
-          "To get a public download link for a file, image or digital-signature, use the action 'Get Public Download Link'.",
+          "To get a public download link for a file, image or digital-signature, will require a lot of API-calls.",
       },
     ],
 

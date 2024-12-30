@@ -51,9 +51,11 @@ const includeApiToken = (request, z, bundle) => {
   if (request.url.includes("api/v2.1/dtable/")) {
     //console.log("use ApiToken", bundle.authData.apiToken);
     request.headers.Authorization = "Bearer " + bundle.authData.apiToken;
+    console.log("API-Token");
   } else {
     //console.log("use BaseToken", bundle.authData.baseToken);
     request.headers.Authorization = "Bearer " + bundle.authData.baseToken;
+    console.log("Bearer-Token");
   }
   return request;
 };

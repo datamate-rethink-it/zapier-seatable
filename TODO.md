@@ -4,10 +4,10 @@ middleware zum entfernen von unerwüsnchten Zeilen -> brauche ich das?
 
 umwandeln der ausgabe von einzelnen spaltentypen (single-select, collaborator, etc...)
 
-- collaborator umwandeln ist eine extra option (weil extra api call)
+- collaborator umwandeln ist eine extra option (weil extra api call) -> auch für die standardspalten...
 - get files ist eine extra option (weil extra api call)
 
-allow download (hint: viele api requests...)
+[x] allow download (hint: viele api requests...)
 
 create row -> change data input
 

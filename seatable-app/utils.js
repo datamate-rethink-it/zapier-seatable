@@ -1,3 +1,5 @@
+const hydrators = require("./hydrators");
+
 // INTERNAL: split asset path.
 function getAssetPath(type, url) {
   const parts = url.split(`/${type}/`);
@@ -13,9 +15,9 @@ function getCollaboratorInfo(authLocal, collaboratorList) {
     collaboratorList.find(
       (singleCollaborator) => singleCollaborator.email === authLocal
     ) || {
-      contact_email: "unknown",
-      name: "unkown",
-      email: "unknown",
+      contact_email: null,
+      name: null,
+      email: null,
     }
   );
 }
@@ -130,6 +132,58 @@ function enrichColumns(row, metadata, collaboratorList) {
   return row;
 }
 
+const getPublicDownloadLink = async (asset_path, z, bundle) => {
+  //console.log("asset_path", asset_path);
+  try {
+    const response = await z.request({
+      method: "GET",
+      url: `${bundle.authData.serverUrl}/api/v2.1/dtable/app-download-link/`,
+      params: { path: asset_path },
+      skipEncodingChars: "/@%",
+    });
+    return response.data.download_link;
+  } catch (error) {
+    console.error(
+      `Error getting download link for ${asset_path}:`,
+      error.message
+    );
+    return null;
+  }
+};
+
+const processRowsForDownloadLinks = async (rows, z, bundle, download) => {
+  for (const row of rows) {
+    for (const [key, value] of Object.entries(row)) {
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          if (item.path) {
+            if (download !== "yes") {
+              item.public_download_link = null;
+              item.file = null;
+            } else {
+              const downloadLink = await getPublicDownloadLink(
+                item.path,
+                z,
+                bundle
+              );
+              if (downloadLink) {
+                item.public_download_link = downloadLink;
+                item.file = z.dehydrateFile(hydrators.downloadFile, {
+                  url: downloadLink,
+                });
+              } else {
+                item.public_download_link = "error";
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return rows;
+};
+
 module.exports = {
   enrichColumns,
+  processRowsForDownloadLinks,
 };

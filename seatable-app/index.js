@@ -4,7 +4,7 @@ const {
   afters = [],
 } = require("./authentication");
 
-//const hydrators = require("./hydrators");
+const hydrators = require("./hydrators");
 
 // triggers
 const new_updated_row = require("./triggers/new_updated_row");
@@ -25,7 +25,7 @@ module.exports = {
 
   authentication,
 
-  //hydrators,
+  hydrators,
 
   beforeRequest: [...befores],
   afterResponse: [...afters],
