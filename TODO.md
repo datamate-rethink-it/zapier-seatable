@@ -9,6 +9,10 @@ umwandeln der ausgabe von einzelnen spaltentypen (single-select, collaborator, e
 
 allow download (hint: viele api requests...)
 
+create row -> change data input
+
+[x] check if api-gateway is enabled.
+
 ## Final Triggers / Actions
 
 Triggers

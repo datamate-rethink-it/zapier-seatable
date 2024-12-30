@@ -31,7 +31,12 @@ const getBaseToken = async (z, bundle) => {
     method: "GET",
     body: {},
   });
-  //console.log(response);
+  //console.log(response.data);
+  if (response.data?.use_api_gateway !== true) {
+    throw new z.errors.Error(
+      "Your SeaTable Server must support API-Gateway. Please update your SeaTable Server to the newest version."
+    );
+  }
   return {
     baseUuid: response.data.dtable_uuid,
     baseToken: response.data.access_token,
