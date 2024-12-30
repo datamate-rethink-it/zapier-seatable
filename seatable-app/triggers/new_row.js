@@ -91,7 +91,7 @@ module.exports = {
   noun: "new_row",
 
   display: {
-    label: "New Row ",
+    label: "New Row",
     description: "Triggers when a new row is created.",
   },
 

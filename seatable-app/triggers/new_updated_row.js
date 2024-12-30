@@ -91,7 +91,7 @@ module.exports = {
   noun: "New_updated_row",
 
   display: {
-    label: "New or Updated Row ",
+    label: "New or Updated Row",
     description:
       "Triggers when a row is created or updated. (File Uploads does not trigger this event)",
   },

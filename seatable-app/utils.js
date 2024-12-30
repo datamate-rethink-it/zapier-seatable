@@ -22,6 +22,14 @@ function getCollaboratorInfo(authLocal, collaboratorList) {
   );
 }
 
+function collaboratorInfo(collaborators, username) {
+  for (const collaborator of collaborators) {
+    if (collaborator.email === username) {
+      return collaborator;
+    }
+  }
+}
+
 function enrichColumns(row, metadata, collaboratorList) {
   Object.keys(row).forEach((key) => {
     const columnDef = metadata.find(
@@ -186,4 +194,5 @@ const processRowsForDownloadLinks = async (rows, z, bundle, download) => {
 module.exports = {
   enrichColumns,
   processRowsForDownloadLinks,
+  collaboratorInfo,
 };

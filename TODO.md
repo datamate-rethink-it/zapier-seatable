@@ -12,10 +12,6 @@ Seems to be finished.
 
 create row -> change data input
 
-## Other stuff
-
-[x] check if api-gateway is enabled.
-
 ## Final Triggers / Actions
 
 Triggers
@@ -34,3 +30,8 @@ Search
 
 [ ] Find Row
 [ ] Find Many Rows (With Line Item Support)
+
+## Other stuff
+
+[x] check if api-gateway is enabled.
+[ ] meta.isLoadingSample
