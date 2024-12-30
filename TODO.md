@@ -18,7 +18,7 @@ Triggers
 
 [x] New or Updated Row
 [x] New Row
-[ ] New Signature
+[x] New Signature
 
 Actions
 

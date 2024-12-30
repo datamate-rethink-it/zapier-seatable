@@ -144,7 +144,7 @@ module.exports = {
         key: "alert",
         type: "copy",
         helpText:
-          "To get a public download link for a file, image or digital-signature, will require a lot of API-calls.",
+          "To get a public download link for a file, image or digital-signature, will require additional API-calls.",
       },
     ],
 

@@ -195,4 +195,6 @@ module.exports = {
   enrichColumns,
   processRowsForDownloadLinks,
   collaboratorInfo,
+  getPublicDownloadLink,
+  getAssetPath,
 };

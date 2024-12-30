@@ -1,4 +1,9 @@
-const { collaboratorInfo } = require("../utils");
+const {
+  collaboratorInfo,
+  getPublicDownloadLink,
+  getAssetPath,
+} = require("../utils");
+const hydrators = require("../hydrators");
 
 const perform = async (z, bundle) => {
   const requestOptions = {
@@ -26,6 +31,8 @@ const perform = async (z, bundle) => {
   // output
   const rows = [];
   let collaborators = false;
+  let downloadLink = null;
+  let assetLink = null;
 
   for (const row of response.json.results) {
     if (assetColumn.type === "file") {
@@ -33,15 +40,28 @@ const perform = async (z, bundle) => {
        * multiple files possible
        * qDEk: [[Object],[Object]],
        */
+
       for (const obj of row[bundle.inputData.asset_column]) {
+        // download and asset links
+        if (bundle.inputData.download === "yes") {
+          downloadLink = await getPublicDownloadLink(
+            getAssetPath("files", obj["url"]),
+            z,
+            bundle
+          );
+          assetLink = z.dehydrateFile(hydrators.downloadFile, {
+            url: downloadLink,
+          });
+        }
+
         const resultItem = {
           id: `${row._id}-${obj["url"]}-${obj["size"]}`,
           type: "file",
           name: obj["name"],
           size: obj["size"],
           url: obj["url"],
-          //publicUrl: pubFile.publicUrl, //TODO:...
-          //asset: pubFile.hydratedUrl,
+          publicUrl: downloadLink,
+          asset: assetLink,
           metadata: {
             table_id: assetColumn.table_id,
             table_name: assetColumn.table_name,
@@ -62,15 +82,28 @@ const perform = async (z, bundle) => {
        * 'https://stage.seatable.io/workspace/224/asset/c392d08d-5b00-4456-9217-2afb89e07a0c/images/2023-06/hearthbeat.png'
        * ],
        **/
+
       for (const obj of row[bundle.inputData.asset_column]) {
+        // download and asset links
+        if (bundle.inputData.download === "yes") {
+          downloadLink = await getPublicDownloadLink(
+            getAssetPath("images", obj),
+            z,
+            bundle
+          );
+          assetLink = z.dehydrateFile(hydrators.downloadFile, {
+            url: downloadLink,
+          });
+        }
+
         const resultItem = {
           id: `${row._id}-${obj}`,
           type: "image",
           name: "unknown", //TODO:...
           size: 0,
           url: obj,
-          //publicUrl: pubFile.publicUrl,
-          //asset: pubFile.hydratedUrl,
+          publicUrl: downloadLink,
+          asset: assetLink,
           metadata: {
             table_id: assetColumn.table_id,
             table_name: assetColumn.table_name,
@@ -102,6 +135,19 @@ const perform = async (z, bundle) => {
       }
 
       const obj = row[bundle.inputData.asset_column];
+
+      // download and asset links
+      if (bundle.inputData.download === "yes") {
+        downloadLink = await getPublicDownloadLink(
+          getAssetPath("digital-signs", obj["sign_image_url"]),
+          z,
+          bundle
+        );
+        assetLink = z.dehydrateFile(hydrators.downloadFile, {
+          url: downloadLink,
+        });
+      }
+
       const resultItem = {
         id: `${row._id}-${obj["sign_image_url"]}`,
         type: "signature",
@@ -109,8 +155,8 @@ const perform = async (z, bundle) => {
           "Signature of " + collaboratorInfo(collaborators, obj.username).name,
         size: 0,
         url: obj["sign_image_url"],
-        //publicUrl: pubFile.publicUrl,
-        //asset: pubFile.hydratedUrl,
+        publicUrl: downloadLink,
+        asset: assetLink,
         signed_by_email: collaboratorInfo(collaborators, obj.username)
           .contact_email,
         metadata: {
@@ -159,6 +205,24 @@ module.exports = {
         required: true,
         dynamic: "intern_asset_columns.name",
         altersDynamicFields: true,
+      },
+      {
+        key: "download",
+        label: "Provide access to images, files and digital signatures?",
+        type: "string",
+        choices: [
+          { label: "Yes", sample: "yes", value: "yes" },
+          { label: "No", sample: "no", value: "no" },
+        ],
+        default: "no",
+        required: true,
+        helpText: "Choose whether to download the asset columns.",
+      },
+      {
+        key: "alert",
+        type: "copy",
+        helpText:
+          "To get a public download link for a file, image or digital-signature, will require additional API-calls.",
       },
     ],
 
