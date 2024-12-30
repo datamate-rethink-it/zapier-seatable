@@ -1,15 +1,18 @@
 # ToDos
 
-middleware zum entfernen von unerwüsnchten Zeilen -> brauche ich das?
+## Transform trigger return values
 
-umwandeln der ausgabe von einzelnen spaltentypen (single-select, collaborator, etc...)
+[x] collaborator columns
+[x] assets
+[x] buttons (are not returned)
 
-- collaborator umwandeln ist eine extra option (weil extra api call) -> auch für die standardspalten...
-- get files ist eine extra option (weil extra api call)
+Seems to be finished.
 
-[x] allow download (hint: viele api requests...)
+## Transform action input for row creation
 
 create row -> change data input
+
+## Other stuff
 
 [x] check if api-gateway is enabled.
 

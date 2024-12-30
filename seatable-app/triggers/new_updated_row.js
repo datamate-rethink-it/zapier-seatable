@@ -19,7 +19,7 @@ const perform = async (z, bundle) => {
     (table) => table._id === bundle.inputData.table_id
   ).columns;
 
-  // get collaborators...
+  // get collaborators (if requested)...
   let collaborators = [];
   if (bundle.inputData.collaborators === "yes") {
     const response3 = await z.request({
@@ -28,7 +28,7 @@ const perform = async (z, bundle) => {
     collaborators = response3.json.user_list;
   }
 
-  // enrich columns...
+  // enrich rows (except download link)...
   let enrichedRows = (response.data.rows = response.data.rows.map((row) =>
     enrichColumns(row, metadata, collaborators, z, bundle)
   ));
@@ -36,7 +36,7 @@ const perform = async (z, bundle) => {
   // DEBUG:
   //console.log(enrichedRows);
 
-  // Process rows for download links
+  // enrich rows with download links and file (if requested)
   enrichedRows = await processRowsForDownloadLinks(
     enrichedRows,
     z,
@@ -93,7 +93,7 @@ module.exports = {
   display: {
     label: "New or Updated Row ",
     description:
-      "Triggers when a new row is created or a row is updated. (max xxx rows are possible in this view - otherwise the trigger will not work)",
+      "Triggers when a row is created or updated. (File Uploads does not trigger this event)",
   },
 
   operation: {
