@@ -18,6 +18,7 @@ const intern_asset_columns = require("./triggers/intern_asset_columns");
 
 // create actions
 const row = require("./creates/row");
+const row_update = require("./creates/row_update");
 
 // search
 
@@ -45,6 +46,7 @@ module.exports = {
 
   creates: {
     [row.key]: row,
+    [row_update.key]: row_update
   },
 
   resources: {},
