@@ -61,15 +61,16 @@ const inputFields = async (z, bundle) => {
     throw new Error(`Table with ID ${bundle.inputData.table_id} not found`);
   }
 
-  // TODO: clean non-writable columns like button, _creator, _last_modifier, ???
-  //console.log(response);
+  const readonlyColumnTypes = ['creator', 'last-modifier', 'ctime', 'mtime', 'auto-number', 'button'];
 
-  const inputs = targetTable.columns.map((column) => ({
-    key: column.name,
-    label: column.name,
-    type: column.type,
-    required: false,
-  }));
+  const inputs = targetTable.columns.filter((column) => !readonlyColumnTypes.includes(column.type))
+    .map((column) => ({
+      key: column.name,
+      label: column.name,
+      type: column.type,
+      required: false,
+    }));
+
   return inputs;
 };
 
