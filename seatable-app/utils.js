@@ -1,3 +1,5 @@
+const FormData = require('form-data');
+const http = require('https');
 const hydrators = require("./hydrators");
 
 // INTERNAL: split asset path.
@@ -159,6 +161,66 @@ const getPublicDownloadLink = async (asset_path, z, bundle) => {
   }
 };
 
+const getUploadLink = async (z, bundle) => {
+  const response = await z.request({
+    method: "GET",
+    url: `${bundle.authData.serverUrl}/api/v2.1/dtable/app-upload-link/`,
+    skipEncodingChars: "/@%",
+  });
+
+  return response.json;
+};
+
+// TODO: Does not work
+const uploadFile = async (z, uploadLink, file) => {
+  console.log(1)
+  const stream = await makeDownloadStream(file, z);
+  console.log(2)
+
+  const formData = new FormData();
+  // TODO: Get actual filename
+  formData.append("file", stream, {
+    filename: "Test.svg",
+    contentType: "application/octet-stream",
+  });
+
+  stream.resume();
+
+  formData.append("parent_dir", uploadLink.parent_path);
+  formData.append("relative_path", uploadLink.relativePath);
+
+  const options = {
+    method: "POST",
+    url: uploadLink.upload_link,
+    params: {
+      'ret-json': 1,
+    },
+    headers: {
+      ...formData.getHeaders(),
+      "Content-Type": "multipart/form-data",
+    },
+    body: formData,
+  };
+
+  console.log(options)
+
+  const response = await z.request(options);
+
+  console.log(response.data);
+};
+
+const makeDownloadStream = (url) =>
+  new Promise((resolve, reject) => {
+    http
+      .request(url, (res) => {
+        // We can risk missing the first n bytes if we don't pause!
+        res.pause();
+        resolve(res);
+      })
+      .on("error", reject)
+      .end();
+  });
+
 const processRowsForDownloadLinks = async (rows, z, bundle, download) => {
   for (const row of rows) {
     for (const [key, value] of Object.entries(row)) {
@@ -191,10 +253,21 @@ const processRowsForDownloadLinks = async (rows, z, bundle, download) => {
   return rows;
 };
 
+const getCollaborators = async (z, bundle) => {
+  const response = await z.request({
+    url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/related-users/`,
+  });
+
+  return response.json.user_list;
+};
+
 module.exports = {
   enrichColumns,
   processRowsForDownloadLinks,
   collaboratorInfo,
   getPublicDownloadLink,
   getAssetPath,
+  getCollaborators,
+  getUploadLink,
+  uploadFile,
 };

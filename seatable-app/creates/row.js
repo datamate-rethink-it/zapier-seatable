@@ -1,13 +1,60 @@
-const { enrichColumns } = require("../utils");
+const { enrichColumns, getCollaborators, getUploadLink, uploadFile } = require("../utils");
 
 const perform = async (z, bundle) => {
   // TODO: handle single-select, multiple-select, collaborator, images, urls, ...
+
+  const metadata_response = await z.request({
+    url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/metadata/`,
+  });
+
+  const targetTable = metadata_response.json.metadata.tables.find(
+    (table) => table._id === bundle.inputData.table_id
+  );
+
+  if (!targetTable) {
+    throw new Error(`Table with ID ${bundle.inputData.table_id} not found`);
+  }
+
+  // TODO: Only execute this request if there's at least a single collaborator column
+  const collaborators = await getCollaborators(z, bundle);
+
+  const row = {};
+
+  for (const [key, value] of Object.entries(bundle.inputData)) {
+    // Skip table_id
+    if (key === 'table_id') {
+      continue;
+    }
+
+    const column = targetTable.columns.find(column => column.name === key);
+    if (!column) {
+      continue;
+    }
+
+    // Handle "special" column types
+    switch (column.type) {
+      case 'collaborator':
+        // Get the @auth.local email address
+        row[key] = [collaborators.find(c => c.contact_email === value)?.email];
+        break;
+      case 'file':
+        const uploadLink = await getUploadLink(z, bundle);
+        console.log(uploadLink)
+        await uploadFile(z, uploadLink, value);
+        // TODO
+        break;
+      default:
+        row[key] = value;
+        break;
+    }
+  }
+
   const requestOptions = {
     method: "POST",
     url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/rows/`,
     body: {
       table_id: bundle.inputData.table_id,
-      rows: [bundle.inputData],
+      rows: [row],
     },
   };
   console.log(requestOptions);
@@ -61,17 +108,53 @@ const inputFields = async (z, bundle) => {
     throw new Error(`Table with ID ${bundle.inputData.table_id} not found`);
   }
 
-  const readonlyColumnTypes = ['creator', 'last-modifier', 'ctime', 'mtime', 'auto-number', 'button'];
+  const readonlyColumnTypes = [
+    'creator',
+    'last-modifier',
+    'ctime',
+    'mtime',
+    'auto-number',
+    'button',
+    // The following columns are unsupported for now:
+    'geolocation',
+    'digital-sign',
+  ];
 
   const inputs = targetTable.columns.filter((column) => !readonlyColumnTypes.includes(column.type))
     .map((column) => ({
       key: column.name,
       label: column.name,
-      type: column.type,
+      type: mapColumnType(column.type),
+      helpText: generateHelpText(column),
       required: false,
     }));
 
   return inputs;
+};
+
+// Map from SeaTable column types to Zapier field types
+const mapColumnType = (columnType) => {
+  switch (columnType) {
+    case 'checkbox':
+      return 'boolean';
+    case 'rating':
+      return 'integer';
+    case 'date':
+      return 'datetime';
+    default:
+      return columnType;
+  }
+};
+
+const generateHelpText = (column) => {
+  switch (column.type) {
+    case 'collaborator':
+      return 'Please enter the email adress of a user. The @auth.local address will not work.';
+    case 'multiple-select':
+      return 'Only supports existing options. Separate the options with a space.';
+    default:
+      return undefined;
+  }
 };
 
 module.exports = {
