@@ -1,5 +1,5 @@
 const { inputFields } = require('./common');
-const { getCollaborators } = require('../utils');
+const { getCollaborators, getUploadLink, uploadFile } = require('../utils');
 
 const perform = async (z, bundle) => {
   const metadata_response = await z.request({
@@ -38,12 +38,29 @@ const perform = async (z, bundle) => {
         // Get the @auth.local email address
         row[column.name] = [collaborators.find(c => c.contact_email === value)?.email];
         break;
-      case 'file':
+      case 'file': {
         const uploadLink = await getUploadLink(z, bundle);
-        console.log(uploadLink)
-        await uploadFile(z, uploadLink, value);
-        // TODO
+        const file = await uploadFile(z, uploadLink, value, "file");
+
+        row[column.name] = [
+          {
+            name: file.name,
+            size: file.size,
+            type: "file",
+            url: `/workspace/${bundle.authData.workspaceId}${uploadLink.parent_path}/${uploadLink.file_relative_path}/${file.name}`,
+          },
+        ];
+
         break;
+      }
+      case 'image': {
+        const uploadLink = await getUploadLink(z, bundle);
+        const image = await uploadFile(z, uploadLink, value, "image");
+
+        row[column.name] = [`/workspace/${bundle.authData.workspaceId}${uploadLink.parent_path}/${uploadLink.img_relative_path}/${image.name}`];
+
+        break;
+      }
       case 'multiple-select':
         // Must be an array
         row[column.name] = value.split(" ");
