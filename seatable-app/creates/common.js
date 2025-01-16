@@ -18,6 +18,7 @@ const inputFields = async (z, bundle) => {
     'mtime',
     'auto-number',
     'button',
+    'formula',
     // The following columns are unsupported for now:
     'geolocation',
     'digital-sign',
