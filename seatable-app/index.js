@@ -14,6 +14,7 @@ const new_asset = require("./triggers/new_asset");
 // internal
 const intern_tables = require("./triggers/intern_tables");
 const intern_views = require("./triggers/intern_views");
+const intern_rows = require("./triggers/intern_rows");
 const intern_asset_columns = require("./triggers/intern_asset_columns");
 
 // create actions
@@ -39,6 +40,7 @@ module.exports = {
     [new_asset.key]: new_asset,
     [intern_tables.key]: intern_tables,
     [intern_views.key]: intern_views,
+    [intern_rows.key]: intern_rows,
     [intern_asset_columns.key]: intern_asset_columns,
   },
 

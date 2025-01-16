@@ -115,6 +115,8 @@ module.exports = {
         type: "string",
         required: true,
         helpText: "Enter the row ID of an existing row.",
+        dynamic: "intern_rows.id.name",
+        altersDynamicFields: false,
       },
       inputFields,
     ],
