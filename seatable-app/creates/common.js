@@ -24,18 +24,16 @@ const inputFields = async (z, bundle) => {
     'digital-sign',
   ];
 
+  const operation = bundle.inputData.row_id ? 'update' : 'create';
+
   const inputs = targetTable.columns.filter((column) => !readonlyColumnTypes.includes(column.type))
     .map((column) => ({
       key: column.name,
       label: column.name,
       type: mapColumnType(column.type),
-      helpText: generateHelpText(column),
+      helpText: generateHelpText(column, operation),
       required: false,
     }));
-
-  if (bundle.inputData.row_id) {
-    console.log(bundle.inputData);
-  }
 
   return inputs;
 };
@@ -54,15 +52,24 @@ const mapColumnType = (columnType) => {
   }
 };
 
-const generateHelpText = (column) => {
+// operation can be "create" or "update"
+const generateHelpText = (column, operation) => {
+  let text = '';
+
   switch (column.type) {
     case 'collaborator':
-      return 'Please enter the email adress of a user. The @auth.local address will not work.';
+      text += 'Please enter the email adress of a user. The @auth.local address will not work.';
+      break;
     case 'multiple-select':
-      return 'Only supports existing options. Separate the options with a space.';
-    default:
-      return undefined;
+      text += 'Only supports existing options. Separate the options with a space.';
+      break;
   }
+
+  if (operation === "update") {
+    text += 'Use three spaces to delete the current column value from the row.'
+  }
+
+  return text;
 };
 
 module.exports = {
