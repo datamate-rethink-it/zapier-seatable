@@ -180,7 +180,8 @@ const extractFilename = (stream, url) => {
   return fromHeader ?? (fromURL ?? fallback);
 }
 
-const uploadFile = async (z, uploadLink, file) => {
+// type is either "file" or "image"
+const uploadFile = async (z, uploadLink, file, type) => {
   const stream = await makeDownloadStream(file, z);
 
   const formData = new FormData();
@@ -193,7 +194,7 @@ const uploadFile = async (z, uploadLink, file) => {
   stream.resume();
 
   formData.append("parent_dir", uploadLink.parent_path);
-  formData.append("relative_path", uploadLink.file_relative_path);
+  formData.append("relative_path", type === "file" ? uploadLink.file_relative_path : uploadLink.img_relative_path);
 
   const options = {
     method: "POST",

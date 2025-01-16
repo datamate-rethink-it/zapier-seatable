@@ -38,9 +38,9 @@ const perform = async (z, bundle) => {
         // Get the @auth.local email address
         row[key] = [collaborators.find(c => c.contact_email === value)?.email];
         break;
-      case 'file':
+      case 'file': {
         const uploadLink = await getUploadLink(z, bundle);
-        const file = await uploadFile(z, uploadLink, value);
+        const file = await uploadFile(z, uploadLink, value, "file");
 
         row[key] = [
           {
@@ -52,6 +52,15 @@ const perform = async (z, bundle) => {
         ];
 
         break;
+      }
+      case 'image': {
+        const uploadLink = await getUploadLink(z, bundle);
+        const image = await uploadFile(z, uploadLink, value, "image");
+
+        row[key] = [`/workspace/${bundle.authData.workspaceId}${uploadLink.parent_path}/${uploadLink.img_relative_path}/${image.name}`];
+
+        break;
+      }
       default:
         row[key] = value;
         break;
