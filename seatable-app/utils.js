@@ -171,23 +171,29 @@ const getUploadLink = async (z, bundle) => {
   return response.json;
 };
 
-// TODO: Does not work
+const extractFilename = (stream, url) => {
+  // Extract from Content-Disposition header
+  const fromHeader = stream.headers["content-disposition"]?.match(/^attachment; filename="(?<filename>[^"]+)"$/)?.groups?.filename;
+  const fromURL = new URL(url).pathname.split('/').pop();
+  const fallback = "file";
+
+  return fromHeader ?? (fromURL ?? fallback);
+}
+
 const uploadFile = async (z, uploadLink, file) => {
-  console.log(1)
   const stream = await makeDownloadStream(file, z);
-  console.log(2)
 
   const formData = new FormData();
-  // TODO: Get actual filename
+
   formData.append("file", stream, {
-    filename: "Test.svg",
+    filename: extractFilename(stream, file),
     contentType: "application/octet-stream",
   });
 
   stream.resume();
 
   formData.append("parent_dir", uploadLink.parent_path);
-  formData.append("relative_path", uploadLink.relativePath);
+  formData.append("relative_path", uploadLink.file_relative_path);
 
   const options = {
     method: "POST",
@@ -202,11 +208,9 @@ const uploadFile = async (z, uploadLink, file) => {
     body: formData,
   };
 
-  console.log(options)
-
   const response = await z.request(options);
 
-  console.log(response.data);
+  return response.data[0];
 };
 
 const makeDownloadStream = (url) =>

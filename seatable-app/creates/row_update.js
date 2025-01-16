@@ -2,9 +2,6 @@ const { inputFields } = require('./common');
 const { getCollaborators } = require('../utils');
 
 const perform = async (z, bundle) => {
-  // TODO
-
-  // TODO: Limit code duplication
   const metadata_response = await z.request({
     url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/metadata/`,
   });
@@ -22,14 +19,16 @@ const perform = async (z, bundle) => {
 
   const row = {};
 
-  for (const [key, value] of Object.entries(bundle.inputData)) {
-    // Skip table_id
-    if (key === 'table_id') {
+  for (const column of targetTable.columns) {
+    // Exactly three spaces => column value should be deleted
+    // TODO: Does not work when using "zapier invoke": bundle.inputDataRaw is undefined
+    if (bundle.inputDataRaw?.[column.name] === '   ') {
+      row[column.name] = null;
       continue;
     }
 
-    const column = targetTable.columns.find(column => column.name === key);
-    if (!column) {
+    const value = bundle.inputData[column.name];
+    if (value === undefined || value === '') {
       continue;
     }
 
@@ -37,7 +36,7 @@ const perform = async (z, bundle) => {
     switch (column.type) {
       case 'collaborator':
         // Get the @auth.local email address
-        row[key] = [collaborators.find(c => c.contact_email === value)?.email];
+        row[column.name] = [collaborators.find(c => c.contact_email === value)?.email];
         break;
       case 'file':
         const uploadLink = await getUploadLink(z, bundle);
@@ -46,7 +45,7 @@ const perform = async (z, bundle) => {
         // TODO
         break;
       default:
-        row[key] = value;
+        row[column.name] = value;
         break;
     }
   }
@@ -67,12 +66,7 @@ const perform = async (z, bundle) => {
 
   const response = await z.request(requestOptions);
 
-  // TODO: Return data
-  console.log(response.json);
-};
-
-const addDynamicOutputFields = async (z, bundle) => {
-  // TODO
+  return response.data;
 };
 
 module.exports = {
@@ -103,13 +97,11 @@ module.exports = {
       },
       inputFields,
     ],
-    /* TODO
     sample: {
-      _ctime: "2024-12-29T15:33:30+01:00",
-      _mtime: "2024-12-29T17:25:34+01:00",
-      _id: "c1kYssFbSWWX5KT6yukooQ",
-      id: "c1kYssFbSWWX5KT6yukooQ_2024-12-29T17:25:34+01:00",
-    },*/
-    outputFields: [addDynamicOutputFields],
+      success: true,
+    },
+    outputFields: [
+      { key: "success", label: "Success", type: "boolean" },
+    ],
   },
 };

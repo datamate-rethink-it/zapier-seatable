@@ -1,3 +1,4 @@
+const { inputFields } = require("./common");
 const { enrichColumns, getCollaborators, getUploadLink, uploadFile } = require("../utils");
 
 const perform = async (z, bundle) => {
@@ -39,9 +40,17 @@ const perform = async (z, bundle) => {
         break;
       case 'file':
         const uploadLink = await getUploadLink(z, bundle);
-        console.log(uploadLink)
-        await uploadFile(z, uploadLink, value);
-        // TODO
+        const file = await uploadFile(z, uploadLink, value);
+
+        row[key] = [
+          {
+            name: file.name,
+            size: file.size,
+            type: "file",
+            url: `/workspace/${bundle.authData.workspaceId}${uploadLink.parent_path}/${uploadLink.file_relative_path}/${file.name}`,
+          },
+        ];
+
         break;
       default:
         row[key] = value;
@@ -93,43 +102,6 @@ const addDynamicOutputFields = async (z, bundle) => {
 
   //console.log(generatedOutputFields);
   return generatedOutputFields;
-};
-
-const inputFields = async (z, bundle) => {
-  const response = await z.request({
-    url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/metadata/`,
-  });
-
-  const targetTable = response.json.metadata.tables.find(
-    (table) => table._id === bundle.inputData.table_id
-  );
-
-  if (!targetTable) {
-    throw new Error(`Table with ID ${bundle.inputData.table_id} not found`);
-  }
-
-  const readonlyColumnTypes = [
-    'creator',
-    'last-modifier',
-    'ctime',
-    'mtime',
-    'auto-number',
-    'button',
-    // The following columns are unsupported for now:
-    'geolocation',
-    'digital-sign',
-  ];
-
-  const inputs = targetTable.columns.filter((column) => !readonlyColumnTypes.includes(column.type))
-    .map((column) => ({
-      key: column.name,
-      label: column.name,
-      type: mapColumnType(column.type),
-      helpText: generateHelpText(column),
-      required: false,
-    }));
-
-  return inputs;
 };
 
 // Map from SeaTable column types to Zapier field types
