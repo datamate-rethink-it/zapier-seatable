@@ -44,6 +44,10 @@ const perform = async (z, bundle) => {
         await uploadFile(z, uploadLink, value);
         // TODO
         break;
+      case 'multiple-select':
+        // Must be an array
+        row[column.name] = value.split(" ");
+        break;
       default:
         row[column.name] = value;
         break;
