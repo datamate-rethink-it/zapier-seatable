@@ -47,6 +47,8 @@ const mapColumnType = (columnType) => {
       return 'integer';
     case 'date':
       return 'datetime';
+    case 'image':
+      return 'file';
     default:
       return columnType;
   }
