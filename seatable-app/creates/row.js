@@ -113,31 +113,6 @@ const addDynamicOutputFields = async (z, bundle) => {
   return generatedOutputFields;
 };
 
-// Map from SeaTable column types to Zapier field types
-const mapColumnType = (columnType) => {
-  switch (columnType) {
-    case 'checkbox':
-      return 'boolean';
-    case 'rating':
-      return 'integer';
-    case 'date':
-      return 'datetime';
-    default:
-      return columnType;
-  }
-};
-
-const generateHelpText = (column) => {
-  switch (column.type) {
-    case 'collaborator':
-      return 'Please enter the email adress of a user. The @auth.local address will not work.';
-    case 'multiple-select':
-      return 'Only supports existing options. Separate the options with a space.';
-    default:
-      return undefined;
-  }
-};
-
 module.exports = {
   key: "row",
   noun: "row",
