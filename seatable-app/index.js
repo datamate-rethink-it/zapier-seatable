@@ -16,6 +16,7 @@ const intern_tables = require("./triggers/intern_tables");
 const intern_views = require("./triggers/intern_views");
 const intern_rows = require("./triggers/intern_rows");
 const intern_asset_columns = require("./triggers/intern_asset_columns");
+const intern_search_columns = require("./triggers/intern_search_columns");
 
 // create actions
 const row = require("./creates/row");
@@ -44,6 +45,7 @@ module.exports = {
     [intern_views.key]: intern_views,
     [intern_rows.key]: intern_rows,
     [intern_asset_columns.key]: intern_asset_columns,
+    [intern_search_columns.key]: intern_search_columns,
   },
 
   searches: {

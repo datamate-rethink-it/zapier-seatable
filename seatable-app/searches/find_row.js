@@ -1,13 +1,52 @@
+const { enrichColumns, processRowsForDownloadLinks } = require("../utils");
+
 // find a particular intern_rows by name
 const perform = async (z, bundle) => {
+  const metadata = await z.request({
+    url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/metadata/`,
+  });
+
+  const table = metadata.json.metadata.tables.find((table) => table._id === bundle.inputData.table_id);
+  if (!table) {
+    throw new Error(`Table with ID ${bundle.inputData.table_id} not found`);
+  }
+
+  const column = table.columns.find(column => column.key === bundle.inputData.column_key);
+  if (!column) {
+    throw new Error(`Column with key ${bundle.inputData.column_key} not found`);
+  }
+
+  let query = `SELECT * FROM \`${table.name}\` WHERE \`${column.name}\` `;
+  let searchTerm = bundle.inputData.term;
+
+  if (bundle.inputData.insensitive === 'yes') {
+    query = `SELECT * FROM \`${table.name}\` WHERE lower(\`${column.name}\`) `;
+    searchTerm = searchTerm.toLowerCase();
+  }
+
+  if (bundle.inputData.wildcard === 'yes') {
+    query += `LIKE "%${searchTerm}%"`;
+  } else {
+    query += `= "${searchTerm}"`;
+  }
+
   const response = await z.request({
-    url: "https://jsonplaceholder.typicode.com/posts",
-    params: {
-      name: bundle.inputData.name,
+    method: "POST",
+    url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/sql/`,
+    body: {
+      sql: query,
+      convert_keys: true,
     },
   });
+
+  const collaborators = [];
+  const rows = response.data.results.map((row) => enrichColumns(row, table.columns, collaborators, z, bundle));
+
+  // This call mutates `rows`
+  await processRowsForDownloadLinks(rows, z, bundle, bundle.inputData.download);
+
   // this should return an array of objects (but only the first will be used)
-  return response.data;
+  return rows;
 };
 
 module.exports = {
@@ -35,7 +74,15 @@ module.exports = {
         altersDynamicFields: true,
         helpText: "Select the table you want to search in.",
       },
-      // column (nur in manchen kann gesucht werden. Welchen?)
+      {
+        key: "column_key",
+        label: "Search Column",
+        type: "string",
+        required: true,
+        dynamic: "intern_search_columns.id.name",
+        altersDynamicFields: false,
+        helpText: "Select the column you want to search in.",
+      },
       {
         key: "term",
         label: "Search term",
@@ -53,6 +100,19 @@ module.exports = {
         required: true,
         helpText:
           "**False:** The search only results perfect matches. **True:** Finds a row even if the search value is part of a string.",
+      },
+      {
+        key: "insensitive",
+        label: "Case Insensitive Search",
+        type: "string",
+        choices: [
+          { label: "Yes", sample: "yes", value: "yes" },
+          { label: "No", sample: "no", value: "no" },
+        ],
+        default: "no",
+        required: true,
+        helpText:
+          "Whether the search ignores case sensitivity (**yes**). Otherwise, it distinguishes between uppercase and lowercase characters.",
       },
       {
         key: "download",
