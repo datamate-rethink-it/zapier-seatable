@@ -1,4 +1,4 @@
-const { enrichColumns } = require("../utils");
+const { enrichColumns, processRowsForDownloadLinks } = require("../utils");
 
 const perform = async (z, bundle) => {
   const requestOptions = {
