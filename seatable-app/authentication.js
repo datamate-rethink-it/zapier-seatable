@@ -91,7 +91,7 @@ module.exports = {
 
     test,
 
-    connectionLabel: "{{serverUrl}}",
+    connectionLabel: "'{{baseName}}' at {{serverUrl}}",
   },
   befores: [includeApiToken],
   afters: [handleBadResponses],

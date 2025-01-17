@@ -19,7 +19,7 @@ const perform = async (z, bundle) => {
     for (const table of response.data.metadata.tables) {
       returnData.push({
         id: table._id,
-        name: table.name + " (in Base '" + bundle.authData.baseName + "')",
+        name: table.name,
       });
     }
   }

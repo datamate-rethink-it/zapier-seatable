@@ -216,13 +216,16 @@ module.exports = {
         ],
         default: "no",
         required: true,
-        helpText: "Choose whether to download the asset columns.",
+        helpText:
+          "Choose whether to download the asset columns. \
+          **False**: You get only *internal links* to your files, images and signatures that require an authentication and therefore can not be used in your Zapier actions. Still you get access to the metadata of your files.\
+          **True**: You get access to your files, images and signatures. SeaTable also creates public download links (valid for a few hours).",
       },
       {
         key: "alert",
         type: "copy",
         helpText:
-          "To get a public download link for a file, image or digital-signature, will require additional API-calls.",
+          "Activating **Provide access to images, files and digital signatures** will require additional API-calls, so the [limits](https://api.seatable.io/reference/limits) may be exhausted earlier.",
       },
     ],
 
@@ -249,11 +252,6 @@ module.exports = {
 
     outputFields: [
       { key: "type", label: "Type" },
-      { key: "name", label: "Name of the file" },
-      { key: "size", label: "Size in byte" },
-      { key: "url", label: "File URL (requires auth.)" },
-      { key: "publicUrl", label: "File URL (temp. available)" },
-      { key: "asset", label: "File Asset" },
       { key: "metadata__column_key", label: "Meta: Column key" },
       { key: "metadata__column_name", label: "Meta: Column name" },
       { key: "metadata__row_id", label: "Meta: Row ID" },
