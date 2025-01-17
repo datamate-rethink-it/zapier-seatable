@@ -89,7 +89,7 @@ const addDynamicOutputFields = async (z, bundle) => {
 
 module.exports = {
   key: "new_row",
-  noun: "row",
+  noun: "row (trigger)",
 
   display: {
     label: "New Row",
@@ -114,7 +114,7 @@ module.exports = {
         key: "view_id",
         label: "View",
         type: "string",
-        required: true,
+        required: false,
         dynamic: "intern_views.id.name",
         altersDynamicFields: true,
       },

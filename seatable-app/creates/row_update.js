@@ -1,5 +1,5 @@
-const { inputFields } = require('./common');
-const { getCollaborators, getUploadLink, uploadFile } = require('../utils');
+const { inputFields } = require("./common");
+const { getCollaborators, getUploadLink, uploadFile } = require("../utils");
 
 const perform = async (z, bundle) => {
   const metadata_response = await z.request({
@@ -22,23 +22,25 @@ const perform = async (z, bundle) => {
   for (const column of targetTable.columns) {
     // Exactly three spaces => column value should be deleted
     // TODO: Does not work when using "zapier invoke": bundle.inputDataRaw is undefined
-    if (bundle.inputDataRaw?.[column.name] === '   ') {
+    if (bundle.inputDataRaw?.[column.name] === "   ") {
       row[column.name] = null;
       continue;
     }
 
     const value = bundle.inputData[column.name];
-    if (value === undefined || value === '') {
+    if (value === undefined || value === "") {
       continue;
     }
 
     // Handle "special" column types
     switch (column.type) {
-      case 'collaborator':
+      case "collaborator":
         // Get the @auth.local email address
-        row[column.name] = [collaborators.find(c => c.contact_email === value)?.email];
+        row[column.name] = [
+          collaborators.find((c) => c.contact_email === value)?.email,
+        ];
         break;
-      case 'file': {
+      case "file": {
         const uploadLink = await getUploadLink(z, bundle);
         const file = await uploadFile(z, uploadLink, value, "file");
 
@@ -53,15 +55,17 @@ const perform = async (z, bundle) => {
 
         break;
       }
-      case 'image': {
+      case "image": {
         const uploadLink = await getUploadLink(z, bundle);
         const image = await uploadFile(z, uploadLink, value, "image");
 
-        row[column.name] = [`/workspace/${bundle.authData.workspaceId}${uploadLink.parent_path}/${uploadLink.img_relative_path}/${image.name}`];
+        row[column.name] = [
+          `/workspace/${bundle.authData.workspaceId}${uploadLink.parent_path}/${uploadLink.img_relative_path}/${image.name}`,
+        ];
 
         break;
       }
-      case 'multiple-select':
+      case "multiple-select":
         // Must be an array
         row[column.name] = value.split(" ");
         break;
@@ -92,10 +96,11 @@ const perform = async (z, bundle) => {
 
 module.exports = {
   key: "row_update",
-  noun: "Row Update",
+  noun: "row (update)",
   display: {
     label: "Update Row",
-    description: "Updates an existing row, probably with input from previous steps.",
+    description:
+      "Updates an existing row, probably with input from previous steps.",
   },
   operation: {
     perform,
@@ -123,8 +128,6 @@ module.exports = {
     sample: {
       success: true,
     },
-    outputFields: [
-      { key: "success", label: "Success", type: "boolean" },
-    ],
+    outputFields: [{ key: "success", label: "Success", type: "boolean" }],
   },
 };

@@ -88,7 +88,7 @@ const addDynamicOutputFields = async (z, bundle) => {
 
 module.exports = {
   key: "new_updated_row",
-  noun: "New_updated_row",
+  noun: "or updated row (trigger)",
 
   display: {
     label: "New or Updated Row",
@@ -107,12 +107,14 @@ module.exports = {
         required: true,
         dynamic: "intern_tables.id.name",
         altersDynamicFields: true,
+        helpText:
+          "*Note:* This trigger returns only the first 1000 rows. If your table has more rows, please select a view and make sure that this view has either less than 1000 rows or that the newest entries are sorted to the top.",
       },
       {
         key: "view_id",
         label: "View",
         type: "string",
-        required: true,
+        required: false,
         dynamic: "intern_views.id.name",
         altersDynamicFields: true,
       },
@@ -139,13 +141,16 @@ module.exports = {
         ],
         default: "no",
         required: true,
-        helpText: "Choose whether to download the asset columns.",
+        helpText:
+          "Choose whether to download the asset columns. \
+          **False**: You get only *internal links* to your files, images and signatures that require an authentication and therefore can not be used in your Zapier actions. Still you get access to the metadata of your files.\
+          **True**: You get access to your files, images and signatures. SeaTable also creates public download links (valid for a few hours).",
       },
       {
         key: "alert",
         type: "copy",
         helpText:
-          "To get a public download link for a file, image or digital-signature, will require additional API-calls.",
+          "Activating **Provide access to images, files and digital signatures** will require additional API-calls, so the [limits](https://api.seatable.io/reference/limits) may be exhausted earlier.",
       },
     ],
 

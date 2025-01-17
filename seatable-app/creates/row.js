@@ -1,5 +1,10 @@
 const { inputFields } = require("./common");
-const { enrichColumns, getCollaborators, getUploadLink, uploadFile } = require("../utils");
+const {
+  enrichColumns,
+  getCollaborators,
+  getUploadLink,
+  uploadFile,
+} = require("../utils");
 
 const perform = async (z, bundle) => {
   // TODO: handle single-select, multiple-select, collaborator, images, urls, ...
@@ -23,22 +28,24 @@ const perform = async (z, bundle) => {
 
   for (const [key, value] of Object.entries(bundle.inputData)) {
     // Skip table_id
-    if (key === 'table_id') {
+    if (key === "table_id") {
       continue;
     }
 
-    const column = targetTable.columns.find(column => column.name === key);
+    const column = targetTable.columns.find((column) => column.name === key);
     if (!column) {
       continue;
     }
 
     // Handle "special" column types
     switch (column.type) {
-      case 'collaborator':
+      case "collaborator":
         // Get the @auth.local email address
-        row[key] = [collaborators.find(c => c.contact_email === value)?.email];
+        row[key] = [
+          collaborators.find((c) => c.contact_email === value)?.email,
+        ];
         break;
-      case 'file': {
+      case "file": {
         const uploadLink = await getUploadLink(z, bundle);
         const file = await uploadFile(z, uploadLink, value, "file");
 
@@ -53,11 +60,13 @@ const perform = async (z, bundle) => {
 
         break;
       }
-      case 'image': {
+      case "image": {
         const uploadLink = await getUploadLink(z, bundle);
         const image = await uploadFile(z, uploadLink, value, "image");
 
-        row[key] = [`/workspace/${bundle.authData.workspaceId}${uploadLink.parent_path}/${uploadLink.img_relative_path}/${image.name}`];
+        row[key] = [
+          `/workspace/${bundle.authData.workspaceId}${uploadLink.parent_path}/${uploadLink.img_relative_path}/${image.name}`,
+        ];
 
         break;
       }
@@ -115,7 +124,7 @@ const addDynamicOutputFields = async (z, bundle) => {
 
 module.exports = {
   key: "row",
-  noun: "row",
+  noun: "row (create)",
 
   display: {
     label: "Create Row",

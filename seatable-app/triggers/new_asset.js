@@ -178,7 +178,7 @@ const perform = async (z, bundle) => {
 
 module.exports = {
   key: "new_asset",
-  noun: "asset",
+  noun: "asset (trigger)",
 
   display: {
     label: "New File/Image/Signature",
