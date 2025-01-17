@@ -39,7 +39,15 @@ const perform = async (z, bundle) => {
     },
   });
 
-  const collaborators = [];
+  // get collaborators (if requested)...
+  let collaborators = [];
+  if (bundle.inputData.collaborators === "yes") {
+    const response = await z.request({
+      url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/related-users/`,
+    });
+    collaborators = response.json.user_list;
+  }
+
   const rows = response.data.results.map((row) => enrichColumns(row, table.columns, collaborators, z, bundle));
 
   // This call mutates `rows`
@@ -113,6 +121,19 @@ module.exports = {
         required: true,
         helpText:
           "Whether the search ignores case sensitivity (**yes**). Otherwise, it distinguishes between uppercase and lowercase characters.",
+      },
+      {
+        key: "collaborators",
+        label: "Provide collaborator names and e-mail adresses?",
+        type: "string",
+        choices: [
+          { label: "Yes", sample: "yes", value: "yes" },
+          { label: "No", sample: "no", value: "no" },
+        ],
+        default: "no",
+        required: true,
+        helpText:
+          "Choose whether to get the collaborator names and contact email adresses.",
       },
       {
         key: "download",
