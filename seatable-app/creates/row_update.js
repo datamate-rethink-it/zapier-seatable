@@ -116,7 +116,7 @@ module.exports = {
       },
       {
         key: "row_id",
-        label: "Row ID",
+        label: "Row",
         type: "string",
         required: true,
         helpText: "Enter the row ID of an existing row.",

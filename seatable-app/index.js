@@ -20,8 +20,10 @@ const intern_asset_columns = require("./triggers/intern_asset_columns");
 // create actions
 const row = require("./creates/row");
 const row_update = require("./creates/row_update");
+const row_delete = require("./creates/row_delete");
 
 // search
+const find_row = require("./searches/find_row");
 
 module.exports = {
   version: require("./package.json").version,
@@ -44,12 +46,29 @@ module.exports = {
     [intern_asset_columns.key]: intern_asset_columns,
   },
 
-  searches: {},
+  searches: {
+    [find_row.key]: find_row,
+  },
 
   creates: {
     [row.key]: row,
-    [row_update.key]: row_update
+    [row_update.key]: row_update,
+    [row_delete.key]: row_delete,
   },
+
+  /*
+  searchOrCreates: {
+    find_or_create_row: {
+      key: "find_or_create_row",
+      display: {
+        label: "Find or Create a Row",
+        description: "Finds a row, or creates one if it doesn't exist.",
+      },
+      search: "find_row",
+      create: "row",
+    },
+  },
+  */
 
   resources: {},
 };
