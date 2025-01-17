@@ -88,7 +88,7 @@ const addDynamicOutputFields = async (z, bundle) => {
 
 module.exports = {
   key: "new_updated_row",
-  noun: "Row Update",
+  noun: "Row",
 
   display: {
     label: "New or Updated Row",

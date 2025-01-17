@@ -96,7 +96,7 @@ const perform = async (z, bundle) => {
 
 module.exports = {
   key: "row_update",
-  noun: "Row_update",
+  noun: "Row",
   display: {
     label: "Update Row",
     description:
