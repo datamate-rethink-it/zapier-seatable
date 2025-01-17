@@ -41,6 +41,7 @@ const getBaseToken = async (z, bundle) => {
     baseUuid: response.data.dtable_uuid,
     baseToken: response.data.access_token,
     workspaceId: response.data.workspace_id,
+    baseName: response.data.dtable_name,
   };
 };
 

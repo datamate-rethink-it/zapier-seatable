@@ -1,5 +1,5 @@
-const FormData = require('form-data');
-const http = require('https');
+const FormData = require("form-data");
+const http = require("https");
 const hydrators = require("./hydrators");
 
 // INTERNAL: split asset path.
@@ -38,19 +38,6 @@ function enrichColumns(row, metadata, collaboratorList) {
       (obj) => obj.name === key || obj.key === key
     );
 
-    if (columnDef?.type === "collaborator") {
-      const collaborators = row[key] || [];
-      if (collaborators.length > 0) {
-        row[key] = collaborators.map((email) => {
-          const { contact_email, name } = getCollaboratorInfo(
-            email,
-            collaboratorList
-          );
-          return { email, contact_email, name };
-        });
-      }
-    }
-
     if (columnDef?.type === "single-select") {
       const selectedId = row[key];
       if (selectedId && columnDef.data && columnDef.data.options) {
@@ -78,6 +65,20 @@ function enrichColumns(row, metadata, collaboratorList) {
             return selectedOption ? selectedOption.name : id;
           })
           .filter(Boolean);
+      }
+    }
+
+    // collaborator can have multiple entries. Therefore not same code like _creator or _last_modifier
+    if (columnDef?.type === "collaborator") {
+      const collaborators = row[key] || [];
+      if (collaborators.length > 0) {
+        row[key] = collaborators.map((email) => {
+          const { contact_email, name } = getCollaboratorInfo(
+            email,
+            collaboratorList
+          );
+          return { email, contact_email, name };
+        });
       }
     }
 
@@ -173,12 +174,14 @@ const getUploadLink = async (z, bundle) => {
 
 const extractFilename = (stream, url) => {
   // Extract from Content-Disposition header
-  const fromHeader = stream.headers["content-disposition"]?.match(/^attachment; filename="(?<filename>[^"]+)"$/)?.groups?.filename;
-  const fromURL = new URL(url).pathname.split('/').pop();
+  const fromHeader = stream.headers["content-disposition"]?.match(
+    /^attachment; filename="(?<filename>[^"]+)"$/
+  )?.groups?.filename;
+  const fromURL = new URL(url).pathname.split("/").pop();
   const fallback = "file";
 
-  return fromHeader ?? (fromURL ?? fallback);
-}
+  return fromHeader ?? fromURL ?? fallback;
+};
 
 // type is either "file" or "image"
 const uploadFile = async (z, uploadLink, file, type) => {
@@ -194,13 +197,18 @@ const uploadFile = async (z, uploadLink, file, type) => {
   stream.resume();
 
   formData.append("parent_dir", uploadLink.parent_path);
-  formData.append("relative_path", type === "file" ? uploadLink.file_relative_path : uploadLink.img_relative_path);
+  formData.append(
+    "relative_path",
+    type === "file"
+      ? uploadLink.file_relative_path
+      : uploadLink.img_relative_path
+  );
 
   const options = {
     method: "POST",
     url: uploadLink.upload_link,
     params: {
-      'ret-json': 1,
+      "ret-json": 1,
     },
     headers: {
       ...formData.getHeaders(),
@@ -236,18 +244,26 @@ const processRowsForDownloadLinks = async (rows, z, bundle, download) => {
               item.public_download_link = null;
               item.file = null;
             } else {
-              const downloadLink = await getPublicDownloadLink(
-                item.path,
-                z,
-                bundle
-              );
-              if (downloadLink) {
-                item.public_download_link = downloadLink;
+              // uploaded file or just a link to an image
+              if (item.path === item.url) {
+                item.public_download_link = item.path;
                 item.file = z.dehydrateFile(hydrators.downloadFile, {
-                  url: downloadLink,
+                  url: item.path,
                 });
               } else {
-                item.public_download_link = "error";
+                const downloadLink = await getPublicDownloadLink(
+                  item.path,
+                  z,
+                  bundle
+                );
+                if (downloadLink) {
+                  item.public_download_link = downloadLink;
+                  item.file = z.dehydrateFile(hydrators.downloadFile, {
+                    url: downloadLink,
+                  });
+                } else {
+                  item.public_download_link = "error";
+                }
               }
             }
           }
