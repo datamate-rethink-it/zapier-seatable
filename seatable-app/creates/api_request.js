@@ -8,23 +8,6 @@ const perform = async (z, bundle) => {
     );
   }
 
-  console.log(bundle.inputData.querys);
-
-  // build query params
-  let queryString = "";
-  if (
-    bundle.inputData.querys &&
-    typeof bundle.inputData.querys === "object" &&
-    bundle.inputData.querys.length() > 0
-  ) {
-    queryString = Object.keys(bundle.inputData.querys)
-      .map(function (key) {
-        return key + "=" + bundle.inputData.querys[key];
-      })
-      .join("&");
-    queryString = `?${queryString}`;
-  }
-
   // check body input
   z.console.log("inputDataRaw.body", bundle.inputData.body);
   if (!isJsonString(bundle.inputData.body)) {
@@ -33,9 +16,10 @@ const perform = async (z, bundle) => {
   const body = bundle.inputData.body;
 
   const request = {
-    url: `${bundle.authData.serverUrl}${bundle.inputData.endpoint}${queryString}`,
+    url: `${bundle.authData.serverUrl}${bundle.inputData.endpoint}`,
     method: `${bundle.inputData.http_method}`,
-    body,
+    params: bundle.inputData.querys,
+    body: JSON.parse(body),
   };
 
   const response = await z.request(request);
