@@ -22,6 +22,7 @@ const intern_search_columns = require("./triggers/intern_search_columns");
 const row = require("./creates/row");
 const row_update = require("./creates/row_update");
 const row_delete = require("./creates/row_delete");
+const api_request = require("./creates/api_request");
 
 // search
 const find_row = require("./searches/find_row");
@@ -56,6 +57,7 @@ module.exports = {
     [row.key]: row,
     [row_update.key]: row_update,
     [row_delete.key]: row_delete,
+    [api_request.key]: api_request,
   },
 
   /*

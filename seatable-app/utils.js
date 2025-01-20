@@ -282,6 +282,15 @@ const getCollaborators = async (z, bundle) => {
   return response.json.user_list;
 };
 
+function isJsonString(str) {
+  try {
+    JSON.parse(str);
+  } catch (e) {
+    return false;
+  }
+  return true;
+}
+
 module.exports = {
   enrichColumns,
   processRowsForDownloadLinks,
@@ -291,4 +300,5 @@ module.exports = {
   getCollaborators,
   getUploadLink,
   uploadFile,
+  isJsonString,
 };
