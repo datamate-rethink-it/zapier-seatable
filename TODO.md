@@ -16,22 +16,23 @@ create row -> change data input
 
 Triggers
 
-[x] New or Updated Row
-[x] New Row
-[x] New Signature
+[x] New or Updated Row -> finalisiert!
+[x] New Row -> finalisiert!
+[x] New Signature -> finalisiert!
 
 Actions
 
-[ ] Create Row
-[ ] Update Row
-[ ] API Request (Beta)
+[x] Create Row
+[x] Update Row
+[x] Delete Row
+[x] API Request (Beta)
 
 Search
 
-[ ] Find Row
-[ ] Find Many Rows (With Line Item Support)
+[x] Find Row
+[x] Find Many Rows (With Line Item Support)
 
 ## Other stuff
 
 [x] check if api-gateway is enabled.
-[ ] meta.isLoadingSample
+[ ] meta.isLoadingSample - not necessary.

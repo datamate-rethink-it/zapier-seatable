@@ -59,18 +59,21 @@ const perform = async (z, bundle) => {
   // This call mutates `rows`
   await processRowsForDownloadLinks(rows, z, bundle, bundle.inputData.download);
 
-  // this should return an array of objects (but only the first will be used)
-  return rows;
+  // this should return something like this:
+  // return [{Data: [{id:"adsfafd", name: "adfadf"},{id:"234", name: "234"}]}];
+  return [{ Data: rows }];
 };
 
 module.exports = {
-  key: "find_row",
-  noun: "row",
+  // see here for a full list of available properties:
+  // https://github.com/zapier/zapier-platform/blob/main/packages/schema/docs/build/schema.md#searchschema
+  key: "find_many_rows",
+  noun: "rows",
 
   display: {
-    label: "Find Row",
+    label: "Find Many Rows (With Line Item Support)",
     description:
-      "Find a row using SQL Query search synctax. Optionally, create a row if none are found.",
+      "Finds a row using SQL Query search syntax. Optionally, create a row if none are found.",
   },
 
   operation: {

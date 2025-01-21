@@ -22,10 +22,13 @@ const intern_search_columns = require("./triggers/intern_search_columns");
 const row = require("./creates/row");
 const row_update = require("./creates/row_update");
 const row_delete = require("./creates/row_delete");
+const row_lock = require("./creates/row_lock");
+const row_unlock = require("./creates/row_unlock");
 const api_request = require("./creates/api_request");
 
 // search
 const find_row = require("./searches/find_row");
+const find_many_rows = require("./searches/find_many_rows");
 
 module.exports = {
   version: require("./package.json").version,
@@ -49,30 +52,29 @@ module.exports = {
     [intern_search_columns.key]: intern_search_columns,
   },
 
-  searches: {
-    [find_row.key]: find_row,
-  },
-
   creates: {
     [row.key]: row,
     [row_update.key]: row_update,
     [row_delete.key]: row_delete,
+    [row_lock.key]: row_lock,
+    [row_unlock.key]: row_unlock,
     [api_request.key]: api_request,
   },
 
-  /*
+  searches: {
+    [find_row.key]: find_row,
+    [find_many_rows.key]: find_many_rows,
+  },
   searchOrCreates: {
-    find_or_create_row: {
-      key: "find_or_create_row",
+    [find_row.key]: {
+      key: find_row.key,
       display: {
         label: "Find or Create a Row",
-        description: "Finds a row, or creates one if it doesn't exist.",
+        description: "(intentionally left blank)",
       },
-      search: "find_row",
-      create: "row",
+      search: find_row.key,
+      create: row.key,
     },
   },
-  */
-
   resources: {},
 };
