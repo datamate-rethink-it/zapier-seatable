@@ -33,9 +33,6 @@ const perform = async (z, bundle) => {
     enrichColumns(row, metadata, collaborators, z, bundle)
   ));
 
-  // DEBUG:
-  //console.log(enrichedRows);
-
   // enrich rows with download links and file (if requested)
   enrichedRows = await processRowsForDownloadLinks(
     enrichedRows,
@@ -82,7 +79,6 @@ const addDynamicOutputFields = async (z, bundle) => {
     ...dynamicColumnFields,
   ];
 
-  //console.log(generatedOutputFields);
   return generatedOutputFields;
 };
 

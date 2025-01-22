@@ -19,7 +19,7 @@ const intern_asset_columns = require("./triggers/intern_asset_columns");
 const intern_search_columns = require("./triggers/intern_search_columns");
 
 // create actions
-const row = require("./creates/row");
+const row_create = require("./creates/row_create");
 const row_update = require("./creates/row_update");
 const row_delete = require("./creates/row_delete");
 const row_lock = require("./creates/row_lock");
@@ -53,7 +53,7 @@ module.exports = {
   },
 
   creates: {
-    [row.key]: row,
+    [row_create.key]: row_create,
     [row_update.key]: row_update,
     [row_delete.key]: row_delete,
     [row_lock.key]: row_lock,
@@ -73,7 +73,7 @@ module.exports = {
         description: "(intentionally left blank)",
       },
       search: find_row.key,
-      create: row.key,
+      create: row_create.key,
     },
   },
   resources: {},

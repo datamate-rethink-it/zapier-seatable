@@ -135,6 +135,10 @@ function enrichColumns(row, metadata, collaboratorList) {
       }
     }
 
+    if (columnDef?.type === "ctime" || columnDef?.type === "mtime") {
+      row[key] = transformDate(row[key]);
+    }
+
     if (columnDef?.type === "button") {
       delete row[key];
     }
@@ -144,7 +148,6 @@ function enrichColumns(row, metadata, collaboratorList) {
 }
 
 const getPublicDownloadLink = async (asset_path, z, bundle) => {
-  //console.log("asset_path", asset_path);
   try {
     const response = await z.request({
       method: "GET",
@@ -291,6 +294,18 @@ function isJsonString(str) {
   return true;
 }
 
+function transformDate(value) {
+  const date = new Date(value);
+
+  if (isNaN(date.getTime())) {
+    return null; // Return null if the date is invalid
+  }
+
+  return (
+    date.toISOString().slice(0, -5) + date.toString().match(/([+-]\d{4})/)[1]
+  );
+}
+
 module.exports = {
   enrichColumns,
   processRowsForDownloadLinks,
@@ -301,4 +316,5 @@ module.exports = {
   getUploadLink,
   uploadFile,
   isJsonString,
+  transformDate,
 };

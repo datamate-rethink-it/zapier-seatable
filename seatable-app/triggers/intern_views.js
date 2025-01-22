@@ -4,12 +4,10 @@ const perform = async (z, bundle) => {
   const returnData = [];
 
   if (!bundle.authData.baseUuid) {
-    console.log("baseUuid is not set or empty...");
     return returnData;
   }
 
   if (!bundle.inputData.table_id) {
-    console.log("table_id is not set or empty...");
     return returnData;
   }
 

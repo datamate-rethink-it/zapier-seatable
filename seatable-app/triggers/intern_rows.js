@@ -1,6 +1,5 @@
 const perform = async (z, bundle) => {
   if (!bundle.authData.baseUuid) {
-    console.log("baseUuid is not set or empty...");
     return [];
   }
 
@@ -8,27 +7,38 @@ const perform = async (z, bundle) => {
     url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/metadata/`,
   });
 
-  const targetTable = metadata.json.metadata.tables.find((table) => table._id === bundle.inputData.table_id);
+  const targetTable = metadata.json.metadata.tables.find(
+    (table) => table._id === bundle.inputData.table_id
+  );
   if (!targetTable) {
     throw new Error(`Table with ID ${bundle.inputData.table_id} not found`);
   }
 
-  const firstColumn = targetTable.columns.find(column => column.key === '0000');
+  const firstColumn = targetTable.columns.find(
+    (column) => column.key === "0000"
+  );
   if (!firstColumn) {
-    throw new Error(`Table ${targetTable.name} does not have a column with the key "0000"`);
+    throw new Error(
+      `Table ${targetTable.name} does not have a column with the key "0000"`
+    );
   }
 
   const request = {
     method: "POST",
     url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/sql/`,
     body: {
-      sql: "SELECT `" + firstColumn.name + "`, _id FROM `" + targetTable.name + "` LIMIT 10",
+      sql:
+        "SELECT `" +
+        firstColumn.name +
+        "`, _id FROM `" +
+        targetTable.name +
+        "` LIMIT 10",
     },
   };
 
   const response = await z.request(request);
 
-  const rows = response.data.results.map(row => ({
+  const rows = response.data.results.map((row) => ({
     id: row._id,
     name: row["0000"],
   }));

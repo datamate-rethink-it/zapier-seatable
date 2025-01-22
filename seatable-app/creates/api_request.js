@@ -9,7 +9,6 @@ const perform = async (z, bundle) => {
   }
 
   // check body input
-  z.console.log("inputDataRaw.body", bundle.inputData.body);
   if (!isJsonString(bundle.inputData.body)) {
     throw new Error("Your body seems to be no valid JSON.");
   }

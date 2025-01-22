@@ -2,6 +2,7 @@ const {
   collaboratorInfo,
   getPublicDownloadLink,
   getAssetPath,
+  transformDate,
 } = require("../utils");
 const hydrators = require("../hydrators");
 
@@ -68,8 +69,8 @@ const perform = async (z, bundle) => {
             column_key: assetColumn.key,
             column_name: assetColumn.name,
             row_id: `${row._id}`,
-            row_ctime: `${row._ctime}`,
-            row_mtime: `${row._mtime}`,
+            row_ctime: transformDate(row._ctime),
+            row_mtime: transformDate(row._mtime),
           },
         };
         rows.push(resultItem);
@@ -99,7 +100,7 @@ const perform = async (z, bundle) => {
         const resultItem = {
           id: `${row._id}-${obj}`,
           type: "image",
-          name: "unknown", //TODO:...
+          name: "unknown",
           size: 0,
           url: obj,
           publicUrl: downloadLink,
@@ -110,8 +111,8 @@ const perform = async (z, bundle) => {
             column_key: assetColumn.key,
             column_name: assetColumn.name,
             row_id: `${row._id}`,
-            row_ctime: `${row._ctime}`,
-            row_mtime: `${row._mtime}`,
+            row_ctime: transformDate(row._ctime),
+            row_mtime: transformDate(row._mtime),
           },
         };
         rows.push(resultItem);
@@ -165,8 +166,8 @@ const perform = async (z, bundle) => {
           column_key: assetColumn.key,
           column_name: assetColumn.name,
           row_id: `${row._id}`,
-          row_ctime: `${row._ctime}`,
-          row_mtime: `${row._mtime}`,
+          row_ctime: transformDate(row._ctime),
+          row_mtime: transformDate(row._mtime),
         },
       };
       rows.push(resultItem);
@@ -243,8 +244,8 @@ module.exports = {
         column_name: "Image",
         row_id: "EZc6JVoCR5GVMbhpWx_9FA",
         row_reference: "table:0000:row:EZc6JVoCR5GVMbhpWx_9FA",
-        row_ctime: "2023-06-21T20:20:31Z",
-        row_mtime: "2023-06-21T20:25:52Z",
+        row_ctime: "2023-06-21T20:20:31+0100",
+        row_mtime: "2023-06-21T20:25:52+0100",
         table_id: "0000",
         table_name: "Time and Budget",
       },

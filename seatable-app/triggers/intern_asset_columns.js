@@ -1,18 +1,13 @@
-// Fetches a list of records from the endpoint
 const perform = async (z, bundle) => {
   const returnData = [];
 
   if (!bundle.authData.baseUuid) {
-    console.log("baseUuid is not set or empty...");
     return returnData;
   }
 
   if (!bundle.inputData.table_name) {
-    console.log("table_name is not set or empty...");
     return returnData;
   }
-
-  console.log(bundle.inputData);
 
   const request = {
     url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/metadata/`,

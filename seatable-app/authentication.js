@@ -6,6 +6,7 @@ const test = (z, bundle) => {
       "Please correct the Server URL. It must begin with https:// and should not end with a trailing slash (/). For example: https://your-seafile-server.com."
     );
   }
+
   z.request({
     url: bundle.authData.serverUrl + "/api/v2.1/dtable/app-access-token/",
   });
@@ -25,13 +26,11 @@ const handleBadResponses = (response, z, bundle) => {
 };
 
 const getBaseToken = async (z, bundle) => {
-  //console.log("getBaseToken");
   const response = await z.request({
     url: bundle.authData.serverUrl + "/api/v2.1/dtable/app-access-token/",
     method: "GET",
     body: {},
   });
-  //console.log(response.data);
   if (response.data?.use_api_gateway !== true) {
     throw new z.errors.Error(
       "Your SeaTable Server must support API-Gateway. Please update your SeaTable Server to the newest version."
@@ -48,13 +47,9 @@ const getBaseToken = async (z, bundle) => {
 // This function runs before every outbound request. You can have as many as you
 // need. They'll need to each be registered in your index.js file.
 const includeApiToken = (request, z, bundle) => {
-  //console.log("request", request);
-  //console.log(request.url);
   if (request.url.includes("api/v2.1/dtable/")) {
-    //console.log("use ApiToken", bundle.authData.apiToken);
     request.headers.Authorization = "Bearer " + bundle.authData.apiToken;
   } else {
-    //console.log("use BaseToken", bundle.authData.baseToken);
     request.headers.Authorization = "Bearer " + bundle.authData.baseToken;
   }
   return request;
@@ -67,8 +62,6 @@ module.exports = {
     type: "session",
     sessionConfig: { perform: getBaseToken },
 
-    // Define any input app's auth requires here. The user will be prompted to enter
-    // this info when they connect their account.
     fields: [
       {
         key: "serverUrl",

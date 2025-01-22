@@ -2,8 +2,6 @@ const { inputFields } = require("./common");
 const { getCollaborators, getUploadLink, uploadFile } = require("../utils");
 
 const perform = async (z, bundle) => {
-  // TODO: handle single-select, multiple-select, collaborator, images, urls, ...
-
   // get metadata of the complete base
   const metadata_response = await z.request({
     url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/metadata/`,
@@ -20,6 +18,9 @@ const perform = async (z, bundle) => {
 
   // will be filled later, if there is a collaborator column
   let collaborators = [];
+
+  // variable to check, if I have to create a link after the row creation
+  let link_records = [];
 
   const row = {};
 
@@ -41,8 +42,6 @@ const perform = async (z, bundle) => {
         if (collaborators.length === 0) {
           collaborators = await getCollaborators(z, bundle);
         }
-
-        console.log(collaborators);
 
         // Get the @auth.local email address from Name, @auth.local or the email address.
         row[key] = [
@@ -88,6 +87,18 @@ const perform = async (z, bundle) => {
           .match(/("[^"]*"|\S+)/g)
           .map((item) => item.replace(/^"|"$/g, "").trim());
         break;
+      case "link":
+        if (value !== "") {
+          link = {
+            other_row_id: value,
+            table_id: column.data.table_id,
+            other_table_id: column.data.other_table_id,
+            link_id: column.data.link_id,
+            row_id: "not available yet...",
+          };
+          link_records.push(link);
+        }
+        break;
       default:
         row[key] = value;
         break;
@@ -102,8 +113,35 @@ const perform = async (z, bundle) => {
       rows: [row],
     },
   };
-  console.log(requestOptions);
+
   const response = await z.request(requestOptions);
+
+  // show error, if there was one during creation.
+  if (response.data?.inserted_row_count !== 1) {
+    throw new Error("Row creation failed. Please review your input values.");
+  }
+
+  const new_row_id = response.data.first_row._id;
+
+  // create links, if necessary
+  if (link_records.length > 0) {
+    for (const new_link of link_records) {
+      let linkRequestOptions = {
+        method: "POST",
+        url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/links/`,
+        body: {
+          table_id: new_link.table_id,
+          other_table_id: new_link.other_table_id,
+          link_id: new_link.link_id,
+          other_rows_ids_map: {
+            [new_row_id]: [new_link.other_row_id],
+          },
+        },
+      };
+      await z.request(linkRequestOptions);
+    }
+  }
+
   return response.data;
 };
 
@@ -136,12 +174,11 @@ const addDynamicOutputFields = async (z, bundle) => {
     ...dynamicColumnFields,
   ];
 
-  //console.log(generatedOutputFields);
   return generatedOutputFields;
 };
 
 module.exports = {
-  key: "row",
+  key: "row_create",
   noun: "Row",
 
   display: {
@@ -166,8 +203,8 @@ module.exports = {
     ],
 
     sample: {
-      _ctime: "2024-12-29T15:33:30+01:00",
-      _mtime: "2024-12-29T17:25:34+01:00",
+      _ctime: "2024-12-29T15:33:30+0100",
+      _mtime: "2024-12-29T17:25:34+0100",
       _id: "c1kYssFbSWWX5KT6yukooQ",
       id: "c1kYssFbSWWX5KT6yukooQ_2024-12-29T17:25:34+01:00",
     },

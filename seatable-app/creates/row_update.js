@@ -17,11 +17,14 @@ const perform = async (z, bundle) => {
   // will be filled later, if there is a collaborator column
   let collaborators = [];
 
+  // variable to check, if I have to create a link after the row creation
+  let link_records = [];
+
   const row = {};
 
   for (const column of targetTable.columns) {
     // Exactly three spaces => column value should be deleted
-    // TODO: Does not work when using "zapier invoke": bundle.inputDataRaw is undefined
+    // HINT: Does not work when using "zapier invoke": bundle.inputDataRaw is undefined
     if (bundle.inputDataRaw?.[column.name] === "   ") {
       row[column.name] = null;
       continue;
@@ -84,6 +87,18 @@ const perform = async (z, bundle) => {
           .match(/("[^"]*"|\S+)/g)
           .map((item) => item.replace(/^"|"$/g, "").trim());
         break;
+      case "link":
+        if (value !== "") {
+          link = {
+            other_row_id: value,
+            table_id: column.data.table_id,
+            other_table_id: column.data.other_table_id,
+            link_id: column.data.link_id,
+            row_id: bundle.inputData.row_id,
+          };
+          link_records.push(link);
+        }
+        break;
       default:
         row[column.name] = value;
         break;
@@ -105,6 +120,25 @@ const perform = async (z, bundle) => {
   };
 
   const response = await z.request(requestOptions);
+
+  // create links, if necessary
+  if (link_records.length > 0) {
+    for (const new_link of link_records) {
+      let linkRequestOptions = {
+        method: "POST",
+        url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/links/`,
+        body: {
+          table_id: new_link.table_id,
+          other_table_id: new_link.other_table_id,
+          link_id: new_link.link_id,
+          other_rows_ids_map: {
+            [new_link.row_id]: [new_link.other_row_id],
+          },
+        },
+      };
+      await z.request(linkRequestOptions);
+    }
+  }
 
   return response.data;
 };

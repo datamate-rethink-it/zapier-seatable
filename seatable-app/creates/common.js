@@ -57,6 +57,8 @@ const mapColumnType = (columnType) => {
       return "file";
     case "long-text":
       return "text";
+    case "text":
+      return "string";
     default:
       return columnType;
   }
@@ -71,16 +73,32 @@ const generateHelpText = (column, operation) => {
       text +=
         "Please enter the @auth.local address, the email adress or the name of the user.";
       break;
+    case "number":
+      text +=
+        'Enter any numeric value. Decimals must be separated from the integer with a period ".".';
+      break;
+    case "single-select":
+      text += "Single select column only accepts existing options.";
+      break;
     case "multiple-select":
       text +=
         'Only supports existing options. Separate the options with a space. If one of your options has a space in it, encapsulate it with double quotes, like "Option 1". Option names containing double quotes are not supported.';
       break;
     case "duration":
       text +=
-        'Please enter the duration in seconds (like "90" for "0:01:30") or in time format ("1:45")';
+        'Please enter the duration in seconds (like "90" for "0:01:30") or in time format ("1:45").';
+    case "rate":
+      text += "Rating column accepts whole number values.";
+      break;
+    case "link":
+      text += "Please enter the row id of the target row.";
+      break;
   }
 
   if (operation === "update") {
+    if (text.length > 0) {
+      text += " ";
+    }
     text += "Use three spaces to delete the current column value from the row.";
   }
 

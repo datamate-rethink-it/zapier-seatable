@@ -4,6 +4,10 @@
 
 - finalization of "Find Row"
 - finalization of "Find Many Rows
+- collaborator column accepts Name, E-Mail or @auth.local address as input
+- multiple-select accepts option values with space in it
+- finalization of "Row Lock/Unlock"
+- correct display of times
 
 ## v4.0.4 (2025-01-20)
 

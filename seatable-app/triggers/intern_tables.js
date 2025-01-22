@@ -4,7 +4,6 @@ const perform = async (z, bundle) => {
   const returnData = [];
 
   if (!bundle.authData.baseUuid) {
-    console.log("baseUuid is not set or empty...");
     return returnData;
   }
 
