@@ -36,3 +36,11 @@ Search
 
 [x] check if api-gateway is enabled.
 [ ] meta.isLoadingSample - not necessary.
+
+## Features
+
+[x] multiple select accepts values with space encapsulated with double quotes
+[x] collaborator column accepts name, email or @auth.local
+[x] duration
+[x] long-text (as markdown)
+[ ] linked record will show "add search"

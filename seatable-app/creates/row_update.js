@@ -14,8 +14,8 @@ const perform = async (z, bundle) => {
     throw new Error(`Table with ID ${bundle.inputData.table_id} not found`);
   }
 
-  // TODO: Only execute this request if there's at least a single collaborator column
-  const collaborators = await getCollaborators(z, bundle);
+  // will be filled later, if there is a collaborator column
+  let collaborators = [];
 
   const row = {};
 
@@ -35,9 +35,17 @@ const perform = async (z, bundle) => {
     // Handle "special" column types
     switch (column.type) {
       case "collaborator":
-        // Get the @auth.local email address
+        // get collaborators, if not yet done
+        if (collaborators.length === 0) {
+          collaborators = await getCollaborators(z, bundle);
+        }
+
+        // Get the @auth.local email address from Name, @auth.local or the email address.
         row[column.name] = [
-          collaborators.find((c) => c.contact_email === value)?.email,
+          collaborators.find(
+            (c) =>
+              c.contact_email === value || c.email === value || c.name === value
+          )?.email,
         ];
         break;
       case "file": {
@@ -66,8 +74,15 @@ const perform = async (z, bundle) => {
         break;
       }
       case "multiple-select":
-        // Must be an array
-        row[column.name] = value.split(" ");
+        /**
+         * Must be an array. It accepts:
+         * Mark Steven      => ["Mark", "Steven"]
+         * Mark "Opt 2"     => ["Mark", "Option 2"]
+         * "Opt 1" "Opt 2"  => ["Opt 1", "Opt 2"]
+         **/
+        row[key] = value
+          .match(/("[^"]*"|\S+)/g)
+          .map((item) => item.replace(/^"|"$/g, "").trim());
         break;
       default:
         row[column.name] = value;

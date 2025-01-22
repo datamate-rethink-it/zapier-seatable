@@ -1,18 +1,15 @@
 const { inputFields } = require("./common");
-const {
-  enrichColumns,
-  getCollaborators,
-  getUploadLink,
-  uploadFile,
-} = require("../utils");
+const { getCollaborators, getUploadLink, uploadFile } = require("../utils");
 
 const perform = async (z, bundle) => {
   // TODO: handle single-select, multiple-select, collaborator, images, urls, ...
 
+  // get metadata of the complete base
   const metadata_response = await z.request({
     url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/metadata/`,
   });
 
+  // identify only the relevant/selected table (by id)
   const targetTable = metadata_response.json.metadata.tables.find(
     (table) => table._id === bundle.inputData.table_id
   );
@@ -21,8 +18,8 @@ const perform = async (z, bundle) => {
     throw new Error(`Table with ID ${bundle.inputData.table_id} not found`);
   }
 
-  // TODO: Only execute this request if there's at least a single collaborator column
-  const collaborators = await getCollaborators(z, bundle);
+  // will be filled later, if there is a collaborator column
+  let collaborators = [];
 
   const row = {};
 
@@ -40,9 +37,19 @@ const perform = async (z, bundle) => {
     // Handle "special" column types
     switch (column.type) {
       case "collaborator":
-        // Get the @auth.local email address
+        // get collaborators, if not yet done
+        if (collaborators.length === 0) {
+          collaborators = await getCollaborators(z, bundle);
+        }
+
+        console.log(collaborators);
+
+        // Get the @auth.local email address from Name, @auth.local or the email address.
         row[key] = [
-          collaborators.find((c) => c.contact_email === value)?.email,
+          collaborators.find(
+            (c) =>
+              c.contact_email === value || c.email === value || c.name === value
+          )?.email,
         ];
         break;
       case "file": {
@@ -70,6 +77,17 @@ const perform = async (z, bundle) => {
 
         break;
       }
+      case "multiple-select":
+        /**
+         * Must be an array. It accepts:
+         * Mark Steven      => ["Mark", "Steven"]
+         * Mark "Opt 2"     => ["Mark", "Option 2"]
+         * "Opt 1" "Opt 2"  => ["Opt 1", "Opt 2"]
+         **/
+        row[key] = value
+          .match(/("[^"]*"|\S+)/g)
+          .map((item) => item.replace(/^"|"$/g, "").trim());
+        break;
       default:
         row[key] = value;
         break;
