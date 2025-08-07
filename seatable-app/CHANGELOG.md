@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.0.6 (2025-02-28)
+
+- add token refresh logic
+
 ## v4.0.5 (2025-01-21)
 
 - finalization of "Find Row"

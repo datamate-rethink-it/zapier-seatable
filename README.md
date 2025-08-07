@@ -8,7 +8,7 @@ Pull requests welcome. Please follow existing code style and add tests for new f
 
 ## Support
 
-For issues or questions, please open a GitHub issue.
+For support with this Zapier integration, please contact support@seatable.io.
 
 ## Licensing
 

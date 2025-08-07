@@ -10,15 +10,29 @@ const test = (z, bundle) => {
   z.request({
     url: bundle.authData.serverUrl + "/api/v2.1/dtable/app-access-token/",
   });
+
   return "Auth-Test successful";
 };
 
-const handleBadResponses = (response, z, bundle) => {
-  if (response.status === 403) {
+const handleBadResponses = (response, z) => {
+  if (
+    response.status === 403 &&
+    response.url.includes("api/v2.1/dtable/app-access-token")
+  ) {
+    // initial authentication error
     throw new z.errors.Error(
-      // This message is surfaced to the user
-      "The API-Token you supplied is incorrect",
+      "The API-Token you supplied is incorrect.",
       "AuthenticationError",
+      response.status
+    );
+  } else if (response.status === 403) {
+    // try to refresh the token
+    throw new z.errors.RefreshAuthError();
+  } else if (response.status !== 200) {
+    // other errors
+    throw new z.errors.Error(
+      "Request failed with status" + response.status,
+      "CustomError",
       response.status
     );
   }
@@ -52,6 +66,7 @@ const includeApiToken = (request, z, bundle) => {
   } else {
     request.headers.Authorization = "Bearer " + bundle.authData.baseToken;
   }
+
   return request;
 };
 
