@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.0.7 (2025-08-07)
+
+- fix bug with multiple-select columns in row_update
+
 ## v4.0.6 (2025-02-28)
 
 - add token refresh logic

@@ -83,7 +83,7 @@ const perform = async (z, bundle) => {
          * Mark "Opt 2"     => ["Mark", "Option 2"]
          * "Opt 1" "Opt 2"  => ["Opt 1", "Opt 2"]
          **/
-        row[key] = value
+        row[column.name] = value
           .match(/("[^"]*"|\S+)/g)
           .map((item) => item.replace(/^"|"$/g, "").trim());
         break;
