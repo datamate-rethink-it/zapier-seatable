@@ -1,5 +1,9 @@
 # Changelog
 
+## v4.0.8 (2026-02-17)
+
+- fix bug with link columns in row_create and row_update
+
 ## v4.0.7 (2025-08-07)
 
 - fix bug with multiple-select columns in row_update

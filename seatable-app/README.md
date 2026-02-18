@@ -38,6 +38,10 @@ These are what you normally do next:
 # Install dependencies
 npm install  # or you can use yarn
 
+# Install Zapier
+npm install zapier-platform-cli
+zapier --version
+
 # Run tests
 zapier test
 
@@ -45,6 +49,7 @@ zapier test
 zapier register "App Title"
 
 # Or you can link to an existing integration on Zapier
+zapier login
 zapier link
 
 # Push it to Zapier
