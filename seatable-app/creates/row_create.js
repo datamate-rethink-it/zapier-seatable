@@ -130,16 +130,20 @@ const perform = async (z, bundle) => {
       const isSwapped = table_id !== targetTable._id;
       const [srcId, destId] = isSwapped ? [other_table_id, table_id] : [table_id, other_table_id];
 
-      await z.request({
-        method: "POST",
-        url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/links/`,
-        body: {
-          table_id: srcId,
-          other_table_id: destId,
-          link_id,
-          other_rows_ids_map: { [new_row_id]: [other_row_id] },
-        },
-      });
+      try {
+        await z.request({
+          method: "POST",
+          url: `${bundle.authData.serverUrl}/api-gateway/api/v2/dtables/${bundle.authData.baseUuid}/links/`,
+          body: {
+            table_id: srcId,
+            other_table_id: destId,
+            link_id,
+            other_rows_ids_map: { [new_row_id]: [other_row_id] },
+          },
+        });
+      } catch (error) {
+        throw new Error(`Link creation failed. Please review the row ID "${other_row_id}".`);
+      }
     }
   }
 
